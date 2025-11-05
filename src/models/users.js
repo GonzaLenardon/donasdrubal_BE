@@ -27,6 +27,18 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    cuit: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    domicilio: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    datosImpositivos: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
 
     password: {
       type: DataTypes.STRING,

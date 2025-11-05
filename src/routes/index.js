@@ -1,5 +1,5 @@
 import express from 'express';
-import { addUser, allUsers } from '../controllers/users.js';
+import { addUser, allUsers, upUser } from '../controllers/users.js';
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.get('/', (req, res) => {
 /* router.get('/user', addUser); */
 router.post('/user', addUser);
 router.get('/user', allUsers);
+router.put('/user', upUser);
 
 export { router };
