@@ -1,8 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { sequelize } from './src/models/index.js';
-/* import modelos from './src/models/index.js'; // <- Esto inicializa los modelos
- */
+import { db } from './src/models/index.js';
+
 import { router } from './src/routes/index.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -29,11 +28,11 @@ const PORT = process.env.SERVER_PORT || 3000;
 const startServer = async () => {
   try {
     // 🔹 Primero probar conexión
-    await sequelize.authenticate();
+    await db.authenticate();
     console.log('✅ Conexión a la base de datos establecida correctamente.');
 
     // 🔹 Luego sincronizar modelos (sin borrar datos)
-    await sequelize.sync({ force: false });
+    await db.sync({ force: false });
     console.log('📦 Base de datos sincronizada.');
 
     // 🔹 Iniciar servidor Express

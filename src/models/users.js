@@ -17,7 +17,7 @@ class Users extends Model {
 
 Users.init(
   {
-    id_usuario: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -36,6 +36,14 @@ Users.init(
       allowNull: false,
     },
     datosImpositivos: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    telefono: {
       type: DataTypes.STRING,
       allowNull: false,
     },

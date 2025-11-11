@@ -8,7 +8,8 @@ const pruebaUser = async (req, res) => {
 const addUser = async (req, res) => {
   console.log('paso x aca', req.body);
   try {
-    const { nombre, cuit, domicilio, datosImpositivos, rol } = req.body;
+    const { nombre, cuit, domicilio, email, telefono, datosImpositivos, rol } =
+      req.body;
     const password = req.body.password || '123456'; // 👈 default
 
     const user = await Users.findOne({ where: { nombre } });
@@ -21,6 +22,8 @@ const addUser = async (req, res) => {
       nombre,
       cuit,
       domicilio,
+      email,
+      telefono,
       datosImpositivos,
       password,
       rol,
@@ -36,9 +39,17 @@ const addUser = async (req, res) => {
 
 const upUser = async (req, res) => {
   try {
-    const { id_usuario, nombre, rol, datosImpositivos, cuit, domicilio } =
-      req.body;
-    const user = await Users.findOne({ where: { id_usuario } });
+    const {
+      id,
+      nombre,
+      rol,
+      email,
+      telefono,
+      datosImpositivos,
+      cuit,
+      domicilio,
+    } = req.body;
+    const user = await Users.findOne({ where: { id } });
     /*   console.log('usuario', user); */
 
     if (!user) {
@@ -46,8 +57,8 @@ const upUser = async (req, res) => {
     }
 
     await Users.update(
-      { nombre, rol, datosImpositivos, cuit, domicilio },
-      { where: { id_usuario } }
+      { nombre, rol, email, telefono, datosImpositivos, cuit, domicilio },
+      { where: { id } }
     );
 
     res.status(201).json({ message: 'Usuario actualizado exitosamente' });
