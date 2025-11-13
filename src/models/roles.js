@@ -43,7 +43,7 @@ Roles.init(
     },
     {
       sequelize: db,
-      modelName: 'roles',
+      modelName: 'Roles',
       tableName: 'roles',
       timestamps: false
     }

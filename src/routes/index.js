@@ -24,16 +24,16 @@ router.get('/user/:userId/roles', getUserRoles);    // Obtener los roles de un u
 /* ****** Rutas Roles **********/
 router.get('/role', getRole);
 router.post('/role', addRole);
-router.get('/role', allRoles);
+router.get('/roles', allRoles);
 router.put('/role', upRole);
 router.delete('/role', downRole);
 
 /* ****** Rutas Permisos **********/
-router.get('/role', getPermissionById);
-router.post('/role', addPermission);
-router.get('/role', allPermissions);
-router.put('/role', updatePermission);
-router.delete('/role', downPermission);
+router.get('/permission', getPermissionById);
+router.post('/permission', addPermission);
+router.get('/permissions', allPermissions);
+router.put('/permission', updatePermission);
+router.delete('/Permission', downPermission);
 
 /* ****** Rutas User_Roles **********/
 router.get('/user_role', allUserRoles);

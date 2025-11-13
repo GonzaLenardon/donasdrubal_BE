@@ -1,11 +1,11 @@
 import UserRole from '../models/user_roles.js'; 
 import User from '../models/users.js';
-import Role from '../models/roles.js';
+import Roles from '../models/roles.js';
 
 
   const allUserRoles = async (req, res) => {
     try {
-      const userRoles = await UserRole.findAll({ include: [User, Role] });
+      const userRoles = await UserRole.findAll({ include: [User, Roles] });
       res.json(userRoles);
     } catch (error) {
       console.error('Error al obtener roles de usuario:', error);
@@ -42,14 +42,15 @@ import Role from '../models/roles.js';
   try {
     const { userId, roleId } = req.body;
 
-    const user = await Users.findByPk(userId);
+    const user = await User.findByPk(userId);
     const role = await Roles.findByPk(roleId);
 
     if (!user || !role) {
       return res.status(404).json({ message: 'Usuario o Rol no encontrado' });
     }
 
-    await user.addRole(role); // 👈 Sequelize crea la relación en UserRoles
+        // Crear relación
+    await UserRole.create({ user_id: userId, role_id: roleId });
     res.status(200).json({ message: 'Rol asignado correctamente al usuario' });
   } catch (error) {
     console.error('Error al asignar rol:', error);
@@ -62,7 +63,7 @@ const getUserRoles = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await Users.findByPk(userId, {
+    const user = await User.findByPk(userId, {
       include: {
         model: Roles,
         through: { attributes: [] }, // no mostrar la tabla pivote
@@ -73,7 +74,7 @@ const getUserRoles = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    res.json({ user: user.name, roles: user.Roles });
+    res.json({ user: user.nombre, roles: user.Roles });
   } catch (error) {
     console.error('Error al obtener roles del usuario:', error);
     res.status(500).json({ message: 'Error al obtener roles del usuario', error });

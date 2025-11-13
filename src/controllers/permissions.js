@@ -24,8 +24,8 @@ const getPermissionById = async (req, res) => {
 
 const addPermission = async (req, res) => {
     try {
-        const { name, description } = req.body;
-        const permission = await Permission.create({ name, description });
+        const { nombre, descripcion } = req.body;
+        const permission = await Permissions.create({ nombre, descripcion });
         res.status(201).json(permission);
     } catch (error) {
         console.error('Error al crear permiso:', error);
@@ -37,11 +37,11 @@ const updatePermission = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description } = req.body;
-        const permission = await Permission.findByPk(id);
+        const permission = await Permissions.findByPk(id);
         if (!permission) return res.status(404).json({ error: 'Permiso no encontrado' });
 
-        permission.name = name;
-        permission.description = description;
+        permission.nombre = nombre;
+        permission.descripcion = descripcion;
         await permission.save();
 
         res.json(permission);
@@ -54,7 +54,7 @@ const updatePermission = async (req, res) => {
 const downPermission = async (req, res) => {
     try {
         const { id } = req.params;
-        const permission = await Permission.findByPk(id);
+        const permission = await Permissions.findByPk(id);
         if (!permission) return res.status(404).json({ error: 'Permiso no encontrado' });
 
         await permission.destroy();
