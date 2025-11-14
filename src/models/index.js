@@ -37,6 +37,13 @@ Permissions.belongsToMany(Roles, {
   otherKey: 'role_id',
 });
 
+Users.hasOne(Clients, { 
+  foreignKey: 'user_id' 
+});
+Clients.belongsTo(Users, {
+   foreignKey: 'user_id' 
+  });
+
 export { sequelize };
 export { Users };
 export { Roles };

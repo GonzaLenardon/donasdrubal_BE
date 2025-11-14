@@ -4,6 +4,7 @@ import { addRole, allRoles, upRole, getRole, downRole } from '../controllers/rol
 import { addPermission, allPermissions, downPermission, updatePermission, getPermissionById } from '../controllers/permissions.js';
 import { allUserRoles, addUserRole, downUserRole, assignRoleToUser, getUserRoles} from '../controllers/user_roles.js';
 import { allRolePermissions, addRolePermission, downRolePErmission } from '../controllers/role_permissions.js';
+import { addClient } from '../controllers/clients.js';
 
 const router = express.Router();
 
@@ -20,6 +21,9 @@ router.get('/user', allUsers);
 router.put('/user', upUser);
 router.post('/user/role', assignRoleToUser);        // Asignar un rol a un usuario
 router.get('/user/:userId/roles', getUserRoles);    // Obtener los roles de un usuario
+
+/* ****** Rutas Cliente **********/
+router.post('/client', addClient);
 
 /* ****** Rutas Roles **********/
 router.get('/role', getRole);
