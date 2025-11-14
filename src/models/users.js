@@ -52,10 +52,10 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    is_active: 
-    { type: DataTypes.BOOLEAN, 
-      defaultValue: true,
-    },
+    // is_active: 
+    // { type: DataTypes.BOOLEAN, 
+    //   defaultValue: true,
+    // },
     salt: {
       type: DataTypes.STRING,
     },

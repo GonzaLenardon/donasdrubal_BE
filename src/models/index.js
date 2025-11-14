@@ -4,6 +4,9 @@ import Roles from './roles.js';
 import Permissions from './permissions.js';
 import UserRoles from './user_roles.js';
 import RolePermissions from './role_permissions.js'; 
+import Maquinas from './maquinas.js';
+import Calibraciones from './calibraciones.js';
+import Clients from './clients.js';
 
 // -------------------------------
 // Relaciones entre los modelos
@@ -43,16 +46,16 @@ Users.hasOne(Clients, {
 Clients.belongsTo(Users, {
    foreignKey: 'user_id' 
   });
-import Maquinas from './maquinas.js';
-import Calibraciones from './calibraciones.js';
 
 Users.hasMany(Maquinas, { foreignKey: 'user_id', as: 'maquinas' });
+
 Maquinas.belongsTo(Users, { foreignKey: 'user_id', as: 'cliente' });
 
 Maquinas.hasMany(Calibraciones, {
   foreignKey: 'maquina_id',
   as: 'calibracionesmaquina',
 });
+
 Calibraciones.belongsTo(Maquinas, {
   foreignKey: 'maquina_id',
   as: 'calibraciones',

@@ -4,7 +4,7 @@ import User from '../models/users.js';
 import Client from '../models/clients.js';
 
 
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 
 const addClient = async (req, res) => {
   try {
