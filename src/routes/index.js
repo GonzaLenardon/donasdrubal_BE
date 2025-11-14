@@ -1,4 +1,5 @@
 import express from 'express';
+import { checkRole } from '../middlewares/checkRoles.js';
 import { addUser, allUsers, upUser} from '../controllers/users.js';
 import { addRole, allRoles, upRole, getRole, downRole } from '../controllers/roles.js';
 import { addPermission, allPermissions, downPermission, updatePermission, getPermissionById } from '../controllers/permissions.js';
@@ -32,7 +33,8 @@ router.post('/user/role', assignRoleToUser);        // Asignar un rol a un usuar
 router.get('/user/:userId/roles', getUserRoles);    // Obtener los roles de un usuario
 
 /* ****** Rutas Cliente **********/
-router.post('/client', addClient);
+router.post('/cliente', addClient);
+// router.post('/cliente', checkRole(['admin']), addClient);
 
 /* ****** Rutas Roles **********/
 router.get('/role', getRole);

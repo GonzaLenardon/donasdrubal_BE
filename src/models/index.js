@@ -6,7 +6,7 @@ import UserRoles from './user_roles.js';
 import RolePermissions from './role_permissions.js'; 
 import Maquinas from './maquinas.js';
 import Calibraciones from './calibraciones.js';
-import Clients from './clients.js';
+import Clientes from './clientes.js';
 
 // -------------------------------
 // Relaciones entre los modelos
@@ -40,10 +40,10 @@ Permissions.belongsToMany(Roles, {
   otherKey: 'role_id',
 });
 
-Users.hasOne(Clients, { 
+Users.hasOne(Clientes, { 
   foreignKey: 'user_id' 
 });
-Clients.belongsTo(Users, {
+Clientes.belongsTo(Users, {
    foreignKey: 'user_id' 
   });
 
@@ -67,3 +67,4 @@ export { Roles };
 export { Permissions };
 export { UserRoles };
 export { RolePermissions};
+export { Clientes };
