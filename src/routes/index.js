@@ -28,13 +28,13 @@ router.get('/', (req, res) => {
 router.post('/user', addUser);
 router.get('/user', allUsers);
 router.put('/user', upUser);
+router.get('/user/:id', getUser);
 
 router.get('/maquinas', allMaquinas);
 router.get('/maquinas/:user', maquinasUser);
 router.post('/maquinas', addMaquina);
 router.put('/maquinas', updateMaquina);
 
-/* ****** Rutas Calibraciones **********/
 router.post('/calibraciones', addCalibraciones);
 router.get('/calibraciones/:maquina', calibracionesMaquinas);
 router.put('/calibraciones/:id', updateCalibraciones);
