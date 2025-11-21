@@ -1,10 +1,5 @@
 import express from 'express';
-import { addUser, allUsers, upUser} from '../controllers/users.js';
-import { addRole, allRoles, upRole, getRole, downRole } from '../controllers/roles.js';
-import { addPermission, allPermissions, downPermission, updatePermission, getPermissionById } from '../controllers/permissions.js';
-import { allUserRoles, addUserRole, downUserRole, assignRoleToUser, getUserRoles} from '../controllers/user_roles.js';
-import { allRolePermissions, addRolePermission, downRolePErmission } from '../controllers/role_permissions.js';
-import { addClient } from '../controllers/clients.js';
+import { addUser, allUsers, upUser } from '../controllers/users.js';
 import {
   allMaquinas,
   addMaquina,
@@ -28,13 +23,13 @@ router.get('/', (req, res) => {
 router.post('/user', addUser);
 router.get('/user', allUsers);
 router.put('/user', upUser);
+router.get('/user/:id', getUser);
 
 router.get('/maquinas', allMaquinas);
 router.get('/maquinas/:user', maquinasUser);
 router.post('/maquinas', addMaquina);
 router.put('/maquinas', updateMaquina);
 
-/* ****** Rutas Calibraciones **********/
 router.post('/calibraciones', addCalibraciones);
 router.get('/calibraciones/:maquina', calibracionesMaquinas);
 router.put('/calibraciones/:id', updateCalibraciones);
