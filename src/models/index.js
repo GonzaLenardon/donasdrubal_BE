@@ -10,9 +10,10 @@ Maquinas.hasMany(Calibraciones, {
   foreignKey: 'maquina_id',
   as: 'calibracionesmaquina',
 });
+
 Calibraciones.belongsTo(Maquinas, {
   foreignKey: 'maquina_id',
-  as: 'calibraciones',
+  as: 'maquina',
 });
 
 export { db };

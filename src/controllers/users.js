@@ -2,23 +2,24 @@ import Users from '../models/users.js';
 
 const pruebaUser = async (req, res) => {
   console.log('haber que nos llega', req);
-  res.send('hola USUARIO QUERIDO');
+  return res.status(200).send('hola USUARIO QUERIDO');
 };
 
 const addUser = async (req, res) => {
   console.log('paso x aca', req.body);
+
   try {
     const { nombre, cuit, domicilio, email, telefono, datosImpositivos, rol } =
       req.body;
-    const password = req.body.password || '123456'; // 👈 default
+    const password = req.body.password || '123456';
 
     const user = await Users.findOne({ where: { nombre } });
 
     if (user) {
-      return res.status(400).json({ message: '¡Usuario ya existente!' });
+      return res.status(400).json({ error: 'Usuario ya existente' });
     }
 
-    const newUser = await Users.create({
+    const resp = await Users.create({
       nombre,
       cuit,
       domicilio,
@@ -28,12 +29,17 @@ const addUser = async (req, res) => {
       password,
       rol,
     });
-    res.status(201).json({ message: 'Usuario creado exitosamente', newUser });
+
+    return res.status(201).json({
+      message: 'Usuario creado exitosamente',
+      data: resp,
+    });
   } catch (error) {
     console.error('Error al agregar usuario:', error);
-    res
-      .status(500)
-      .json({ error: 'Error en el servidor', details: error.message });
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
   }
 };
 
@@ -49,11 +55,11 @@ const upUser = async (req, res) => {
       cuit,
       domicilio,
     } = req.body;
+
     const user = await Users.findOne({ where: { id } });
-    /*   console.log('usuario', user); */
 
     if (!user) {
-      return res.status(400).json({ message: '¡Usuario NO está registrado!' });
+      return res.status(400).json({ error: 'Usuario no registrado' });
     }
 
     await Users.update(
@@ -61,24 +67,55 @@ const upUser = async (req, res) => {
       { where: { id } }
     );
 
-    res.status(201).json({ message: 'Usuario actualizado exitosamente' });
+    return res
+      .status(200)
+      .json({ message: 'Usuario actualizado exitosamente' });
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
-    res
-      .status(500)
-      .json({ error: 'Error en el servidor', details: error.message });
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
   }
 };
 
 const allUsers = async (req, res) => {
   try {
-    const users = await Users.findAll();
-    console.log('Usuario', users);
-    res.status(200).json(users);
+    const resp = await Users.findAll();
+
+    return res.status(200).json({
+      message: 'Usuarios obtenidos correctamente',
+      data: resp,
+    });
   } catch (error) {
-    console.log('Error ', error);
-    res.status(500).json({ error: 'Error al obtener usuarios' });
+    console.error('Error al obtener usuarios:', error);
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
   }
 };
 
-export { addUser, upUser, allUsers };
+const getUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const resp = await Users.findOne({ where: { id } });
+
+    if (!resp) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    return res.status(200).json({
+      message: 'Usuario obtenido correctamente',
+      data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
+export { addUser, upUser, allUsers, getUser, pruebaUser };
