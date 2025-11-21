@@ -1,9 +1,9 @@
 import { Model, DataTypes } from 'sequelize';
 import db from '../config/database.js';
 
-class Clients extends Model {}
+class Clientes extends Model {}
 
-Clients.init(
+Clientes.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -14,20 +14,20 @@ Clients.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    rating: { 
+    categoria: { 
         type: DataTypes.ENUM('alto', 'medio', 'bajo'),
         allowNull: false,
         defaultValue: 'medio'
     },  
-    company_name: { // Razon Social
+    razon_social: { // Razon Social
       type: DataTypes.STRING,
       allowNull: false,
     },
-    company_address: { // Direccion Razon Social
+    direccion_fiscal: { // Direccion Razon Social
       type: DataTypes.STRING,
       allowNull: true,
     },
-    tax_id: {   //CUIT
+    cuil_cuit: {   //CUIT
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -36,52 +36,52 @@ Clients.init(
       allowNull: false,
     },
 
-    phone: {
+    telefono: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    address: {
+    direccion: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    city: {
+    ciudad: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    state: {
+    provincia: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    country: {
+    pais: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    lead_status: {      // estado de cliente:"Nuevo", "En Proceso", "Contactado", "Calificado", "Cliente", "Perdido"
+    estado: {      // estado de cliente:"Nuevo", "En Proceso", "Contactado", "Calificado", "Cliente", "Perdido"
       type: DataTypes.STRING,
       defaultValue: 'Nuevo',
     },
 
-    source: {           // Cómo llegó el cliente: Web, campaña, referido, redes sociales, etc.
+    modo_ingreso: {           // Cómo llegó el cliente: Web, campaña, referido, redes sociales, etc.
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    notes: {
+    notas: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
   },
   {
     sequelize: db,
-    modelName: 'Client',
-    tableName: 'clients',
+    modelName: 'Cliente',
+    tableName: 'clientes',
     timestamps: false,
   }
 );
 
-export default Clients;
+export default Clientes;

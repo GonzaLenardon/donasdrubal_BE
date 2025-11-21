@@ -1,9 +1,42 @@
 import Users from '../models/users.js';
+import { createUser } from '../services/userService.js';
 
 const pruebaUser = async (req, res) => {
   console.log('haber que nos llega', req);
   return res.status(200).send('hola USUARIO QUERIDO');
 };
+
+// const addUser = async (req, res) => {
+//   console.log('paso x aca', req.body);
+//   try {
+//     const { nombre, cuit, domicilio, email, telefono, datosImpositivos, rol } =
+//       req.body;
+//     const password = req.body.password || '123456'; // 👈 default
+
+//     const user = await Users.findOne({ where: { nombre } });
+
+//     if (user) {
+//       return res.status(400).json({ message: '¡Usuario ya existente!' });
+//     }
+
+//     const newUser = await Users.create({
+//       nombre,
+//       cuit,
+//       domicilio,
+//       email,
+//       telefono,
+//       datosImpositivos,
+//       password,
+//       rol,
+//     });
+//     res.status(201).json({ message: 'Usuario creado exitosamente', newUser });
+//   } catch (error) {
+//     console.error('Error al agregar usuario:', error);
+//     res
+//       .status(500)
+//       .json({ error: 'Error en el servidor', details: error.message });
+//   }
+// };
 
 const addUser = async (req, res) => {
   console.log('paso x aca', req.body);
