@@ -5,7 +5,7 @@ import { addRole, allRoles, upRole, getRole, downRole } from '../controllers/rol
 import { addPermission, allPermissions, downPermission, updatePermission, getPermissionById } from '../controllers/permissions.js';
 import { allUserRoles, addUserRole, downUserRole, assignRoleToUser, getUserRoles} from '../controllers/user_roles.js';
 import { allRolePermissions, addRolePermission, downRolePErmission } from '../controllers/role_permissions.js';
-import { addClient } from '../controllers/clients.js';
+import { addClient, allClientes, upCliente, getCliente  } from '../controllers/clients.js';
 import {
   allMaquinas,
   addMaquina,
@@ -48,6 +48,10 @@ router.put('/calibraciones/:id', updateCalibraciones);
 
 /* ****** Rutas Cliente **********/
 router.post('/cliente', addClient);
+router.get('/cliente', allClientes);
+router.put('/cliente', upCliente);                   
+router.get('/cliente/:id', getCliente);
+
 // router.post('/cliente', checkRole(['admin']), addClient);
 
 /* ****** Rutas Roles **********/
