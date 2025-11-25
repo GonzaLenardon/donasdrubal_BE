@@ -1,6 +1,6 @@
 import express from 'express';
 import { checkRole } from '../middlewares/checkRoles.js';
-import { addUser, allUsers, upUser} from '../controllers/users.js';
+import { addUser, allUsers, upUser, getUser} from '../controllers/users.js';
 import { addRole, allRoles, upRole, getRole, downRole } from '../controllers/roles.js';
 import { addPermission, allPermissions, downPermission, updatePermission, getPermissionById } from '../controllers/permissions.js';
 import { allUserRoles, addUserRole, downUserRole, assignRoleToUser, getUserRoles} from '../controllers/user_roles.js';
