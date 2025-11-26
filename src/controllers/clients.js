@@ -7,39 +7,54 @@ import { createUser } from '../services/userService.js';
 
 const addClient = async (req, res) => {
   try {
-    // const {
-    //   nombre,
-    //   email,
-    //   password,
-    //   categoria = 'medio',
-    //   razon_social,
-    //   direccion_fiscal,
-    //   cuil_cuit,
-    //   iva_id,
-    //   telefono,
-    //   direccion,
-    //   ciudad,
-    //   provincia = 'Entre Ríos',
-    //   pais = 'Argentina',
-    //   estado = 'Nuevo',
-    //   modo_ingreso = 'Web',
-    //   notas, 
-    //   rol = 'cliente'
+    const {
+      user_nombre,
+      user_email,
+      user_password,
+      categoria = 'medio',
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia = 'Entre Ríos',
+      pais = 'Argentina',
+      estado = 'Nuevo',
+      modo_ingreso = 'Web',
+      notas, 
+      rol = 'cliente'
 
-    // } = req.body;
+    } = req.body;
 
     // 1. Crear usuario
 
         // Crear usuario usando el servicio que ya tenés
     const newUser = await createUser({
-      ...req.body,
-      rol: 'cliente',
+      nombre : user_nombre,
+      telefono : telefono,  
+      email : user_email,
+      password : user_password,
+
     });
    
     // 2. Crear cliente asociado
     const newClient = await Cliente.create({
-      ...req.body,
       user_id: newUser.id,
+      categoria,
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia,
+      pais,
+      estado,
+      modo_ingreso,
+      notas,     
 
     });
 

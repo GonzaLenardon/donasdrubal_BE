@@ -30,6 +30,10 @@ Maquinas.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    cliente_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   {
     sequelize: db,

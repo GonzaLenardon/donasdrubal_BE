@@ -11,6 +11,7 @@ import {
   addMaquina,
   maquinasUser,
   updateMaquina,
+  maquinasCliente,
 } from '../controllers/maquinas.js';
 import {
   addCalibraciones,
@@ -37,6 +38,8 @@ router.get('/user/:userId/roles', getUserRoles);    // Obtener los roles de un u
 
 router.get('/maquinas', allMaquinas);
 router.get('/maquinas/:user', maquinasUser);
+// router.get('/cliente/:user/maquinas/', maquinasCliente);
+router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
 router.post('/maquinas', addMaquina);
 router.put('/maquinas', updateMaquina);
 
