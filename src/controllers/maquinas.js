@@ -18,7 +18,7 @@ export const allMaquinas = async (req, res) => {
 };
 
 export const addMaquina = async (req, res) => {
-  const { tipo_maquina, marca, modelo, responsable, user_id } = req.body;
+  const { tipo_maquina, marca, modelo, responsable, user_id, cliente_id } = req.body;
 
   try {
     const resp = await Maquinas.create({
@@ -27,6 +27,7 @@ export const addMaquina = async (req, res) => {
       modelo,
       responsable,
       user_id,
+      cliente_id,
     });
 
     return res.status(201).json({
@@ -42,7 +43,7 @@ export const addMaquina = async (req, res) => {
 };
 
 export const updateMaquina = async (req, res) => {
-  const { id, tipo_maquina, marca, modelo, responsable, user_id } = req.body;
+  const { id, tipo_maquina, marca, modelo, responsable, user_id, cliente_id } = req.body;
 
   try {
     const maquina = await Maquinas.findByPk(id);
@@ -57,6 +58,7 @@ export const updateMaquina = async (req, res) => {
       modelo,
       responsable,
       user_id,
+      cliente_id,
     });
 
     return res.status(200).json({
@@ -76,6 +78,24 @@ export const maquinasUser = async (req, res) => {
 
   try {
     const resp = await Maquinas.findAll({ where: { user_id: user } });
+
+    return res.status(200).json({
+      message: 'Máquinas encontradas',
+      data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
+export const maquinasCliente = async (req, res) => {
+  const cliente_id = req.params.cliente_id;
+
+  try {
+    const resp = await Maquinas.findAll({ where: { cliente_id: cliente_id } });
 
     return res.status(200).json({
       message: 'Máquinas encontradas',

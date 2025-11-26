@@ -7,39 +7,54 @@ import { createUser } from '../services/userService.js';
 
 const addClient = async (req, res) => {
   try {
-    // const {
-    //   nombre,
-    //   email,
-    //   password,
-    //   categoria = 'medio',
-    //   razon_social,
-    //   direccion_fiscal,
-    //   cuil_cuit,
-    //   iva_id,
-    //   telefono,
-    //   direccion,
-    //   ciudad,
-    //   provincia = 'Entre Ríos',
-    //   pais = 'Argentina',
-    //   estado = 'Nuevo',
-    //   modo_ingreso = 'Web',
-    //   notas, 
-    //   rol = 'cliente'
+    const {
+      user_nombre,
+      user_email,
+      user_password,
+      categoria = 'medio',
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia = 'Entre Ríos',
+      pais = 'Argentina',
+      estado = 'Nuevo',
+      modo_ingreso = 'Web',
+      notas, 
+      rol = 'cliente'
 
-    // } = req.body;
+    } = req.body;
 
     // 1. Crear usuario
 
         // Crear usuario usando el servicio que ya tenés
     const newUser = await createUser({
-      ...req.body,
-      rol: 'cliente',
+      nombre : user_nombre,
+      telefono : telefono,  
+      email : user_email,
+      password : user_password,
+
     });
    
     // 2. Crear cliente asociado
     const newClient = await Cliente.create({
-      ...req.body,
       user_id: newUser.id,
+      categoria,
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia,
+      pais,
+      estado,
+      modo_ingreso,
+      notas,     
 
     });
 
@@ -58,26 +73,32 @@ const addClient = async (req, res) => {
 
 
 // Listar clientes con usuario
-export const listClients = async (req, res) => {
+const allClientes = async (req, res) => {
   try {
     const clients = await Cliente.findAll({
-      include: [{ model: Users, as: 'user' }],
+      include: [{ model: User, as: 'user' }],
     });
 
-    res.json(clients);
+     return res.status(200).json({
+      message: 'Clientes obtenidos correctamente',
+      data: clients,
+    });
   } catch (error) {
-    console.error('Error al listar clientes', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error al obtener usuarios:', error);
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
   }
 };
 
 // Actualizar cliente + usuario
-export const updateClient = async (req, res) => {
+const upCliente = async (req, res) => {
   try {
     const client = await Cliente.findByPk(req.params.id);
     if (!client) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    const user = await Users.findByPk(client.user_id);
+    const user = await User.findByPk(client.user_id);
 
     // Actualizar usuario
     await user.update({
@@ -102,12 +123,12 @@ export const updateClient = async (req, res) => {
 };
 
 //  Eliminar cliente + usuario
-export const deleteClient = async (req, res) => {
+const deleteClient = async (req, res) => {
   try {
     const client = await Cliente.findByPk(req.params.id);
     if (!client) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    await Users.destroy({ where: { id: client.user_id } });
+    await User.destroy({ where: { id: client.user_id } });
     await Cliente.destroy({ where: { id: client.id } });
 
     res.json({ message: 'Cliente y usuario eliminados' });
@@ -117,5 +138,29 @@ export const deleteClient = async (req, res) => {
   }
 };
 
+const getCliente = async (req, res) => {
+  const { id } = req.params;
 
-export { addClient };
+  try {
+    const resp = await Cliente.findOne({
+      include: [{ model: User, as: 'user' }],
+    }, { where: { id } });
+
+    if (!resp) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    return res.status(200).json({
+      message: 'Cliente obtenido correctamente',
+      data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
+
+export { addClient, allClientes, upCliente, getCliente} ;
