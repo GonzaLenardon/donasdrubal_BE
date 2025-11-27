@@ -1,5 +1,6 @@
 import Users from '../models/users.js';
 import { createUser } from '../services/userService.js';
+import jwt from 'jsonwebtoken';
 
 const pruebaUser = async (req, res) => {
   console.log('haber que nos llega', req);
@@ -113,6 +114,8 @@ const upUser = async (req, res) => {
 };
 
 const allUsers = async (req, res) => {
+  console.log('Usuario que hace la petición:', req.user.email);
+
   try {
     const resp = await Users.findAll();
 
@@ -151,4 +154,53 @@ const getUser = async (req, res) => {
   }
 };
 
-export { addUser, upUser, allUsers, getUser, pruebaUser };
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await Users.findOne({ where: { email } });
+    if (!user)
+      return res.status(401).json({ mensaje: 'Usuario no encontrado' });
+
+    const isValid = await user.validatePass(password);
+
+    if (!isValid)
+      return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+
+    const payload = {
+      id: user.id,
+      user: user.email,
+      rol: user.rol,
+    };
+
+    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '8h' });
+
+    /*
+    console.log(
+      'sameSite',
+      process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+    ); */
+
+    res
+      .cookie('Token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax', // 👈 Funciona en localhost sin HTTPS
+        maxAge: 4 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({
+        ok: true,
+        user: user.name,
+        id: user.id,
+        email: user.email,
+        rol: user.rol,
+        mensaje: 'Autorizado',
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+};
+
+export { addUser, upUser, allUsers, getUser, pruebaUser, login };
