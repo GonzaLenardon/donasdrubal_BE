@@ -43,7 +43,7 @@ import {
 import {
   allMaquinas,
   addMaquina,
-  maquinasUser,
+  // maquinasUser,
   updateMaquina,
   maquinasCliente,
 } from '../controllers/maquinas.js';
@@ -100,7 +100,7 @@ router.get('/cliente/:id', getCliente);
 // ========================================
 
 router.get('/maquinas', allMaquinas);
-router.get('/maquinas/:user', maquinasUser);
+// router.get('/maquinas/:user', maquinasUser);
 router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
 router.post('/maquinas', addMaquina);
 router.put('/maquinas', updateMaquina);

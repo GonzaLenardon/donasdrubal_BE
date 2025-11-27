@@ -18,7 +18,8 @@ export const allMaquinas = async (req, res) => {
 };
 
 export const addMaquina = async (req, res) => {
-  const { tipo_maquina, marca, modelo, responsable, user_id, cliente_id } =
+  console.log('add Maquinas', req.body);
+  const { tipo_maquina, marca, modelo, responsable, cliente_id } =
     req.body;
 
   try {
@@ -27,7 +28,7 @@ export const addMaquina = async (req, res) => {
       marca,
       modelo,
       responsable,
-      user_id,
+      // user_id,
       cliente_id,
     });
 
@@ -44,7 +45,7 @@ export const addMaquina = async (req, res) => {
 };
 
 export const updateMaquina = async (req, res) => {
-  const { id, tipo_maquina, marca, modelo, responsable, user_id, cliente_id } =
+  const { id, tipo_maquina, marca, modelo, responsable, cliente_id } =
     req.body;
 
   try {
@@ -59,7 +60,7 @@ export const updateMaquina = async (req, res) => {
       marca,
       modelo,
       responsable,
-      user_id,
+      // user_id,
       cliente_id,
     });
 
@@ -75,29 +76,30 @@ export const updateMaquina = async (req, res) => {
   }
 };
 
-export const maquinasUser = async (req, res) => {
-  const user = req.params.user;
-  console.log('paso x maquinas user');
+// export const maquinasUser = async (req, res) => {
+//   const user = req.params.user;
+//   console.log('paso x maquinas user');
 
-  try {
-    const resp = await Maquinas.findAll({ where: { user_id: user } });
+//   try {
+//     const resp = await Maquinas.findAll({ where: { user_id: user } });
 
-    return res.status(200).json({
-      message: 'Máquinas encontradas',
-      data: resp,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Error en el servidor',
-      details: error.message,
-    });
-  }
-};
+//     return res.status(200).json({
+//       message: 'Máquinas encontradas',
+//       data: resp,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: 'Error en el servidor',
+//       details: error.message,
+//     });
+//   }
+// };
+
 
 export const maquinasCliente = async (req, res) => {
   const cliente_id = req.params.cliente_id;
 
-  console.log('paso x maquinas clientes');
+  console.log('paso x maquinasCliente', req.params);
   try {
     const resp = await Maquinas.findAll({ where: { cliente_id: cliente_id } });
 

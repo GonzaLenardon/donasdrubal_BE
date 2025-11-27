@@ -43,13 +43,16 @@ Permissions.belongsToMany(Roles, {
 Users.hasOne(Clientes, { 
   foreignKey: 'user_id' 
 });
+
 Clientes.belongsTo(Users, {
    foreignKey: 'user_id' 
   });
 
-Users.hasMany(Maquinas, { foreignKey: 'user_id', as: 'maquinas' });
+// Users.hasMany(Maquinas, { foreignKey: 'user_id', as: 'maquinas' });
+Clientes.hasMany(Maquinas, { foreignKey: 'cliente_id', as: 'maquinas' });
 
-Maquinas.belongsTo(Users, { foreignKey: 'user_id', as: 'cliente' });
+// Maquinas.belongsTo(Users, { foreignKey: 'user_id', as: 'cliente' });
+Maquinas.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
 
 Maquinas.hasMany(Calibraciones, {
   foreignKey: 'maquina_id',

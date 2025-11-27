@@ -95,27 +95,54 @@ const allClientes = async (req, res) => {
 // Actualizar cliente + usuario
 const upCliente = async (req, res) => {
   try {
-    const client = await Cliente.findByPk(req.params.id);
+    console.log('req.param upodate cliente', req.body)
+    const{
+      id,
+      categoria,
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia,
+      pais,
+      estado,
+      modo_ingreso,
+      notas,     
+    } = req.body || {};
+    const client = await Cliente.findOne({ where: { id } });
     if (!client) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    const user = await User.findByPk(client.user_id);
+    // const user = await User.findByPk(client.user_id);
 
-    // Actualizar usuario
-    await user.update({
-      nombre: req.body.nombre,
-      email: req.body.email,
-      telefono: req.body.telefono,
-    });
+    // // Actualizar usuario
+    // await user.update({
+    //   nombre: req.body.nombre,
+    //   email: req.body.email,
+    //   telefono: req.body.telefono,
+    // });
 
     // Actualizar cliente
-    await client.update({
-      razon_social: req.body.razon_social,
-      domicilio: req.body.domicilio,
-      telefono: req.body.telefono,
-      email: req.body.email,
-    });
+    await client.update(
+      {categoria,
+      razon_social,
+      direccion_fiscal,
+      cuil_cuit,
+      iva_id,
+      telefono,
+      direccion,
+      ciudad,
+      provincia,
+      pais,
+      estado,
+      modo_ingreso,
+      notas},
+      { where: { id } }
+    );
 
-    res.json({ message: 'Cliente actualizado', client, user });
+    res.json({ message: 'Cliente actualizado', client });
   } catch (error) {
     console.error('Error al actualizar cliente', error);
     res.status(500).json({ error: error.message });
