@@ -169,7 +169,7 @@ const login = async (req, res) => {
       rol: user.rol,
     };
 
-    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '5m' });
+    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
 
     /*
     console.log(
@@ -201,4 +201,16 @@ const login = async (req, res) => {
   }
 };
 
-export { addUser, upUser, allUsers, getUser, pruebaUser, login };
+const verify = async (req, res) => {
+  const token = req.cookies.Token;
+  if (!token) return res.sendStatus(401);
+
+  try {
+    jwt.verify(token, process.env.SECRET);
+    res.sendStatus(200); // válido
+  } catch {
+    res.sendStatus(401); // token inválido / expirado
+  }
+};
+
+export { addUser, upUser, allUsers, getUser, pruebaUser, login, verify };

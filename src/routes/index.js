@@ -7,6 +7,7 @@ import {
   upUser,
   getUser,
   login,
+  verify,
 } from '../controllers/users.js';
 import {
   addRole,
@@ -75,6 +76,8 @@ router.post('/user', addUser);
 // ========================================
 
 router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
+
+router.get('/auth/verify', verify);
 
 // ========================================
 // RUTAS PROTEGIDAS - USUARIOS
