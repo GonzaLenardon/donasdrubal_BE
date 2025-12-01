@@ -3,7 +3,7 @@ import Users from './users.js';
 import Roles from './roles.js';
 import Permissions from './permissions.js';
 import UserRoles from './user_roles.js';
-import RolePermissions from './role_permissions.js'; 
+import RolePermissions from './role_permissions.js';
 import Maquinas from './maquinas.js';
 import Calibraciones from './calibraciones.js';
 import Clientes from './clientes.js';
@@ -40,16 +40,15 @@ Permissions.belongsToMany(Roles, {
   otherKey: 'role_id',
 });
 
-Users.hasOne(Clientes, { 
-  foreignKey: 'user_id' 
+Users.hasOne(Clientes, {
+  foreignKey: 'user_id',
 });
 Clientes.belongsTo(Users, {
-   foreignKey: 'user_id' 
-  });
+  foreignKey: 'user_id',
+});
 
-Users.hasMany(Maquinas, { foreignKey: 'user_id', as: 'maquinas' });
-
-Maquinas.belongsTo(Users, { foreignKey: 'user_id', as: 'cliente' });
+Clientes.hasMany(Maquinas, { foreignKey: 'cliente_id', as: 'maquinas' });
+Maquinas.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
 
 Maquinas.hasMany(Calibraciones, {
   foreignKey: 'maquina_id',
@@ -66,5 +65,5 @@ export { Users, Maquinas, Calibraciones };
 export { Roles };
 export { Permissions };
 export { UserRoles };
-export { RolePermissions};
+export { RolePermissions };
 export { Clientes };

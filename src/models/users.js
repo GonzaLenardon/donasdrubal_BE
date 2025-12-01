@@ -27,6 +27,7 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    /* 
     cuit: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -38,7 +39,7 @@ Users.init(
     datosImpositivos: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
+    }, */
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -52,8 +53,8 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    // is_active: 
-    // { type: DataTypes.BOOLEAN, 
+    // is_active:
+    // { type: DataTypes.BOOLEAN,
     //   defaultValue: true,
     // },
     salt: {

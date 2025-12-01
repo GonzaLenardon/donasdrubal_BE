@@ -24,6 +24,8 @@ export const verifyToken = (req, res, next) => {
       rol: decoded.rol,
     };
 
+    console.log('req.user', req.user);
+
     // Continuar con la siguiente función
     next();
   } catch (error) {
@@ -55,8 +57,11 @@ export const verifyToken = (req, res, next) => {
 
 // Middleware opcional: verificar roles específicos
 export const verifyRole = (rolesPermitidos) => {
+  console.log('Que llega a verifyRole', rolesPermitidos);
+
   return (req, res, next) => {
     // El usuario debe estar autenticado primero
+
     if (!req.user) {
       return res.status(401).json({
         ok: false,

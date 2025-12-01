@@ -9,29 +9,34 @@ Clientes.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-    },    
-    user_id: {    // Relación con users
+    },
+    user_id: {
+      // Relación con users
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    categoria: { 
-        type: DataTypes.ENUM('alto', 'medio', 'bajo'),
-        allowNull: false,
-        defaultValue: 'medio'
-    },  
-    razon_social: { // Razon Social
+    categoria: {
+      type: DataTypes.ENUM('alto', 'medio', 'bajo'),
+      allowNull: false,
+      defaultValue: 'medio',
+    },
+    razon_social: {
+      // Razon Social
       type: DataTypes.STRING,
       allowNull: false,
     },
-    direccion_fiscal: { // Direccion Razon Social
+    direccion_fiscal: {
+      // Direccion Razon Social
       type: DataTypes.STRING,
       allowNull: true,
     },
-    cuil_cuit: {   //CUIT
+    cuil_cuit: {
+      //CUIT
       type: DataTypes.STRING,
       allowNull: true,
     },
-    iva_id: {   //Condición frente al IVA
+    iva_id: {
+      //Condición frente al IVA
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -39,6 +44,10 @@ Clientes.init(
     telefono: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
 
     direccion: {
@@ -61,12 +70,14 @@ Clientes.init(
       allowNull: true,
     },
 
-    estado: {      // estado de cliente:"Nuevo", "En Proceso", "Contactado", "Calificado", "Cliente", "Perdido"
+    estado: {
+      // estado de cliente:"Nuevo", "En Proceso", "Contactado", "Calificado", "Cliente", "Perdido"
       type: DataTypes.STRING,
       defaultValue: 'Nuevo',
     },
 
-    modo_ingreso: {           // Cómo llegó el cliente: Web, campaña, referido, redes sociales, etc.
+    modo_ingreso: {
+      // Cómo llegó el cliente: Web, campaña, referido, redes sociales, etc.
       type: DataTypes.STRING,
       allowNull: true,
     },

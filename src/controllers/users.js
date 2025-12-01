@@ -43,8 +43,7 @@ const addUser = async (req, res) => {
   console.log('paso x aca', req.body);
 
   try {
-    const { nombre, cuit, domicilio, email, telefono, datosImpositivos, rol } =
-      req.body;
+    const { nombre, email, telefono, rol } = req.body;
     const password = req.body.password || '123456';
 
     const user = await Users.findOne({ where: { nombre } });
@@ -55,11 +54,8 @@ const addUser = async (req, res) => {
 
     const resp = await Users.create({
       nombre,
-      cuit,
-      domicilio,
       email,
       telefono,
-      datosImpositivos,
       password,
       rol,
     });
@@ -173,7 +169,7 @@ const login = async (req, res) => {
       rol: user.rol,
     };
 
-    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '8h' });
+    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '5m' });
 
     /*
     console.log(
@@ -183,7 +179,8 @@ const login = async (req, res) => {
 
     res
       .cookie('Token', token, {
-        httpOnly: true,
+        /*  httpOnly: true, */
+        httpOnly: true, // 🔥 Permite que document.cookie lo lea
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'Lax', // 👈 Funciona en localhost sin HTTPS
         maxAge: 4 * 60 * 60 * 1000,
@@ -196,6 +193,7 @@ const login = async (req, res) => {
         email: user.email,
         rol: user.rol,
         mensaje: 'Autorizado',
+        token: token,
       });
   } catch (error) {
     console.error(error);
