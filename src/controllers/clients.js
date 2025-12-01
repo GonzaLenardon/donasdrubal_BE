@@ -1,51 +1,21 @@
 import User from '../models/users.js';
 import Cliente from '../models/clientes.js';
 import { createUser } from '../services/userService.js';
-
+import db from '../config/database.js';
 
 // const bcrypt = require('bcrypt');
 
 const addClient = async (req, res) => {
+  // Iniciar transacción
+  const t = await db.transaction();
+
   try {
     const {
-      user_nombre,
-      user_email,
-      user_password,
-      categoria = 'medio',
-      razon_social,
-      direccion_fiscal,
-      cuil_cuit,
-      iva_id,
-      telefono,
-      direccion,
-      ciudad,
-      provincia = 'Entre Ríos',
-      pais = 'Argentina',
-      estado = 'Nuevo',
-      modo_ingreso = 'Web',
-      notas, 
-      rol = 'cliente'
-
-    } = req.body;
-
-    // 1. Crear usuario
-
-        // Crear usuario usando el servicio que ya tenés
-    const newUser = await createUser({
-      nombre : user_nombre,
-      telefono : telefono,  
-      email : user_email,
-      password : user_password,
-
-    });
-   
-    // 2. Crear cliente asociado
-    const newClient = await Cliente.create({
-      user_id: newUser.id,
       categoria,
       razon_social,
       direccion_fiscal,
       cuil_cuit,
+      email,
       iva_id,
       telefono,
       direccion,
@@ -54,32 +24,100 @@ const addClient = async (req, res) => {
       pais,
       estado,
       modo_ingreso,
-      notas,     
+      notas,
+    } = req.body;
 
-    });
+    console.log('esto llega al body', req.body);
 
+    // Validaciones
+
+    if (!email || !razon_social || !cuil_cuit) {
+      await t.rollback();
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan datos del cliente ',
+      });
+    }
+
+    // 1️⃣ Crear usuario dentro de la transacción
+    const newUser = await User.create(
+      {
+        nombre: razon_social,
+        email: email,
+        password: '123456',
+        telefono: telefono,
+        rol: 'cliente',
+        active: true,
+      },
+      { transaction: t } // 👈 Usar transacción
+    );
+
+    console.log('✅ Usuario creado:', newUser.email);
+
+    // 2️⃣ Crear cliente dentro de la transacción
+    const newClient = await Cliente.create(
+      {
+        user_id: newUser.id,
+        categoria: categoria || 'medio',
+        razon_social,
+        direccion_fiscal,
+        cuil_cuit,
+        iva_id,
+        telefono,
+        direccion,
+        ciudad,
+        provincia: provincia || 'Entre Ríos',
+        pais: pais || 'Argentina',
+        estado: estado || 'Nuevo',
+        modo_ingreso: modo_ingreso || 'Web',
+        notas,
+        email,
+      },
+      { transaction: t } // 👈 Usar transacción
+    );
+
+    console.log('✅ Cliente creado:', newClient.razon_social);
+
+    // ✅ Si todo salió bien, confirmar transacción
+    await t.commit();
 
     res.status(201).json({
+      ok: true,
       message: 'Cliente y usuario creados correctamente',
-      newClient,
-      newUser
+      cliente: {
+        id: newClient.id,
+        razon_social: newClient.razon_social,
+        categoria: newClient.categoria,
+      },
+      usuario: {
+        id: newUser.id,
+        nombre: newUser.name,
+        email: newUser.email,
+      },
     });
-
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    // ❌ Si hay error, revertir TODO
+    await t.rollback();
+
+    console.error('❌ Error al crear cliente:', error);
+
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+      tipo: error.name,
+    });
   }
 };
-
 
 // Listar clientes con usuario
 const allClientes = async (req, res) => {
   try {
-    const clients = await Cliente.findAll({
+    /* const clients = await Cliente.findAll({
       include: [{ model: User, as: 'user' }],
-    });
+    }); */
 
-     return res.status(200).json({
+    const clients = await Cliente.findAll();
+    return res.status(200).json({
       message: 'Clientes obtenidos correctamente',
       data: clients,
     });
@@ -94,39 +132,56 @@ const allClientes = async (req, res) => {
 
 // Actualizar cliente + usuario
 const upCliente = async (req, res) => {
+  console.log('📝 Actualizar cliente - Body:', req.body);
+  console.log('📝 Actualizar cliente - Params:', req.params);
+
   try {
-    const client = await Cliente.findByPk(req.params.id);
-    if (!client) return res.status(404).json({ message: 'Cliente no encontrado' });
+    // 1️⃣ Obtener ID de los parámetros
+    const id = req.params.cliente_id; // 👈 Corregido: extraer id del objeto
 
-    const user = await User.findByPk(client.user_id);
+    // Validar que exista el ID
+    if (!id) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'ID del cliente es requerido',
+      });
+    }
 
-    // Actualizar usuario
-    await user.update({
-      nombre: req.body.nombre,
-      email: req.body.email,
-      telefono: req.body.telefono,
+    // 2️⃣ Buscar cliente
+    const cliente = await Cliente.findByPk(id);
+
+    if (!cliente) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: 'Cliente no encontrado',
+      });
+    }
+
+    // 3️⃣ Actualizar cliente con los datos del body
+    await cliente.update(req.body);
+
+    console.log('✅ Cliente actualizado:', cliente.id);
+
+    // 4️⃣ Responder
+    res.json({
+      ok: true,
+      mensaje: 'Cliente actualizado exitosamente',
+      cliente, // 👈 Corregido: devolver "cliente", no "client" ni "user"
     });
-
-    // Actualizar cliente
-    await client.update({
-      razon_social: req.body.razon_social,
-      domicilio: req.body.domicilio,
-      telefono: req.body.telefono,
-      email: req.body.email,
-    });
-
-    res.json({ message: 'Cliente actualizado', client, user });
   } catch (error) {
-    console.error('Error al actualizar cliente', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error al actualizar cliente:', error);
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
   }
 };
-
 //  Eliminar cliente + usuario
 const deleteClient = async (req, res) => {
   try {
     const client = await Cliente.findByPk(req.params.id);
-    if (!client) return res.status(404).json({ message: 'Cliente no encontrado' });
+    if (!client)
+      return res.status(404).json({ message: 'Cliente no encontrado' });
 
     await User.destroy({ where: { id: client.user_id } });
     await Cliente.destroy({ where: { id: client.id } });
@@ -139,12 +194,10 @@ const deleteClient = async (req, res) => {
 };
 
 const getCliente = async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.cliente_id;
 
   try {
-    const resp = await Cliente.findOne({
-      include: [{ model: User, as: 'user' }],
-    }, { where: { id } });
+    const resp = await Cliente.findOne();
 
     if (!resp) {
       return res.status(404).json({ error: 'Cliente no encontrado' });
@@ -162,5 +215,4 @@ const getCliente = async (req, res) => {
   }
 };
 
-
-export { addClient, allClientes, upCliente, getCliente} ;
+export { addClient, allClientes, upCliente, getCliente };

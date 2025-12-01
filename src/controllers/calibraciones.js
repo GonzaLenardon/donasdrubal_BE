@@ -1,6 +1,6 @@
 import Calibraciones from '../models/calibraciones.js';
+import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
-import Users from '../models/users.js';
 
 export const addCalibraciones = async (req, res) => {
   try {
@@ -48,16 +48,24 @@ export const updateCalibraciones = async (req, res) => {
 
 export const calibracionesMaquinas = async (req, res) => {
   try {
-    const { maquina } = req.params;
+    const { maquina_id } = req.params;
 
     const resp = await Maquinas.findOne({
-      where: { id: maquina },
+      where: { id: maquina_id },
       attributes: ['id', 'marca', 'modelo', 'tipo_maquina'],
       include: [
         {
-          model: Users,
+          model: Clientes,
           as: 'cliente',
-          attributes: ['id', 'nombre', 'telefono', 'cuit', 'datosImpositivos'],
+          attributes: [
+            'id',
+            'razon_social',
+            'telefono',
+            'email',
+            'cuil_cuit',
+            'ciudad',
+            'provincia',
+          ],
         },
         {
           model: Calibraciones,

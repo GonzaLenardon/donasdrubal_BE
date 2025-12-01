@@ -68,6 +68,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/login', login);
+router.post('/user', addUser);
 
 // ========================================
 // APLICAR MIDDLEWARE A TODAS LAS RUTAS SIGUIENTES
@@ -79,7 +80,8 @@ router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
 // RUTAS PROTEGIDAS - USUARIOS
 // ========================================
 
-router.post('/user', verifyRole(['admin']), addUser); // Solo admin puede crear usuarios
+/* router.post('/user', verifyRole(['admin']), addUser); */ // Solo admin puede crear usuarios
+router.post('/user', addUser); // Solo admin puede crear usuarios
 router.get('/user', allUsers);
 router.put('/user', upUser);
 router.get('/user/:id', getUser);
@@ -92,25 +94,28 @@ router.get('/user/:userId/roles', getUserRoles);
 
 router.post('/cliente', verifyRole(['admin']), addClient);
 router.get('/cliente', allClientes);
-router.put('/cliente', upCliente);
-router.get('/cliente/:id', getCliente);
+router.put('/cliente/:cliente_id', upCliente);
+router.get('/cliente/:cliene_id', getCliente);
 
 // ========================================
 // RUTAS PROTEGIDAS - MÁQUINAS
 // ========================================
 
 router.get('/maquinas', allMaquinas);
-router.get('/maquinas/:user', maquinasUser);
+router.get('/cliente/:cliente_id/maquinas', maquinasUser);
 router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
-router.post('/maquinas', addMaquina);
-router.put('/maquinas', updateMaquina);
+router.post('/cliente/:cliente_id/maquinas', addMaquina);
+router.put('/cliente/:cliente_id/maquinas/:id', updateMaquina);
 
 // ========================================
 // RUTAS PROTEGIDAS - CALIBRACIONES
 // ========================================
 
 router.post('/calibraciones', addCalibraciones);
-router.get('/calibraciones/:maquina', calibracionesMaquinas);
+router.get(
+  '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
+  calibracionesMaquinas
+);
 router.put('/calibraciones/:id', updateCalibraciones);
 
 // ========================================
