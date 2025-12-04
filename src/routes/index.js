@@ -55,6 +55,8 @@ import {
   updateCalibraciones,
 } from '../controllers/calibraciones.js';
 
+import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
+
 const router = express.Router();
 
 // ========================================
@@ -158,5 +160,27 @@ router.delete('/user_role', verifyRole(['admin']), downUserRole);
 router.get('/role_permission', verifyRole(['admin']), allRolePermissions);
 router.post('/role_permission', verifyRole(['admin']), addRolePermission);
 router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
+
+// ========================================
+// RUTAS PROTEGIDAS - ROLE_PERMISSIONS (Solo Admin)
+// ========================================
+
+router.get('/role_permission', verifyRole(['admin']), allRolePermissions);
+router.post('/role_permission', verifyRole(['admin']), addRolePermission);
+router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
+
+// ========================================
+// RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
+// ========================================
+
+router.get('/maquinas_tipos', verifyRole(['admin']), maquinaTipoController.allMaquinaTipo);
+router.post('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.addMaquinaTipo);
+router.put('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.updateMaquinaTipo);
+router.delete('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.downMaquinaTipo);
+router.get('/maquina_tipo/:maquina_tipo_id', verifyRole(['admin']), maquinaTipoController.getMaquinaTipo);
+
+
+
+
 
 export { router };
