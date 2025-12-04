@@ -153,6 +153,8 @@ const getUser = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log('llego a Login', email, password);
+
   try {
     const user = await Users.findOne({ where: { email } });
     if (!user)
@@ -165,7 +167,7 @@ const login = async (req, res) => {
 
     const payload = {
       id: user.id,
-      user: user.email,
+      email: user.email,
       rol: user.rol,
     };
 
