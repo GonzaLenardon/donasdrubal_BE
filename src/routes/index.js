@@ -8,6 +8,7 @@ import {
   getUser,
   login,
   verify,
+  logout,
 } from '../controllers/users.js';
 import {
   addRole,
@@ -87,6 +88,7 @@ router.get('/auth/verify', verify);
 
 /* router.post('/user', verifyRole(['admin']), addUser); */ // Solo admin puede crear usuarios
 router.post('/user', addUser); // Solo admin puede crear usuarios
+router.post('/user/logout', logout);
 router.get('/user', allUsers);
 router.put('/user', upUser);
 router.get('/user/:id', getUser);

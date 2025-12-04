@@ -215,4 +215,40 @@ const verify = async (req, res) => {
   }
 };
 
-export { addUser, upUser, allUsers, getUser, pruebaUser, login, verify };
+const logout = (req, res) => {
+  try {
+    // Limpiar la cookie
+    res.clearCookie('Token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Solo secure en producción
+
+      sameSite: 'None',
+      path: '/',
+    });
+
+    // Si usas sesiones, también destruirlas
+    // req.session?.destroy();
+
+    return res.status(200).json({
+      message: 'Sesión cerrada correctamente',
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error en logout:', error);
+    return res.status(500).json({
+      message: 'Error al cerrar sesión',
+      success: false,
+    });
+  }
+};
+
+export {
+  addUser,
+  upUser,
+  allUsers,
+  getUser,
+  pruebaUser,
+  login,
+  verify,
+  logout,
+};
