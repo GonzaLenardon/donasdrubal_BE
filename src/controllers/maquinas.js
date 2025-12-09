@@ -1,4 +1,6 @@
 import Maquinas from '../models/maquinas.js';
+import MaquinaTipo from '../models/maquina_tipo.js';
+import Cliente from '../models/clientes.js';
 
 export const allMaquinas = async (req, res) => {
   console.log('all Maquinas');
@@ -72,7 +74,10 @@ export const maquinasUser = async (req, res) => {
   console.log('paso x maquinas user', cliente);
 
   try {
-    const resp = await Maquinas.findAll({ where: { cliente_id: cliente } });
+    const resp = await Maquinas.findAll({ 
+      where: { cliente_id: cliente },
+      include: [{ model: MaquinaTipo, as: 'tipo' }]
+    });
 
     return res.status(200).json({
       message: 'Máquinas encontradas',
