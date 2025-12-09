@@ -1,6 +1,7 @@
 import Calibraciones from '../models/calibraciones.js';
 import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
+import MaquinaTipo from '../models/maquina_tipo.js';  
 
 export const addCalibraciones = async (req, res) => {
   try {
@@ -61,16 +62,20 @@ export const calibracionesMaquinas = async (req, res) => {
             'id',
             'razon_social',
             'telefono',
-            'email',
-            'cuil_cuit',
-            'ciudad',
-            'provincia',
+            // 'email',
+            // 'cuil_cuit',
+            // 'ciudad',
+            // 'provincia',
           ],
         },
         {
           model: Calibraciones,
           as: 'calibracionesmaquina',
         },
+        {
+          model: MaquinaTipo,
+          as: 'tipo', 
+        },        
       ],
     });
 
@@ -82,11 +87,12 @@ export const calibracionesMaquinas = async (req, res) => {
       message: 'Calibraciones obtenidas correctamente',
       data: {
         id_maquina: resp.id,
-        tipo: resp.tipo_maquina,
+        tipo: resp.tipo,
         modelo: resp.modelo,
         marca: resp.marca,
         cliente: resp.cliente,
         calibraciones: resp.calibracionesmaquina,
+
       },
     });
   } catch (error) {
