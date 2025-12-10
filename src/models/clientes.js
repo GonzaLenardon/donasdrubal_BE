@@ -81,6 +81,11 @@ Clientes.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    ingeniero_id: {
+      // Razon Social
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
 
     notas: {
       type: DataTypes.TEXT,

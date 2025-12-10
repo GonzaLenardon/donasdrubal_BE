@@ -128,6 +128,28 @@ const allUsers = async (req, res) => {
   }
 };
 
+const allIngenieros = async (req, res) => {
+  console.log('Usuario que hace la petición:', req.user.email);
+
+  try {
+    const ingenieros = await Users.findAll({
+      where: { rol: 'ingeniero' },
+      attributes: ['id', 'nombre'], // opcional
+    });
+
+    return res.status(200).json({
+      message: 'Usuarios ingenieros obtenidos correctamente',
+      data: ingenieros,
+    });
+  } catch (error) {
+    console.error('Error al obtener usuarios ingenieros:', error);
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
 const getUser = async (req, res) => {
   const { id } = req.params;
 
@@ -246,6 +268,7 @@ export {
   addUser,
   upUser,
   allUsers,
+  allIngenieros,
   getUser,
   pruebaUser,
   login,

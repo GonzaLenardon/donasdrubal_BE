@@ -24,6 +24,7 @@ const addClient = async (req, res) => {
       pais,
       estado,
       modo_ingreso,
+      ingeniero_id,
       notas,
     } = req.body;
 
@@ -70,6 +71,7 @@ const addClient = async (req, res) => {
         pais: pais || 'Argentina',
         estado: estado || 'Nuevo',
         modo_ingreso: modo_ingreso || 'Web',
+        ingeniero_id,
         notas,
         email,
       },

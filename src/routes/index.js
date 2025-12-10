@@ -9,6 +9,7 @@ import {
   login,
   verify,
   logout,
+  allIngenieros,
 } from '../controllers/users.js';
 import {
   addRole,
@@ -90,6 +91,7 @@ router.get('/auth/verify', verify);
 router.post('/user', addUser); // Solo admin puede crear usuarios
 router.post('/user/logout', logout);
 router.get('/user', allUsers);
+router.get('/user/ingenieros', allIngenieros);
 router.put('/user', upUser);
 router.get('/user/:id', getUser);
 router.post('/user/role', verifyRole(['admin']), assignRoleToUser);
@@ -173,14 +175,30 @@ router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
 // RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
 // ========================================
 
-router.get('/maquinas_tipos', verifyRole(['admin']), maquinaTipoController.allMaquinaTipo);
-router.post('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.addMaquinaTipo);
-router.put('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.updateMaquinaTipo);
-router.delete('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.downMaquinaTipo);
-router.get('/maquina_tipo/:maquina_tipo_id', verifyRole(['admin']), maquinaTipoController.getMaquinaTipo);
-
-
-
-
+router.get(
+  '/maquinas_tipos',
+  verifyRole(['admin']),
+  maquinaTipoController.allMaquinaTipo
+);
+router.post(
+  '/maquina_tipo',
+  verifyRole(['admin']),
+  maquinaTipoController.addMaquinaTipo
+);
+router.put(
+  '/maquina_tipo',
+  verifyRole(['admin']),
+  maquinaTipoController.updateMaquinaTipo
+);
+router.delete(
+  '/maquina_tipo',
+  verifyRole(['admin']),
+  maquinaTipoController.downMaquinaTipo
+);
+router.get(
+  '/maquina_tipo/:maquina_tipo_id',
+  verifyRole(['admin']),
+  maquinaTipoController.getMaquinaTipo
+);
 
 export { router };

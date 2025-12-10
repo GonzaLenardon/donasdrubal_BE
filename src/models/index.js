@@ -52,7 +52,7 @@ Clientes.hasMany(Maquinas, { foreignKey: 'cliente_id', as: 'maquinas' });
 Maquinas.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
 Maquinas.belongsTo(MaquinaTipo, { foreignKey: 'tipo_maquina', as: 'tipo' });
 
-MaquinaTipo.hasMany(Maquinas, { foreignKey: 'tipo_maquina', as: 'maquinas' }); 
+MaquinaTipo.hasMany(Maquinas, { foreignKey: 'tipo_maquina', as: 'maquinas' });
 
 Maquinas.hasMany(Calibraciones, {
   foreignKey: 'maquina_id',
@@ -64,6 +64,18 @@ Calibraciones.belongsTo(Maquinas, {
   as: 'maquina',
 });
 
+// Un cliente tiene asignado UN ingeniero (usuario)
+Clientes.belongsTo(Users, {
+  foreignKey: 'ingeniero_id',
+  as: 'ingenieroAsignado',
+});
+
+// Un usuario ingeniero puede tener muchos clientes asignados
+Users.hasMany(Clientes, {
+  foreignKey: 'ingeniero_id',
+  as: 'clientesAsignados',
+});
+
 export { db };
 export { Users, Maquinas, Calibraciones };
 export { Roles };
@@ -71,4 +83,4 @@ export { Permissions };
 export { UserRoles };
 export { RolePermissions };
 export { Clientes };
-export { MaquinaTipo }; 
+export { MaquinaTipo };
