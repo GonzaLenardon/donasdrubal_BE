@@ -85,6 +85,7 @@ Clientes.init(
       // Razon Social
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 11,  // Asignar a "Sin Ingeniero" por defecto
     },
 
     notas: {

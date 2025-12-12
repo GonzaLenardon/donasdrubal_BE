@@ -20,11 +20,11 @@ Pozo.init(
     },
     latitud: {
       type: DataTypes.DECIMAL(10, 8),   // de -90.00000000 a 90.00000000
-      allowNull: false
+      allowNull: true
     },
     longitud: {
       type: DataTypes.DECIMAL(11, 8),   // de -180.00000000 a 180.00000000
-      allowNull: false
+      allowNull: true
     },
     cliente_id: {
       type: DataTypes.INTEGER,
