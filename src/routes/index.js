@@ -57,6 +57,8 @@ import {
 } from '../controllers/calibraciones.js';
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
+import * as pozoController from '../controllers/pozos.js';
+
 
 const router = express.Router();
 
@@ -68,7 +70,7 @@ router.get('/', (req, res) => {
   res.json({
     ok: true,
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
-    version: '1.0.0',
+    version: '1.2.0',
   });
 });
 
@@ -175,30 +177,31 @@ router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
 // RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
 // ========================================
 
-router.get(
-  '/maquinas_tipos',
-  verifyRole(['admin']),
-  maquinaTipoController.allMaquinaTipo
-);
-router.post(
-  '/maquina_tipo',
-  verifyRole(['admin']),
-  maquinaTipoController.addMaquinaTipo
-);
-router.put(
-  '/maquina_tipo',
-  verifyRole(['admin']),
-  maquinaTipoController.updateMaquinaTipo
-);
-router.delete(
-  '/maquina_tipo',
-  verifyRole(['admin']),
-  maquinaTipoController.downMaquinaTipo
-);
-router.get(
-  '/maquina_tipo/:maquina_tipo_id',
-  verifyRole(['admin']),
-  maquinaTipoController.getMaquinaTipo
-);
+router.get('/maquinas_tipos', verifyRole(['admin']),maquinaTipoController.allMaquinaTipo);
+router.post('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.addMaquinaTipo);
+router.put('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.updateMaquinaTipo);
+router.delete( '/maquina_tipo', verifyRole(['admin']), maquinaTipoController.downMaquinaTipo);
+router.get('/maquina_tipo/:maquina_tipo_id', verifyRole(['admin']), maquinaTipoController.getMaquinaTipo);
+
+// ========================================
+// RUTAS PROTEGIDAS - POZOS
+// ========================================
+
+router.get('/pozos', pozoController.allPozos);
+router.get('/cliente/:cliente_id/pozos', pozoController.pozosCliente);
+router.post('/cliente/:cliente_id/pozos', pozoController.addPozo);
+router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
+
+
+// ========================================
+// RUTAS PROTEGIDAS - MUESTRAS AGUA
+// ========================================
+
+router.get('/pozos/:pozo_id/', getMuestrasAguaPozo);
+router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozo);
+router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', getMuestrasAguaPozoCliente);
+router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozoCliente);
+router.post('/muetras_agua', addMuestraAgua);
+router.put('/muestras_agua/:muestra_agua_id', updateMuestraAgua);
 
 export { router };
