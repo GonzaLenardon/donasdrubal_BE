@@ -197,11 +197,11 @@ router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 // RUTAS PROTEGIDAS - MUESTRAS AGUA
 // ========================================
 
-router.get('/pozos/:pozo_id/', getMuestrasAguaPozo);
-router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozo);
-router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', getMuestrasAguaPozoCliente);
-router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozoCliente);
-router.post('/muetras_agua', addMuestraAgua);
-router.put('/muestras_agua/:muestra_agua_id', updateMuestraAgua);
+// router.get('/pozos/:pozo_id/', getMuestrasAguaPozo);
+// router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozo);
+// router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', getMuestrasAguaPozoCliente);
+// router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozoCliente);
+// router.post('/muetras_agua', addMuestraAgua);
+// router.put('/muestras_agua/:muestra_agua_id', updateMuestraAgua);
 
 export { router };
