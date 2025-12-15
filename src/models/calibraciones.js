@@ -22,27 +22,67 @@ Calibraciones.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observaciones_estado_maquina: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_bomba: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    observaciones_estado_bomba: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_agitador: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observaciones_estado_agitador: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_filtroPrimario: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observarciones_estado_filtroPrimario: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_filtroSecundario: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observaciones_filtroSecundario: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_FiltroLinea: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observaciones_estado_FiltroLinea: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_manguerayconexiones: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    observaciones_estado_manguerayconexiones: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -52,7 +92,17 @@ Calibraciones.init(
       allowNull: false,
     },
 
+    observaciones_estado_antigoteo: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_limpiezaTanque: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    observaciones_estado_limpiezaTanque: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -62,10 +112,21 @@ Calibraciones.init(
       allowNull: false,
     },
 
+    observaciones_estabilidadVerticalBotalon: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     estado_pastillas: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    observaciones_estado_pastillas: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
     Observaciones: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -74,12 +135,17 @@ Calibraciones.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    deletedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
   },
   {
     sequelize: db,
     modelName: 'Calibraciones',
     tableName: 'calibraciones',
     timestamps: false,
+    paranoid: true, // Activa soft delete
   }
 );
 
