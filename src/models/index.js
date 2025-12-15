@@ -10,6 +10,7 @@ import Clientes from './clientes.js';
 import MaquinaTipo from './maquina_tipo.js';
 import Pozo from './pozo.js';
 import MuestraAgua from './muestra_agua.js';
+import Jornada from './jornada.js';
 
 // -------------------------------
 // Relaciones entre los modelos
@@ -34,6 +35,7 @@ Clientes.belongsTo(Users, { foreignKey: 'user_id', as: 'user' });
 Clientes.belongsTo(Users, { foreignKey: 'ingeniero_id', as: 'ingenieroAsignado'});
 Clientes.hasMany(Maquinas, { foreignKey: 'cliente_id', as: 'maquinas' });
 Clientes.hasMany(Pozo, { foreignKey: 'cliente_id', as: 'pozos' });
+Clientes.hasMany(Jornada, { foreignKey: 'cliente_id', as: 'jornadas' });
 
 Maquinas.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
 Maquinas.hasMany(Calibraciones, { foreignKey: 'maquina_id', as: 'calibracionesmaquina',});
@@ -48,6 +50,9 @@ Pozo.hasMany(MuestraAgua, { foreignKey: 'pozo_id', as: 'muestrasAgua' });
 
 MuestraAgua.belongsTo(Pozo, { foreignKey: 'pozo_id', as: 'pozo' });
 
+Jornada.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
+
+
 export { db };
 export { Users, Maquinas, Calibraciones };
 export { Roles };
@@ -58,3 +63,4 @@ export { Clientes };
 export { MaquinaTipo };
 export { Pozo };
 export { MuestraAgua }; 
+export { Jornada };
