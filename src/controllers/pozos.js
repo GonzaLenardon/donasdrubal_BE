@@ -29,7 +29,7 @@ export const addPozo = async (req, res) => {
     const resp = await Pozo.create(payload);
 
     return res.status(201).json({
-      message: 'Máquina creada exitosamente',
+      message: 'Pozo creada exitosamente',
       data: resp,
     });
   } catch (error) {

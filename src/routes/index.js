@@ -59,6 +59,7 @@ import {
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
+import * as jornadaController from '../controllers/jornadas.js';
 
 
 const router = express.Router();
@@ -200,12 +201,23 @@ router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 // ========================================
 
 router.get('/muestras_agua', muestrasAguaController.allMuestrasAgua);
-router.get('/muestras_agua/muestra_agua_id', muestrasAguaController.getMuestrasAgua);
+router.get('/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestrasAgua);
 router.post('/muestras_agua', muestrasAguaController.addMuestraAgua);
 router.put('/muestras_agua/:muestra_agua_id', muestrasAguaController.updateMuestraAgua);
-router.get('/pozos/:pozo_id/', muestrasAguaController.getMuestrasAguaPozo);
+router.get('/pozos/:pozo_id/muestras_agua', muestrasAguaController.getMuestrasAguaPozo);
 router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozo);
 router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', muestrasAguaController.getMuestrasAguaPozoCliente);
 router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozoCliente);
+
+// ========================================
+// RUTAS PROTEGIDAS - JORNADAS
+// ========================================
+
+router.get('/jornadas', jornadaController.allJornadas);
+router.get('/jornadas/:jornada_id', jornadaController.getJornada);
+router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
+router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
+router.put('/cliente/:cliente_id/jornadas/:jornada_id', jornadaController.updateJornada);
+
 
 export { router };
