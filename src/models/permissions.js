@@ -13,7 +13,7 @@ Permissions.init(
     nombre: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true,
+      // unique: true,
     },
     descripcion: {
       type: DataTypes.STRING(255),
