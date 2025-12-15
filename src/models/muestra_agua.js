@@ -11,32 +11,32 @@ MuestraAgua.init(
       autoIncrement: true,
     },
     ph:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },
     dureza:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },   
     alcalinidad:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },
     salinidad:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },
     fuerza_ionica:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },     
     dosis:{
-      type: DataTypes.INTEGER, 
+      type: DataTypes.FLOAT, 
       allowNull: true,
 
     },            

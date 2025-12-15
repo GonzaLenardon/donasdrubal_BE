@@ -2,6 +2,7 @@ import { extractModelFields } from "../utils/payload.js";
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
 
+
 export const allMuestrasAgua = async (req, res) => {
   console.log('allMuestrasAgua controller');
 
@@ -24,6 +25,7 @@ export const addMuestraAgua = async (req, res) => {
   // const { cliente_id } = req.params;
   try {
     const payload = extractModelFields(MuestraAgua, req.body);
+    payload.dosis = (payload.dureza * parseFloat(process.env.CANT_AGUA_MUESTRA_LITROS)) / (parseFloat(process.env.CAPACIDAD_SECUESTRO));
     payload.pozo_id = req.params.pozo_id || req.body.pozo_id;
     console.log('addPozos controller: payload->', payload );
     const resp = await MuestraAgua.create(payload);
