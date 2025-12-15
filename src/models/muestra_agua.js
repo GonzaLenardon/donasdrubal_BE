@@ -10,13 +10,43 @@ MuestraAgua.init(
       primaryKey: true,
       autoIncrement: true,
     },
+    ph:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },
+    dureza:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },   
+    alcalinidad:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },
+    salinidad:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },
+    fuerza_ionica:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },     
+    dosis:{
+      type: DataTypes.INTEGER, 
+      allowNull: true,
+
+    },            
     fecha_muestra: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     fecha_analisis: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },    
     pozo_id: {
       type: DataTypes.INTEGER,

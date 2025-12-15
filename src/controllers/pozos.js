@@ -40,23 +40,17 @@ export const addPozo = async (req, res) => {
   }
 };
 
-export const updatePozo = async (req, res) => {
+export const getPozo = async (req, res) => {
   const { pozo_id } = req.params;
-
+  console.log('getPozo controller: pozo_id->', pozo_id );     
   try {
-    const payload = extractModelFields(Pozo, req.body);
-    
     const pozo = await Pozo.findByPk(pozo_id);
-
     if (!pozo) {
       return res.status(404).json({ error: 'Pozo no encontrada' });
     }
-
-    const resp = await pozo.update(payload);
-
     return res.status(200).json({
-      message: 'Pozo actualizada exitosamente',
-      data: resp,
+      message: 'Pozo obtenido exitosamente',
+      data: pozo,
     });
   } catch (error) {
     return res.status(500).json({
@@ -65,6 +59,30 @@ export const updatePozo = async (req, res) => {
     });
   }
 };
+
+export const updatePozo = async (req, res) => {
+  const { pozo_id } = req.params; 
+  try {
+    const payload = extractModelFields(Pozo, req.body); 
+    const pozo = await Pozo.findByPk(pozo_id);
+
+    if (!pozo) {
+      return res.status(404).json({ error: 'Pozo no encontrada' });
+    } 
+    const resp = await pozo.update(payload);
+
+    return res.status(200).json({
+      message: 'Pozo actualizada exitosamente', 
+      data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',  
+      details: error.message,
+    });
+  } 
+};
+
 
 export const pozosCliente = async (req, res) => {
   const cliente_id = req.params.cliente_id;

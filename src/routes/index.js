@@ -58,6 +58,7 @@ import {
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
+import * as muestrasAguaController from '../controllers/muestras_agua.js';
 
 
 const router = express.Router();
@@ -188,6 +189,7 @@ router.get('/maquina_tipo/:maquina_tipo_id', verifyRole(['admin']), maquinaTipoC
 // ========================================
 
 router.get('/pozos', pozoController.allPozos);
+router.get('/pozos/:pozo_id', pozoController.getPozo);
 router.get('/cliente/:cliente_id/pozos', pozoController.pozosCliente);
 router.post('/cliente/:cliente_id/pozos', pozoController.addPozo);
 router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
@@ -197,11 +199,13 @@ router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 // RUTAS PROTEGIDAS - MUESTRAS AGUA
 // ========================================
 
-// router.get('/pozos/:pozo_id/', getMuestrasAguaPozo);
-// router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozo);
-// router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', getMuestrasAguaPozoCliente);
-// router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', getMuestraAguaPozoCliente);
-// router.post('/muetras_agua', addMuestraAgua);
-// router.put('/muestras_agua/:muestra_agua_id', updateMuestraAgua);
+router.get('/muestras_agua', muestrasAguaController.allMuestrasAgua);
+router.get('/muestras_agua/muestra_agua_id', muestrasAguaController.getMuestrasAgua);
+router.post('/muestras_agua', muestrasAguaController.addMuestraAgua);
+router.put('/muestras_agua/:muestra_agua_id', muestrasAguaController.updateMuestraAgua);
+router.get('/pozos/:pozo_id/', muestrasAguaController.getMuestrasAguaPozo);
+router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozo);
+router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', muestrasAguaController.getMuestrasAguaPozoCliente);
+router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozoCliente);
 
 export { router };
