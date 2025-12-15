@@ -200,10 +200,10 @@ router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 // ========================================
 
 router.get('/muestras_agua', muestrasAguaController.allMuestrasAgua);
-router.get('/muestras_agua/muestra_agua_id', muestrasAguaController.getMuestrasAgua);
+router.get('/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestrasAgua);
 router.post('/muestras_agua', muestrasAguaController.addMuestraAgua);
 router.put('/muestras_agua/:muestra_agua_id', muestrasAguaController.updateMuestraAgua);
-router.get('/pozos/:pozo_id/', muestrasAguaController.getMuestrasAguaPozo);
+router.get('/pozos/:pozo_id/muestras_agua', muestrasAguaController.getMuestrasAguaPozo);
 router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozo);
 router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', muestrasAguaController.getMuestrasAguaPozoCliente);
 router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozoCliente);

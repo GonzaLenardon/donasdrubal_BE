@@ -25,7 +25,7 @@ export const addMuestraAgua = async (req, res) => {
   // const { cliente_id } = req.params;
   try {
     const payload = extractModelFields(MuestraAgua, req.body);
-    payload.dosis = (payload.dureza * parseFloat(process.env.CANT_AGUA_MUESTRA_LITROS)) / (parseFloat(process.env.CAPACIDAD_SECUESTRO));
+    payload.dosis = calcularDosis(payload.dureza);
     payload.pozo_id = req.params.pozo_id || req.body.pozo_id;
     console.log('addPozos controller: payload->', payload );
     const resp = await MuestraAgua.create(payload);
@@ -53,7 +53,7 @@ export const updateMuestraAgua = async (req, res) => {
     if (!muetras_agua) {
       return res.status(404).json({ error: 'Muestra Agua no encontrada' });
     }
-
+    payload.dosis = calcularDosis(payload.dureza);
     const resp = await muetras_agua.update(payload);
 
     return res.status(200).json({
@@ -165,4 +165,10 @@ export const getMuestraAguaPozoCliente = async (req, res) => {
     });
   } 
 };
+
+const calcularDosis = (dureza) => {
+  const cantAguaLitros = parseFloat(process.env.CANT_AGUA_MUESTRA_LITROS);
+  const capacidadSecuestro = parseFloat(process.env.CAPACIDAD_SECUESTRO);
+  return (dureza * cantAguaLitros) / capacidadSecuestro;
+}
 
