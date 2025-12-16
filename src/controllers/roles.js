@@ -1,11 +1,5 @@
 import Roles from '../models/roles.js';
 
-
-const pruebaRoles = async (req, res) => {
-  console.log('haber que nos llega', req);
-  res.send('hola ROL QUERIDO');
-};
-
 const addRole = async (req, res) => {
   console.log('->Alta Rol', req.body);
   try {
@@ -21,51 +15,74 @@ const addRole = async (req, res) => {
       nombre,
       descripcion 
     });
-    res.status(201).json({ message: 'Rol creado exitosamente', newUser });
+    return res.status(200).json({
+       message: 'Rol creado exitosamente', 
+       newUser 
+    });
   } catch (error) {
     console.error('Error al agregar rol:', error);
-    res
-      .status(500)
-      .json({ error: 'Error en el servidor', details: error.message });
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+
   }
 };
 
-const upRole = async (req, res) => {
+const updateRole = async (req, res) => {
+  console.log('updateRole', req.params?.role_id, req.body);
   try {
     const {nombre, descripcion} = req.body;
-    const role = await Roles.findOne({ where: { id } });
-    /*   console.log('Rol;', role); */
-
+    const role_id = req.params?.role_id ?? req.body?.role_id;
+    if (!role_id) {
+      return res.status(400).json({ error: 'role_id es obligatorio' });
+    }
+console.log('Role ID a actualizar:', role_id);
+    // const role = await Roles.findOne({ where: { id: role_id } });
+    const role = await Roles.findByPk(role_id);
+    
+    
     if (!role) {
       return res.status(400).json({ message: '¡Roles NO está registrado!' });
     }
 
-    await Roles.update(
-      { nombre, descripcion },
-      { where: { id } }
+    const resp = await role.update(
+      { nombre, descripcion }
     );
 
-    res.status(201).json({ message: 'Usuario actualizado exitosamente' });
+    res.status(200).json({ 
+      message: 'Rol actualizado exitosamente', 
+      data: resp
+    });
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
-    res
-      .status(500)
-      .json({ error: 'Error en el servidor', details: error.message });
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
   }
 };
 
 const getRole = async (req, res) => {
   try { 
-    const { id } = req.body;
-    const role = await Roles.findOne({ where: { id } });  
+    const role_id = req.params?.role_id ?? req.body?.role_id;
+    if (!role_id) {
+      return res.status(400).json({ error: 'role_id es obligatorio' });
+    }
+    const role = await Roles.findOne({ where: { id: role_id } });  
     console.log('Rol;', role);
     if (!role) {
-      return res.status(400).json({ message: '¡Rol NO está registrado!' });
+      return res.status(404).json({ message: 'Rol NO está registrado' });
     }     
-    res.status(200).json(role);
+    return res.status(200).json({
+      message: 'Rol encontrado',
+      data: role,
+    });
   } catch (error) {
     console.log('Error ', error);
-    res.status(500).json({ error: 'Error al obtener Rol solicitado' });
+    res.status(500).json({ 
+      error: 'Error al obtener usuarios',
+      details: error.message,
+    });
   }   
 };
 
@@ -73,31 +90,40 @@ const allRoles = async (req, res) => {
   try {
     const roles = await Roles.findAll();
     console.log('Roles', roles);
-    res.status(200).json(roles);
+    return res.status(200).json({
+      message: 'Roles obtenidos correctamente',
+      data: roles,
+    });
   } catch (error) {
     console.log('Error ', error);
-    res.status(500).json({ error: 'Error al obtener usuarios' });
+    return res.status(500).json({ 
+      error: 'Error al obtener usuarios',
+      details: error.message,
+    });
   }
 };  
 
 // -------------------OJO--------
 //  aca ver de borrar solo si no existe ningun usuario con el rol a borrar
 //--------------------------------
-const downRole = async (req, res) => { 
+const deleteRole = async (req, res) => { 
   try {
-    const { id } = req.body;
-    const role = await Roles.findOne({ where: { id } });  
+    const role_id = req.params?.role_id ?? req.body?.role_id;
+    if (!role_id) {
+      return res.status(400).json({ error: 'role_id es obligatorio' });
+    }
+    const role = await Roles.findOne({ where: { id: role_id } });  
     console.log('Rol;', role);        
     if (!role) {
       return res.status(400).json({ message: '¡Rol NO está registrado!' });   
     }     
-    await Roles.destroy({ where: { id } }); 
-    res.status(200).json({ message: 'Rol eliminado exitosamente' });
+    await role.destroy(); 
+    return res.status(200).json({ message: 'Rol eliminado exitosamente' });
   } catch (error) {
     console.log('Error ', error);
-    res.status(500).json({ error: 'Error al eliminar Rol' });
+    return res.status(500).json({ error: 'Error al eliminar Rol' });
   }     
 };
 
 
-export { addRole, downRole, upRole, getRole, allRoles };
+export { addRole, deleteRole, updateRole, getRole, allRoles };

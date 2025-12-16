@@ -30,22 +30,17 @@ Roles.init(
         type: DataTypes.STRING(255),
         allowNull: true
       },      
-      // createdAt: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW
-      // },
-      // updatedAt: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW
-      // },
+      deletedAt: {
+          allowNull: true,
+          type: DataTypes.DATE,
+      },      
     },
     {
       sequelize: db,
       modelName: 'Roles',
       tableName: 'roles',
-      timestamps: false
+      timestamps: true,
+      paranoid: true,
     }
   );
 

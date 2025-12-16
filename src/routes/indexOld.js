@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkRole } from '../middlewares/checkRoles.js';
+
 import {
   addUser,
   allUsers,
@@ -86,7 +86,7 @@ router.get('/cliente', allClientes);
 router.put('/cliente', upCliente);
 router.get('/cliente/:id', getCliente);
 
-// router.post('/cliente', checkRole(['admin']), addClient);
+
 
 /* ****** Rutas Roles **********/
 router.get('/role', getRole);

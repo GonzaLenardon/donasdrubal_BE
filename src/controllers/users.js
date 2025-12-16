@@ -1,5 +1,6 @@
-import Users from '../models/users.js';
+// import Users from '../models/users.js';
 import { createUser } from '../services/userService.js';
+import { Users, Roles, UserRoles, db } from '../models/index.js';
 import jwt from 'jsonwebtoken';
 
 const pruebaUser = async (req, res) => {
@@ -7,48 +8,23 @@ const pruebaUser = async (req, res) => {
   return res.status(200).send('hola USUARIO QUERIDO');
 };
 
-// const addUser = async (req, res) => {
-//   console.log('paso x aca', req.body);
-//   try {
-//     const { nombre, cuit, domicilio, email, telefono, datosImpositivos, rol } =
-//       req.body;
-//     const password = req.body.password || '123456'; // 👈 default
-
-//     const user = await Users.findOne({ where: { nombre } });
-
-//     if (user) {
-//       return res.status(400).json({ message: '¡Usuario ya existente!' });
-//     }
-
-//     const newUser = await Users.create({
-//       nombre,
-//       cuit,
-//       domicilio,
-//       email,
-//       telefono,
-//       datosImpositivos,
-//       password,
-//       rol,
-//     });
-//     res.status(201).json({ message: 'Usuario creado exitosamente', newUser });
-//   } catch (error) {
-//     console.error('Error al agregar usuario:', error);
-//     res
-//       .status(500)
-//       .json({ error: 'Error en el servidor', details: error.message });
-//   }
-// };
-
 const addUser = async (req, res) => {
-  console.log('paso x aca', req.body);
+  console.log('userController: body->', req.body);
 
   try {
-    const { nombre, email, telefono, rol } = req.body;
+    const t = await db.transaction();
+    const { nombre, email, telefono, rol, role_id } = req.body;
     const password = req.body.password || '123456';
 
-    const user = await Users.findOne({ where: { nombre } });
+    if (!role_id) {
+      return res.status(400).json({
+        error: 'Debe indicar un role_id para el usuario',
+      });
+    }
 
-    if (user) {
+    const userExist = await Users.findOne({ where: { email },transaction: t,});
+
+    if (userExist) {
       return res.status(400).json({ error: 'Usuario ya existente' });
     }
 
@@ -57,14 +33,28 @@ const addUser = async (req, res) => {
       email,
       telefono,
       password,
-      rol,
-    });
+    },
+      { transaction: t }
+    );
 
+
+    // Crear relación user_roles
+    await UserRoles.create(
+      {
+        user_id: resp.id, //new user_id
+        role_id: role_id,
+      },
+      { transaction: t }
+    );
+
+    //Confirmar transacción
+    await t.commit();
     return res.status(201).json({
       message: 'Usuario creado exitosamente',
       data: resp,
     });
   } catch (error) {
+    await t.rollback();
     console.error('Error al agregar usuario:', error);
     return res.status(500).json({
       error: 'Error en el servidor',
@@ -73,7 +63,7 @@ const addUser = async (req, res) => {
   }
 };
 
-const upUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
     const {
       id,
@@ -151,10 +141,10 @@ const allIngenieros = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-  const { id } = req.params;
+  const { user_id } = req.params;
 
   try {
-    const resp = await Users.findOne({ where: { id } });
+    const resp = await Users.findOne({ where: { user_id } });
 
     if (!resp) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -178,7 +168,14 @@ const login = async (req, res) => {
   console.log('llego a Login', email, password);
 
   try {
-    const user = await Users.findOne({ where: { email } });
+    const user = await Users.findOne({
+      where: { email },
+      include: {
+        model: Roles,
+        attributes: ['id', 'nombre'],
+        through: { attributes: [] }, // oculta user_roles
+      },
+    });
     if (!user)
       return res.status(401).json({ mensaje: 'Usuario no encontrado' });
 
@@ -190,7 +187,7 @@ const login = async (req, res) => {
     const payload = {
       id: user.id,
       email: user.email,
-      rol: user.rol,
+      rol: user.Roles[0].nombre,
     };
 
     const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
@@ -215,7 +212,7 @@ const login = async (req, res) => {
         user: user.name,
         id: user.id,
         email: user.email,
-        rol: user.rol,
+        rol: user.Roles[0].nombre,
         mensaje: 'Autorizado',
         token: token,
       });
@@ -266,7 +263,7 @@ const logout = (req, res) => {
 
 export {
   addUser,
-  upUser,
+  updateUser,
   allUsers,
   allIngenieros,
   getUser,
