@@ -46,10 +46,10 @@ export const addMaquina = async (req, res) => {
 };
 
 export const updateMaquina = async (req, res) => {
-  const { id } = req.params;
+  const { maquina_id } = req.params;
 
   try {
-    const maquina = await Maquinas.findByPk(id);
+    const maquina = await Maquinas.findByPk(maquina_id);
 
     if (!maquina) {
       return res.status(404).json({ error: 'Máquina no encontrada' });

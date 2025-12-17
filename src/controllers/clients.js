@@ -1,5 +1,7 @@
 import User from '../models/users.js';
 import Cliente from '../models/clientes.js';
+import Roles from '../models/roles.js';
+import UserRoles from '../models/user_roles.js';  
 import { createUser } from '../services/userService.js';
 import db from '../config/database.js';
 
@@ -41,6 +43,7 @@ const addClient = async (req, res) => {
     }
 
     // 1️⃣ Crear usuario dentro de la transacción
+    
     const newUser = await User.create(
       {
         nombre: razon_social,
@@ -51,6 +54,22 @@ const addClient = async (req, res) => {
         active: true,
       },
       { transaction: t } // 👈 Usar transacción
+    );
+
+    // Busco el id del rol Cliente
+    const role = await Roles.findOne(
+      { where: { nombre: 'Cliente' } },
+      { transaction: t }
+    ); 
+    if (!role) {
+      throw new Error('Rol "cliente" no existe');
+    }
+    await UserRoles.create(
+      {
+        user_id: newUser.id, //new user_id
+        role_id: role.id,
+      },
+      { transaction: t }
     );
 
     console.log('✅ Usuario creado:', newUser.email);

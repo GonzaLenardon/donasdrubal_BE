@@ -15,8 +15,8 @@ import Roles from '../models/roles.js';
 
   const addUserRole = async (req, res) => {
     try {
-      const { userId, roleId } = req.body;
-      const userRole = await UserRole.create({ userId, roleId });
+      const { user_id, role_id } = req.body;
+      const userRole = await UserRole.create({ user_id, role_id });
       res.status(201).json(userRole);
     } catch (error) {
       console.error('Error al asignar rol al usuario:', error);
@@ -26,8 +26,8 @@ import Roles from '../models/roles.js';
 
   const  downUserRole = async (req, res) => {
     try {
-      const { id } = req.params;
-      const userRole = await UserRole.findByPk(id);
+      const { user_id } = req.params;
+      const userRole = await UserRole.findByPk(user_id);
       if (!userRole) return res.status(404).json({ error: 'Asignación no encontrada' });
 
       await userRole.destroy();
@@ -40,17 +40,17 @@ import Roles from '../models/roles.js';
 
   const assignRoleToUser = async (req, res) => {
   try {
-    const { userId, roleId } = req.body;
+    const { user_id, role_id } = req.body;
 
-    const user = await User.findByPk(userId);
-    const role = await Roles.findByPk(roleId);
+    const user = await User.findByPk(user_id);
+    const role = await Roles.findByPk(role_id);
 
     if (!user || !role) {
       return res.status(404).json({ message: 'Usuario o Rol no encontrado' });
     }
 
         // Crear relación
-    await UserRole.create({ user_id: userId, role_id: roleId });
+    await UserRole.create({ user_id: role_id, role_id: role_id });
     res.status(200).json({ message: 'Rol asignado correctamente al usuario' });
   } catch (error) {
     console.error('Error al asignar rol:', error);
@@ -61,9 +61,9 @@ import Roles from '../models/roles.js';
 // Obtener los roles de un usuario
 const getUserRoles = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { user_id } = req.params;
 
-    const user = await User.findByPk(userId, {
+    const user = await User.findByPk(user_id, {
       include: {
         model: Roles,
         through: { attributes: [] }, // no mostrar la tabla pivote

@@ -1,10 +1,10 @@
 import express from 'express';
+import { ROLES } from '../config/constants/roles.js';
 import { verifyToken, verifyRole } from '../middlewares/auth.js';
-import { checkRole } from '../middlewares/checkRoles.js';
 import {
   addUser,
   allUsers,
-  upUser,
+  updateUser,
   getUser,
   login,
   verify,
@@ -14,9 +14,9 @@ import {
 import {
   addRole,
   allRoles,
-  upRole,
+  updateRole,
   getRole,
-  downRole,
+  deleteRole,
 } from '../controllers/roles.js';
 import {
   addPermission,
@@ -91,21 +91,21 @@ router.get('/auth/verify', verify);
 // RUTAS PROTEGIDAS - USUARIOS
 // ========================================
 
-/* router.post('/user', verifyRole(['admin']), addUser); */ // Solo admin puede crear usuarios
+/* router.post('/user', verifyRole([ROLES.ADMIN]), addUser); */ // Solo admin puede crear usuarios
 router.post('/user', addUser); // Solo admin puede crear usuarios
 router.post('/user/logout', logout);
 router.get('/user', allUsers);
 router.get('/user/ingenieros', allIngenieros);
-router.put('/user', upUser);
-router.get('/user/:id', getUser);
-router.post('/user/role', verifyRole(['admin']), assignRoleToUser);
-router.get('/user/:userId/roles', getUserRoles);
+router.put('/user', updateUser);
+router.get('/user/:user_id', getUser);
+router.post('/user/role', verifyRole([ROLES.ADMIN]), assignRoleToUser);
+router.get('/user/:user_id/roles', getUserRoles);
 
 // ========================================
 // RUTAS PROTEGIDAS - CLIENTES
 // ========================================
 
-router.post('/cliente', verifyRole(['admin']), addClient);
+router.post('/cliente', verifyRole([ROLES.ADMIN]), addClient);
 router.get('/cliente', allClientes);
 router.put('/cliente/:cliente_id', upCliente);
 router.get('/cliente/:cliene_id', getCliente);
@@ -118,7 +118,7 @@ router.get('/maquinas', allMaquinas);
 router.get('/cliente/:cliente_id/maquinas', maquinasUser);
 router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
 router.post('/cliente/:cliente_id/maquinas', addMaquina);
-router.put('/cliente/:cliente_id/maquinas/:id', updateMaquina);
+router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
 
 // ========================================
 // RUTAS PROTEGIDAS - CALIBRACIONES
@@ -135,55 +135,55 @@ router.put('/calibraciones/:id', updateCalibraciones);
 // RUTAS PROTEGIDAS - ROLES (Solo Admin)
 // ========================================
 
-router.get('/role', verifyRole(['admin']), getRole);
-router.post('/role', verifyRole(['admin']), addRole);
-router.get('/roles', verifyRole(['admin']), allRoles);
-router.put('/role', verifyRole(['admin']), upRole);
-router.delete('/role', verifyRole(['admin']), downRole);
-
+router.get('/roles/:role_id', verifyRole([ROLES.ADMIN]), getRole);
+router.post('/roles', verifyRole([ROLES.ADMIN]), addRole);
+router.get('/roles', verifyRole([ROLES.ADMIN]), allRoles);
+router.put('/roles/:role_id', verifyRole([ROLES.ADMIN]), updateRole);
+router.delete('/roles/:role_id', verifyRole([ROLES.ADMIN]), deleteRole);
 // ========================================
 // RUTAS PROTEGIDAS - PERMISOS (Solo Admin)
 // ========================================
 
-router.get('/permission', verifyRole(['admin']), getPermissionById);
-router.post('/permission', verifyRole(['admin']), addPermission);
-router.get('/permissions', verifyRole(['admin']), allPermissions);
-router.put('/permission', verifyRole(['admin']), updatePermission);
-router.delete('/Permission', verifyRole(['admin']), downPermission);
+router.get('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), getPermissionById);
+router.post('/permissions', verifyRole([ROLES.ADMIN]), addPermission);
+router.get('/permissions', verifyRole([ROLES.ADMIN]), allPermissions);
+router.put('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), updatePermission);
+router.delete('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), downPermission);
 
 // ========================================
 // RUTAS PROTEGIDAS - USER_ROLES (Solo Admin)
 // ========================================
 
-router.get('/user_role', verifyRole(['admin']), allUserRoles);
-router.post('/user_role', verifyRole(['admin']), addUserRole);
-router.delete('/user_role', verifyRole(['admin']), downUserRole);
+// router.get('/user_roles', verifyRole([ROLES.ADMIN]), allUserRoles);
+// router.get('/user_roles/:user_id', verifyRole([ROLES.ADMIN]), getUserRoles);
+// router.post('/user_roles', verifyRole([ROLES.ADMIN]), addUserRole);
+// router.delete('/user_roles/:user_id', verifyRole([ROLES.ADMIN]), downUserRole);
 
 // ========================================
 // RUTAS PROTEGIDAS - ROLE_PERMISSIONS (Solo Admin)
 // ========================================
 
-router.get('/role_permission', verifyRole(['admin']), allRolePermissions);
-router.post('/role_permission', verifyRole(['admin']), addRolePermission);
-router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
+// router.get('/role_permissions', verifyRole([ROLES.ADMIN]), allRolePermissions);
+// router.post('/role_permissions', verifyRole([ROLES.ADMIN]), addRolePermission);
+// router.delete('/role_permissions', verifyRole([ROLES.ADMIN]), downRolePErmission);
 
-// ========================================
-// RUTAS PROTEGIDAS - ROLE_PERMISSIONS (Solo Admin)
-// ========================================
+// // ========================================
+// // RUTAS PROTEGIDAS - ROLE_PERMISSIONS (Solo Admin)
+// // ========================================
 
-router.get('/role_permission', verifyRole(['admin']), allRolePermissions);
-router.post('/role_permission', verifyRole(['admin']), addRolePermission);
-router.delete('/role_permission', verifyRole(['admin']), downRolePErmission);
+// router.get('/role_permission', verifyRole([ROLES.ADMIN]), allRolePermissions);
+// router.post('/role_permission', verifyRole([ROLES.ADMIN]), addRolePermission);
+// router.delete('/role_permission', verifyRole([ROLES.ADMIN]), downRolePErmission);
 
 // ========================================
 // RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
 // ========================================
 
-router.get('/maquinas_tipos', verifyRole(['admin']),maquinaTipoController.allMaquinaTipo);
-router.post('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.addMaquinaTipo);
-router.put('/maquina_tipo', verifyRole(['admin']), maquinaTipoController.updateMaquinaTipo);
-router.delete( '/maquina_tipo', verifyRole(['admin']), maquinaTipoController.downMaquinaTipo);
-router.get('/maquina_tipo/:maquina_tipo_id', verifyRole(['admin']), maquinaTipoController.getMaquinaTipo);
+router.get('/maquinas_tipos', verifyRole([ROLES.ADMIN]),maquinaTipoController.allMaquinaTipo);
+router.post('/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.addMaquinaTipo);
+router.put('/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.updateMaquinaTipo);
+router.delete( '/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.downMaquinaTipo);
+router.get('/maquina_tipo/:maquina_tipo_id', verifyRole([ROLES.ADMIN]), maquinaTipoController.getMaquinaTipo);
 
 // ========================================
 // RUTAS PROTEGIDAS - POZOS
