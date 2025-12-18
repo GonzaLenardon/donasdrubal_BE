@@ -103,7 +103,14 @@ const allUsers = async (req, res) => {
   console.log('Usuario que hace la petición:', req.user.email);
 
   try {
-    const resp = await Users.findAll();
+    const resp = await Users.findAll({
+      include: {
+        model: Roles,
+        as: 'roles',
+        attributes: ['id', 'nombre'],
+        through: { attributes: [] },
+      },
+    });
 
     return res.status(200).json({
       message: 'Usuarios obtenidos correctamente',
@@ -172,6 +179,7 @@ const login = async (req, res) => {
       where: { email },
       include: {
         model: Roles,
+        as: 'roles', 
         attributes: ['id', 'nombre'],
         through: { attributes: [] }, // oculta user_roles
       },
@@ -183,12 +191,15 @@ const login = async (req, res) => {
 
     if (!isValid)
       return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+    
 
     const payload = {
       id: user.id,
       email: user.email,
-      rol: user.Roles[0].nombre,
+      rol: user.roles[0]?.nombre,
     };
+    console.log('Payload JWT:', payload);
+    console.log('Payload JWT:', user.roles);
 
     const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
 
@@ -212,7 +223,7 @@ const login = async (req, res) => {
         user: user.name,
         id: user.id,
         email: user.email,
-        rol: user.Roles[0].nombre,
+        rol: user.roles[0]?.nombre,
         mensaje: 'Autorizado',
         token: token,
       });

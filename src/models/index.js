@@ -17,7 +17,7 @@ import Jornada from './jornada.js';
 // -------------------------------
 
 // Un usuario puede tener varios roles
-Users.belongsToMany(Roles, { through: UserRoles, foreignKey: 'user_id', otherKey: 'role_id',});
+Users.belongsToMany(Roles, { through: UserRoles, foreignKey: 'user_id', otherKey: 'role_id', as: 'roles'});
 Users.hasOne(Clientes, { foreignKey: 'user_id', as: 'clienteInfo'});
 // Un usuario ingeniero puede tener muchos clientes asignados
 Users.hasMany(Clientes, {foreignKey: 'ingeniero_id', as: 'clientesAsignados',});
