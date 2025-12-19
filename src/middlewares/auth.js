@@ -4,7 +4,6 @@ export const verifyToken = (req, res, next) => {
   try {
     // Obtener token de las cookies
     const token = req.cookies.Token;
-    console.log('pasox verificar token');
 
     // Verificar si existe el token
     if (!token) {
@@ -20,7 +19,7 @@ export const verifyToken = (req, res, next) => {
     // Agregar la info del usuario al request
     req.user = {
       id: decoded.id,
-      email: decoded.user,
+      email: decoded.email,
       rol: decoded.rol,
     };
 

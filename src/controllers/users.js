@@ -13,7 +13,7 @@ const addUser = async (req, res) => {
 
   try {
     const t = await db.transaction();
-    const { nombre, email, telefono, rol, role_id } = req.body;
+    const { nombre, email, telefono, role_id } = req.body;
     const password = req.body.password || '123456';
 
     if (!role_id) {
@@ -22,21 +22,21 @@ const addUser = async (req, res) => {
       });
     }
 
-    const userExist = await Users.findOne({ where: { email },transaction: t,});
+    const userExist = await Users.findOne({ where: { email }, transaction: t });
 
     if (userExist) {
       return res.status(400).json({ error: 'Usuario ya existente' });
     }
 
-    const resp = await Users.create({
-      nombre,
-      email,
-      telefono,
-      password,
-    },
+    const resp = await Users.create(
+      {
+        nombre,
+        email,
+        telefono,
+        password,
+      },
       { transaction: t }
     );
-
 
     // Crear relación user_roles
     await UserRoles.create(
@@ -63,34 +63,111 @@ const addUser = async (req, res) => {
   }
 };
 
-const updateUser = async (req, res) => {
+/*  const updateUser = async (req, res) => {
+    try {
+      const {
+        id,
+        nombre,
+        rol,
+        email,
+        telefono,
+        datosImpositivos,
+        cuit,
+        domicilio,
+      } = req.body;
+
+      const user = await Users.findOne({ where: { id } });
+
+      if (!user) {
+        return res.status(400).json({ error: 'Usuario no registrado' });
+      }
+
+      await Users.update(
+        { nombre, rol, email, telefono, datosImpositivos, cuit, domicilio },
+        { where: { id } }
+      );
+
+      return res
+        .status(200)
+        .json({ message: 'Usuario actualizado exitosamente' });
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      return res.status(500).json({
+        error: 'Error en el servidor',
+        details: error.message,
+      });
+    }
+  }; */
+/* const updateUser = async (req, res) => {
+  const t = await db.transaction();
+
   try {
-    const {
-      id,
-      nombre,
-      rol,
-      email,
-      telefono,
-      datosImpositivos,
-      cuit,
-      domicilio,
-    } = req.body;
+    const { id, nombre, email, telefono, role_id } = req.body;
+
+    console.log('body', req.body);
+
+    const user = await Users.findByPk(id, { transaction: t });
+
+    if (!user) {
+      await t.rollback();
+      return res.status(400).json({ error: 'Usuario no registrado' });
+    }
+
+    // 1️⃣ Update datos del usuario
+    await user.update({ nombre, email, telefono }, { transaction: t });
+
+    // 2️⃣ Update rol
+    if (role_id) {
+      const userRole = await UserRoles.findOne({
+        where: { user_id: id },
+        transaction: t,
+      });
+
+      if (userRole) {
+        await userRole.update({ role_id }, { transaction: t });
+      } else {
+        await UserRoles.create({ user_id: id, role_id }, { transaction: t });
+      }
+    }
+
+    await t.commit();
+
+    return res.status(200).json({
+      message: 'Usuario actualizado exitosamente',
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error al actualizar usuario:', error);
+
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+}; */
+
+const updateUser = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const { id, nombre, email, telefono, role_id } = req.body;
 
     const user = await Users.findOne({ where: { id } });
 
     if (!user) {
       return res.status(400).json({ error: 'Usuario no registrado' });
     }
+    const role = await Roles.findByPk(role_id);
+    if (!role) return res.status(400).json({ error: 'Rol no registrado' });
 
-    await Users.update(
-      { nombre, rol, email, telefono, datosImpositivos, cuit, domicilio },
-      { where: { id } }
-    );
+    await user.update({ nombre, email, telefono }, { transaction: t });
 
+    await user.setRoles([role_id], { transaction: t });
+    await t.commit();
     return res
       .status(200)
       .json({ message: 'Usuario actualizado exitosamente' });
   } catch (error) {
+    await t.rollback();
     console.error('Error al actualizar usuario:', error);
     return res.status(500).json({
       error: 'Error en el servidor',
@@ -125,13 +202,49 @@ const allUsers = async (req, res) => {
   }
 };
 
+/* const allIngenieros = async (req, res) => {
+  console.log('Usuario que hace la petición:', req.user.email);
+
+  try {
+
+
+
+
+    const ingenieros = await Users.findAll({
+      where: { rol: 'ingeniero' },
+      attributes: ['id', 'nombre'], // opcional
+    });
+
+    return res.status(200).json({
+      message: 'Usuarios ingenieros obtenidos correctamente',
+      data: ingenieros,
+    });
+  } catch (error) {
+    console.error('Error al obtener usuarios ingenieros:', error);
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+}; */
+
 const allIngenieros = async (req, res) => {
   console.log('Usuario que hace la petición:', req.user.email);
 
   try {
     const ingenieros = await Users.findAll({
-      where: { rol: 'ingeniero' },
-      attributes: ['id', 'nombre'], // opcional
+      attributes: ['id', 'nombre'],
+      include: [
+        {
+          model: Roles,
+          as: 'roles',
+          attributes: [], // no necesito devolver el rol, solo filtrar
+          where: {
+            nombre: 'Ingeniero',
+          },
+          through: { attributes: [] },
+        },
+      ],
     });
 
     return res.status(200).json({
@@ -175,11 +288,14 @@ const login = async (req, res) => {
   console.log('llego a Login', email, password);
 
   try {
+    const x = await Roles.findAll();
+    console.log('roles', x);
+
     const user = await Users.findOne({
       where: { email },
       include: {
         model: Roles,
-        as: 'roles', 
+        as: 'roles',
         attributes: ['id', 'nombre'],
         through: { attributes: [] }, // oculta user_roles
       },
@@ -191,7 +307,6 @@ const login = async (req, res) => {
 
     if (!isValid)
       return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
-    
 
     const payload = {
       id: user.id,
