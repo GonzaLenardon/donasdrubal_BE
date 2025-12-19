@@ -27,6 +27,16 @@ Jornada.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    estado: {
+      type: DataTypes.ENUM('Pendiente', 'En Proceso', 'Completada'),
+      allowNull: false,
+      defaultValue: 'Pendiente'
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
     deletedAt: {
         allowNull: true,
         type: DataTypes.DATE,
