@@ -1,5 +1,5 @@
 
-import ROLES from '../config/constants/roles.js';
+import { ROLES } from '../config/constants/roles.js';
 import Cliente from '../models/clientes.js';
 import Roles from '../models/roles.js';
 import UserRoles from '../models/user_roles.js';  

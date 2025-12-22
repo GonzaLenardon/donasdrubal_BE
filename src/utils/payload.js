@@ -11,7 +11,7 @@ export function extractModelFields(model, data = {}, extraExclude = []) {
   const payload = {};
 
   for (const attr of attributes) {
-    if (!exclude.includes(attr) && data.hasOwnProperty(attr)) {
+    if (!exclude.includes(attr) && data.hasOwnProperty(attr) && data[attr] !== undefined) {
       payload[attr] = data[attr];
     }
   }
