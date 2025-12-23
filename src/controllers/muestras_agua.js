@@ -28,7 +28,10 @@ export const addMuestraAgua = async (req, res) => {
     const payload = extractModelFields(MuestraAgua, req.body);
     payload.dosis = calcularDosis(payload.dureza);
     payload.pozo_id = req.params.pozo_id || req.body.pozo_id;
-    console.log('addPozos controller: payload->', payload);
+    if (!payload.pozo_id) {
+      return res.status(404).json({ error: 'Pozo ID no proporcionado' });
+    }
+    console.log('addMuestraAgua controller: payload->', payload);
     const resp = await MuestraAgua.create(payload);
 
     return res.status(201).json({

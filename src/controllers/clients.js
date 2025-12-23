@@ -1,4 +1,5 @@
-import User from '../models/users.js';
+
+import { ROLES } from '../config/constants/roles.js';
 import Cliente from '../models/clientes.js';
 import Roles from '../models/roles.js';
 import UserRoles from '../models/user_roles.js';  
@@ -50,7 +51,7 @@ const addClient = async (req, res) => {
         email: email,
         password: '123456',
         telefono: telefono,
-        rol: 'cliente',
+        // rol: 'cliente',
         active: true,
       },
       { transaction: t } // 👈 Usar transacción
@@ -58,11 +59,11 @@ const addClient = async (req, res) => {
 
     // Busco el id del rol Cliente
     const role = await Roles.findOne(
-      { where: { nombre: 'Cliente' } },
+      { where: { nombre: [ROLES.CLIENTE] } },
       { transaction: t }
     ); 
     if (!role) {
-      throw new Error('Rol "cliente" no existe');
+      throw new Error('Rol "Cliente" no existe');
     }
     await UserRoles.create(
       {

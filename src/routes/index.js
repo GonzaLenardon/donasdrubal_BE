@@ -128,7 +128,7 @@ router.get(
   '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
   calibracionesMaquinas
 );
-router.put('/calibraciones/:id', updateCalibraciones);
+router.put('/calibraciones/:calibracion_id', updateCalibraciones);
 
 // ========================================
 // RUTAS PROTEGIDAS - ROLES (Solo Admin)
