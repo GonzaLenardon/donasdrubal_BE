@@ -61,7 +61,6 @@ import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
 
-
 const router = express.Router();
 
 // ========================================
@@ -115,7 +114,7 @@ router.get('/cliente/:cliene_id', getCliente);
 // ========================================
 
 router.get('/maquinas', allMaquinas);
-router.get('/cliente/:cliente_id/maquinas', maquinasUser);
+/* router.get('/cliente/:cliente_id/maquinas', maquinasUser); */
 router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
 router.post('/cliente/:cliente_id/maquinas', addMaquina);
 router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
@@ -144,11 +143,23 @@ router.delete('/roles/:role_id', verifyRole([ROLES.ADMIN]), deleteRole);
 // RUTAS PROTEGIDAS - PERMISOS (Solo Admin)
 // ========================================
 
-router.get('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), getPermissionById);
+router.get(
+  '/permissions/:permission_id',
+  verifyRole([ROLES.ADMIN]),
+  getPermissionById
+);
 router.post('/permissions', verifyRole([ROLES.ADMIN]), addPermission);
 router.get('/permissions', verifyRole([ROLES.ADMIN]), allPermissions);
-router.put('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), updatePermission);
-router.delete('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), downPermission);
+router.put(
+  '/permissions/:permission_id',
+  verifyRole([ROLES.ADMIN]),
+  updatePermission
+);
+router.delete(
+  '/permissions/:permission_id',
+  verifyRole([ROLES.ADMIN]),
+  downPermission
+);
 
 // ========================================
 // RUTAS PROTEGIDAS - USER_ROLES (Solo Admin)
@@ -179,11 +190,31 @@ router.delete('/permissions/:permission_id', verifyRole([ROLES.ADMIN]), downPerm
 // RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
 // ========================================
 
-router.get('/maquinas_tipos', verifyRole([ROLES.ADMIN]),maquinaTipoController.allMaquinaTipo);
-router.post('/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.addMaquinaTipo);
-router.put('/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.updateMaquinaTipo);
-router.delete( '/maquina_tipo', verifyRole([ROLES.ADMIN]), maquinaTipoController.downMaquinaTipo);
-router.get('/maquina_tipo/:maquina_tipo_id', verifyRole([ROLES.ADMIN]), maquinaTipoController.getMaquinaTipo);
+router.get(
+  '/maquinas_tipos',
+  verifyRole([ROLES.ADMIN]),
+  maquinaTipoController.allMaquinaTipo
+);
+router.post(
+  '/maquina_tipo',
+  verifyRole([ROLES.ADMIN]),
+  maquinaTipoController.addMaquinaTipo
+);
+router.put(
+  '/maquina_tipo/:maquina_tipo_id',
+  verifyRole([ROLES.ADMIN]),
+  maquinaTipoController.updateMaquinaTipo
+);
+router.delete(
+  '/maquina_tipo',
+  verifyRole([ROLES.ADMIN]),
+  maquinaTipoController.downMaquinaTipo
+);
+router.get(
+  '/maquina_tipo/:maquina_tipo_id',
+  verifyRole([ROLES.ADMIN]),
+  maquinaTipoController.getMaquinaTipo
+);
 
 // ========================================
 // RUTAS PROTEGIDAS - POZOS
@@ -195,19 +226,36 @@ router.get('/cliente/:cliente_id/pozos', pozoController.pozosCliente);
 router.post('/cliente/:cliente_id/pozos', pozoController.addPozo);
 router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 
-
 // ========================================
 // RUTAS PROTEGIDAS - MUESTRAS AGUA
 // ========================================
 
 router.get('/muestras_agua', muestrasAguaController.allMuestrasAgua);
-router.get('/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestrasAgua);
+router.get(
+  '/muestras_agua/:muestra_agua_id',
+  muestrasAguaController.getMuestrasAgua
+);
 router.post('/muestras_agua', muestrasAguaController.addMuestraAgua);
-router.put('/muestras_agua/:muestra_agua_id', muestrasAguaController.updateMuestraAgua);
-router.get('/pozos/:pozo_id/muestras_agua', muestrasAguaController.getMuestrasAguaPozo);
-router.get('/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozo);
-router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/', muestrasAguaController.getMuestrasAguaPozoCliente);
-router.get('/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id', muestrasAguaController.getMuestraAguaPozoCliente);
+router.put(
+  '/muestras_agua/:muestra_agua_id',
+  muestrasAguaController.updateMuestraAgua
+);
+router.get(
+  '/pozos/:pozo_id/muestras_agua',
+  muestrasAguaController.getMuestrasAguaPozo
+);
+router.get(
+  '/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
+  muestrasAguaController.getMuestraAguaPozo
+);
+router.get(
+  '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua',
+  muestrasAguaController.getMuestrasAguaPozoCliente
+);
+router.get(
+  '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
+  muestrasAguaController.getMuestraAguaPozoCliente
+);
 
 // ========================================
 // RUTAS PROTEGIDAS - JORNADAS
@@ -217,7 +265,9 @@ router.get('/jornadas', jornadaController.allJornadas);
 router.get('/jornadas/:jornada_id', jornadaController.getJornada);
 router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
 router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
-router.put('/cliente/:cliente_id/jornadas/:jornada_id', jornadaController.updateJornada);
-
+router.put(
+  '/cliente/:cliente_id/jornadas/:jornada_id',
+  jornadaController.updateJornada
+);
 
 export { router };

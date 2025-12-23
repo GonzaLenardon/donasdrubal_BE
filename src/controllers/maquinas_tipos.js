@@ -1,4 +1,3 @@
-
 import MaquinaTipo from '../models/maquina_tipo.js';
 
 export const allMaquinaTipo = async (req, res) => {
@@ -66,13 +65,13 @@ export const updateMaquinaTipo = async (req, res) => {
 };
 
 export const downMaquinaTipo = async (req, res) => {
-  const { maquina_tipo_id } = req.params;           
-    try {   
+  const { maquina_tipo_id } = req.params;
+  try {
     const maquina_tipo = await MaquinaTipo.findByPk(maquina_tipo_id);
 
     if (!maquina_tipo) {
       return res.status(404).json({ error: 'Máquina no encontrada' });
-    }   
+    }
     await maquina_tipo.destroy();
 
     return res.status(200).json({
@@ -80,28 +79,28 @@ export const downMaquinaTipo = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
-      error: 'Error en el servidor',        
-        details: error.message,
+      error: 'Error en el servidor',
+      details: error.message,
     });
-    }
+  }
 };
 
 export const getMaquinaTipo = async (req, res) => {
-  const { maquina_tipo_id } = req.params;   
+  const { maquina_tipo_id } = req.params;
   try {
-    const resp = await MaquinaTipo.findByPk(maquina_tipo_id); 
+    const resp = await MaquinaTipo.findByPk(maquina_tipo_id);
     if (!resp) {
       return res.status(404).json({ error: 'Tipo de máquina no encontrada' });
     }
 
     return res.status(200).json({
-      message: 'Tipo de máquina obtenida correctamente',    
+      message: 'Tipo de máquina obtenida correctamente',
       data: resp,
-    });   
+    });
   } catch (error) {
     return res.status(500).json({
-      error: 'Error en el servidor',  
+      error: 'Error en el servidor',
       details: error.message,
     });
-  } 
+  }
 };

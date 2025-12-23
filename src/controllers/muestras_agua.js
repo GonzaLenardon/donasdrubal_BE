@@ -73,9 +73,10 @@ export const updateMuestraAgua = async (req, res) => {
 
 export const getMuestrasAgua = async (req, res) => {
   const { muestra_agua_id } = req.params;
-  console.log('getMuestrasAgua controller: muestra_agua_id->', muestra_agua_id);
+
   try {
     const muestra_agua = await MuestraAgua.findByPk(muestra_agua_id);
+
     if (!muestra_agua) {
       return res.status(404).json({ error: 'Muestra de Agua no encontrada' });
     }
@@ -135,7 +136,12 @@ export const getMuestrasAguaPozoCliente = async (req, res) => {
         .status(404)
         .json({ error: 'Pozo no encontrado para el cliente especificado' });
     }
-    const resp = await MuestraAgua.findAll({ where: { pozo_id } });
+    const resp = await MuestraAgua.findAll({
+      where: { pozo_id },
+      include: [
+        { model: Pozo, as: 'pozo', attributes: ['nombre', 'establecimiento'] },
+      ],
+    });
 
     return res.status(200).json({
       message:
