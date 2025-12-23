@@ -55,7 +55,7 @@ export const calibracionesMaquinas = async (req, res) => {
 
     const resp = await Maquinas.findOne({
       where: { id: maquina_id },
-      attributes: ['id', 'marca', 'modelo', 'tipo_maquina'],
+      attributes: ['id', 'tipo_maquina'],
       include: [
         {
           model: Clientes,
@@ -76,8 +76,8 @@ export const calibracionesMaquinas = async (req, res) => {
         },
         {
           model: MaquinaTipo,
-          as: 'tipo', 
-        },        
+          as: 'tipo',
+        },
       ],
     });
 
@@ -90,11 +90,10 @@ export const calibracionesMaquinas = async (req, res) => {
       data: {
         id_maquina: resp.id,
         tipo: resp.tipo,
-        modelo: resp.modelo,
-        marca: resp.marca,
+        /*     modelo: resp.modelo,
+        marca: resp.marca, */
         cliente: resp.cliente,
         calibraciones: resp.calibracionesmaquina,
-
       },
     });
   } catch (error) {

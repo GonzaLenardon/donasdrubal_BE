@@ -20,18 +20,11 @@ export const allMaquinas = async (req, res) => {
 };
 
 export const addMaquina = async (req, res) => {
-  const { tipo_maquina, marca, modelo, responsable } = req.body;
-
   const { cliente_id } = req.params;
+  const data = { ...req.body, cliente_id };
 
   try {
-    const resp = await Maquinas.create({
-      tipo_maquina,
-      marca,
-      modelo,
-      responsable,
-      cliente_id,
-    });
+    const resp = await Maquinas.create(data);
 
     return res.status(201).json({
       message: 'Máquina creada exitosamente',
@@ -74,9 +67,9 @@ export const maquinasUser = async (req, res) => {
   console.log('paso x maquinas user', cliente);
 
   try {
-    const resp = await Maquinas.findAll({ 
+    const resp = await Maquinas.findAll({
       where: { cliente_id: cliente },
-      include: [{ model: MaquinaTipo, as: 'tipo' }]
+      include: [{ model: MaquinaTipo, as: 'tipo' }],
     });
 
     return res.status(200).json({
@@ -92,11 +85,15 @@ export const maquinasUser = async (req, res) => {
 };
 
 export const maquinasCliente = async (req, res) => {
-  const cliente_id = req.params.cliente_id;
+  const { cliente_id } = req.params;
 
-  console.log('paso x maquinas clientes');
+  console.log('paso x maquinas clientes hdp', cliente_id);
+
   try {
-    const resp = await Maquinas.findAll({ where: { cliente_id: cliente_id } });
+    const resp = await Maquinas.findAll({
+      where: { cliente_id },
+      include: [{ model: MaquinaTipo, as: 'tipo' }],
+    });
 
     return res.status(200).json({
       message: 'Máquinas encontradas',
