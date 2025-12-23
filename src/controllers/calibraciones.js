@@ -2,13 +2,12 @@ import Calibraciones from '../models/calibraciones.js';
 import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';  
+import { extractModelFields } from '../utils/payload.js';
 
 export const addCalibraciones = async (req, res) => {
   try {
-    const data = req.body;
-
-    const resp = await Calibraciones.create(data);
-
+    const payload = extractModelFields(Calibraciones, req.body);
+    const resp = await Calibraciones.create(payload);
     return res.status(201).json({
       message: 'Calibración creada correctamente',
       data: resp,
@@ -24,15 +23,18 @@ export const addCalibraciones = async (req, res) => {
 
 export const updateCalibraciones = async (req, res) => {
   try {
-    const { id } = req.params;
+    const payload = extractModelFields(Calibraciones, req.body);
 
-    const calibracion = await Calibraciones.findByPk(id);
+    const { calibracion_id } = req.params;
+    if(!calibracion_id){
+      return res.status(400).json({ error: 'Calibración ID no proporcionado' });
+    }   
+    const calibracion = await Calibraciones.findByPk(calibracion_id);
 
     if (!calibracion) {
       return res.status(404).json({ error: 'Calibración no encontrada' });
     }
-
-    const resp = await calibracion.update(req.body);
+    const resp = await calibracion.update(payload);
 
     return res.status(200).json({
       message: 'Calibración actualizada correctamente',

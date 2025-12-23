@@ -1,4 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
+import { ESTADOS_CALIDAD } from '../config/constants/calibracion.js';
 import db from '../config/database.js';
 
 class Calibraciones extends Model {}
@@ -21,6 +22,7 @@ Calibraciones.init(
     estado_maquina: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
     },
 
     observaciones_estado_maquina: {
@@ -31,6 +33,7 @@ Calibraciones.init(
     estado_bomba: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
     },
     observaciones_estado_bomba: {
       type: DataTypes.STRING,
@@ -40,6 +43,7 @@ Calibraciones.init(
     estado_agitador: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_agitador: {
@@ -50,6 +54,7 @@ Calibraciones.init(
     estado_filtroPrimario: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observarciones_estado_filtroPrimario: {
@@ -60,6 +65,7 @@ Calibraciones.init(
     estado_filtroSecundario: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
     },
 
     observaciones_filtroSecundario: {
@@ -70,6 +76,7 @@ Calibraciones.init(
     estado_FiltroLinea: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_FiltroLinea: {
@@ -80,6 +87,7 @@ Calibraciones.init(
     estado_manguerayconexiones: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_manguerayconexiones: {
@@ -90,6 +98,7 @@ Calibraciones.init(
     estado_antigoteo: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_antigoteo: {
@@ -100,6 +109,7 @@ Calibraciones.init(
     estado_limpiezaTanque: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_limpiezaTanque: {
@@ -107,19 +117,10 @@ Calibraciones.init(
       allowNull: false,
     },
 
-    estabilidadVerticalBotalon: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    observaciones_estabilidadVerticalBotalon: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
     estado_pastillas: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
     },
 
     observaciones_estado_pastillas: {
@@ -127,9 +128,43 @@ Calibraciones.init(
       allowNull: false,
     },
 
-    Observaciones: {
+    estabilidadVerticalBotalon: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
+    },
+
+    observaciones_estabilidadVerticalBotalon: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    presion_unimap: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    presion_computadora: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    presion_manometro: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },  
+
+    observaciones_acronex: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },    
+
+    Observaciones: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     maquina_id: {
       type: DataTypes.INTEGER,
