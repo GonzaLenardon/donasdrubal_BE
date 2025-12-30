@@ -5,24 +5,43 @@ import { db } from './src/models/index.js';
 import { router } from './src/routes/index.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
+
+app.use((req, res, next) => {
+  console.log('🌐', req.method, req.originalUrl);
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(
   cors({
     /*  origin: process.env.URL, */
+    // origin: 'http://localhost:5173',
     origin: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Authorization, Content-Type, X-Requested-With',
+    methods: 'GET,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type',
     credentials: true,
   })
 );
+// app.options(/.*/, cors());
+
 
 app.use('/', router);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(
+  '/uploads/calibraciones',
+  express.static(path.join(__dirname, 'uploads', 'calibraciones'))
+);
 
 const PORT = process.env.SERVER_PORT || 3000;
 
