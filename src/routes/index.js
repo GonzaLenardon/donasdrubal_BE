@@ -54,12 +54,16 @@ import {
   addCalibraciones,
   calibracionesMaquinas,
   updateCalibraciones,
+  uploadArchivoCalibracion,
 } from '../controllers/calibraciones.js';
+
+import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
+
 
 const router = express.Router();
 
@@ -71,7 +75,7 @@ router.get('/', (req, res) => {
   res.json({
     ok: true,
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
-    version: '1.2.0',
+    version: '1.2.5',
   });
 });
 
@@ -129,6 +133,15 @@ router.get(
   calibracionesMaquinas
 );
 router.put('/calibraciones/:calibracion_id', updateCalibraciones);
+router.post('/calibraciones/upload',  
+  (req, res, next) => {
+    console.log('Request de upload recibida');
+    next();
+  }, 
+  uploadCalibraciones.single('file'), 
+  uploadArchivoCalibracion
+);
+
 
 // ========================================
 // RUTAS PROTEGIDAS - ROLES (Solo Admin)

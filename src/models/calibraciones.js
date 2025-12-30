@@ -4,6 +4,13 @@ import db from '../config/database.js';
 
 class Calibraciones extends Model {}
 
+const estadoJSON = () => ({
+  estado: ESTADOS_CALIDAD.NO_APLICA,
+  observacion: '',
+  nombre_archivo: '',
+  path: '',
+});
+
 Calibraciones.init(
   {
     id: {
@@ -11,6 +18,10 @@ Calibraciones.init(
       primaryKey: true,
       autoIncrement: true,
     },
+    maquina_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },    
     fecha: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -20,123 +31,69 @@ Calibraciones.init(
       allowNull: false,
     },
     estado_maquina: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
-    },
-
-    observaciones_estado_maquina: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_bomba: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
-    },
-    observaciones_estado_bomba: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_agitador: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_agitador: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_filtroPrimario: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observarciones_estado_filtroPrimario: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_filtroSecundario: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,
+      defaultValue: estadoJSON,
     },
 
-    observaciones_filtroSecundario: {
-      type: DataTypes.STRING,
+    estado_filtroLinea: {
+      type: DataTypes.JSON,
       allowNull: false,
-    },
-
-    estado_FiltroLinea: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_FiltroLinea: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_manguerayconexiones: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_manguerayconexiones: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_antigoteo: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_antigoteo: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_limpiezaTanque: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_limpiezaTanque: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estado_pastillas: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estado_pastillas: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     estabilidadVerticalBotalon: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: ESTADOS_CALIDAD.NO_APLICA,  
-    },
-
-    observaciones_estabilidadVerticalBotalon: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      defaultValue: estadoJSON,
     },
 
     presion_unimap: {
@@ -165,10 +122,6 @@ Calibraciones.init(
     Observaciones: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    maquina_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
     },
     deletedAt: {
       allowNull: true,
