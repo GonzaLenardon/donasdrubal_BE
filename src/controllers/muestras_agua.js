@@ -1,4 +1,5 @@
 import { extractModelFields } from '../utils/payload.js';
+import Clientes from '../models/clientes.js';
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
 
@@ -98,10 +99,29 @@ export const getMuestrasAgua = async (req, res) => {
 export const getMuestrasAguaPozo = async (req, res) => {
   const { pozo_id } = req.params;
   try {
-    const resp = await MuestraAgua.findAll({ where: { pozo_id } });
+
+ const resp = await Pozo.findOne({
+      where: { id: pozo_id },
+      attributes: ['id', 'nombre', 'establecimiento'],
+      include: [
+        {
+          model: Clientes,
+          as: 'cliente',
+          attributes: [
+            'id',
+            'razon_social',
+            'telefono',
+          ],
+        },
+        {
+          model: MuestraAgua,
+          as: 'muestrasAgua',
+        }
+      ],
+    });    
 
     return res.status(200).json({
-      message: 'Muestras de Agua del Pozo obtenidas correctamente',
+      message: 'Muestrasa de Agua del Pozo obtenidas correctamente',
       data: resp,
     });
   } catch (error) {
@@ -133,23 +153,46 @@ export const getMuestraAguaPozo = async (req, res) => {
 export const getMuestrasAguaPozoCliente = async (req, res) => {
   const { cliente_id, pozo_id } = req.params;
   try {
-    const pozo = await Pozo.findOne({ where: { id: pozo_id, cliente_id } });
+    // const pozo = await Pozo.findOne({ where: { id: pozo_id, cliente_id } });
+
+
+const pozo = await Pozo.findOne({
+      where: { id: pozo_id, cliente_id } ,
+      attributes: ['id', 'nombre', 'establecimiento'],
+      include: [
+        {
+          model: Clientes,
+          as: 'cliente',
+          attributes: [
+            'id',
+            'razon_social',
+            'telefono',
+          ],
+        },
+        {
+          model: MuestraAgua,
+          as: 'muestrasAgua',
+        }
+      ],
+    });    
+
+
     if (!pozo) {
       return res
         .status(404)
         .json({ error: 'Pozo no encontrado para el cliente especificado' });
     }
-    const resp = await MuestraAgua.findAll({
-      where: { pozo_id },
-      include: [
-        { model: Pozo, as: 'pozo', attributes: ['nombre', 'establecimiento'] },
-      ],
-    });
+    // const resp = await MuestraAgua.findAll({
+    //   where: { pozo_id },
+    //   include: [
+    //     { model: Pozo, as: 'pozo', attributes: ['nombre', 'establecimiento'] },
+    //   ],
+    // });
 
     return res.status(200).json({
       message:
-        'Muestras de Agua del Pozo para el Cliente obtenidas correctamente',
-      data: resp,
+        'Muestrass de Agua del Pozo para el Cliente obtenidas correctamente',
+      data: pozo,
     });
   } catch (error) {
     return res.status(500).json({
