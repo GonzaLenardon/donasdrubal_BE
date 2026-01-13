@@ -1,0 +1,1 @@
+export const UPLOAD_DIR = '/home/api.donasdrubal.com.ar/public_html/uploads';
