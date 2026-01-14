@@ -75,7 +75,7 @@ router.get('/', (req, res) => {
   res.json({
     ok: true,
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
-    version: '1.2.5',
+    version: '1.2.7',
   });
 });
 
