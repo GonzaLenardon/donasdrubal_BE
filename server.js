@@ -38,10 +38,9 @@ app.use('/', router);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(
-  '/uploads',
-  express.static(path.resolve(process.env.UPLOAD_PATH))
-);
+const uploadsPath = path.join(process.cwd(), 'uploads');
+
+app.use('/uploads', express.static(uploadsPath));
 
 const PORT = process.env.SERVER_PORT || 3000;
 

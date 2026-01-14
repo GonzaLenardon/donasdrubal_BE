@@ -7,7 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // const uploadDir = path.join(__dirname, '..', 'uploads', 'calibraciones');
-const uploadDir = path.join(process.env.UPLOAD_PATH, 'calibraciones');
+const uploadPath = path.join(process.cwd(), 'uploads');
+
+
+
+const uploadDir = path.join(uploadPath, 'calibraciones');
 
 
 if (!fs.existsSync(uploadDir)) {
