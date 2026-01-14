@@ -39,8 +39,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(
-  '/uploads/calibraciones',
-  express.static(path.join(__dirname, 'uploads', 'calibraciones'))
+  '/uploads',
+  express.static(path.resolve(process.env.UPLOAD_PATH))
 );
 
 const PORT = process.env.SERVER_PORT || 3000;
