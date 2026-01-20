@@ -21,7 +21,7 @@ Calibraciones.init(
     maquina_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },    
+    },
     fecha: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -112,12 +112,12 @@ Calibraciones.init(
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
-    },  
+    },
 
     observaciones_acronex: {
       type: DataTypes.STRING,
       allowNull: true,
-    },    
+    },
 
     Observaciones: {
       type: DataTypes.STRING,
@@ -134,7 +134,7 @@ Calibraciones.init(
     tableName: 'calibraciones',
     timestamps: false,
     paranoid: true, // Activa soft delete
-  }
+  },
 );
 
 export default Calibraciones;
