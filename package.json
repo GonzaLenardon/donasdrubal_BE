@@ -1,12 +1,13 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
+  "name": "don-asdrubal-backend",
+  "version": "1.2.1",
+  "description": "Backend para gestión de calibraciones Don Asdrúbal",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js"
+    "start": "node server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -18,10 +19,13 @@
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "handlebars": "^4.7.8",
     "jsonwebtoken": "^9.0.2",
     "mariadb": "^3.4.5",
+    "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
+    "puppeteer": "^24.35.0",
     "sequelize": "^6.37.7"
   },
   "devDependencies": {

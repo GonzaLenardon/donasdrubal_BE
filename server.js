@@ -7,6 +7,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import morgan from 'morgan';  
+
+     
 
 dotenv.config();
 
@@ -52,7 +55,7 @@ const startServer = async () => {
 
     // 🔹 Luego sincronizar modelos (sin borrar datos)
     // await db.sync({ force: false });
-    await db.sync({ alter: true }); // Ajusta tablas sin borrar datos
+    await db.sync({ alter: false}); // Ajusta tablas sin borrar datos
     console.log('📦 Base de datos sincronizada.');
 
     // 🔹 Iniciar servidor Express
@@ -66,5 +69,7 @@ const startServer = async () => {
     );
   }
 };
+
+app.use(morgan('dev'));  
 
 startServer();
