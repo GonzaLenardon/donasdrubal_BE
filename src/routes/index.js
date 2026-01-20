@@ -55,6 +55,10 @@ import {
   calibracionesMaquinas,
   updateCalibraciones,
   uploadArchivoCalibracion,
+  generarPDF,
+  previsualizarPDF,
+  enviarPDFPorEmail,
+  limpiarPDFsAntiguos,
 } from '../controllers/calibraciones.js';
 
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
@@ -281,6 +285,60 @@ router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
 router.put(
   '/cliente/:cliente_id/jornadas/:jornada_id',
   jornadaController.updateJornada
+);
+
+
+// =============================================================
+// RUTAS PROTEGIDAS - GENERACION INF=ORMES PDF CALIBRACIONES
+// =============================================================
+
+/**
+ * @route   GET /api/calibraciones/:id/pdf
+ * @desc    Genera y descarga el PDF de una calibración
+ * @access  Private
+ * @query   download=true (opcional) - fuerza descarga vs retornar info
+ */
+router.get(
+  '/calibraciones/:id/pdf',
+  // authMiddleware, // Descomentar si usas autenticación
+  generarPDF
+);
+
+
+/**
+ * @route   GET /api/calibraciones/:id/preview-pdf
+ * @desc    Visualiza el PDF en el navegador
+ * @access  Private
+ */
+router.get(
+  '/calibraciones/:id/preview-pdf',
+  // authMiddleware,
+  previsualizarPDF
+);
+
+/**
+ * @route   POST /api/calibraciones/:id/email-pdf
+ * @desc    Genera y envía el PDF por email
+ * @access  Private
+ * @body    { email: string }
+ */
+router.post(
+  '/calibraciones/:id/email-pdf',
+  // authMiddleware,
+  enviarPDFPorEmail
+);
+
+/**
+ * @route   DELETE /api/calibraciones/pdfs/cleanup
+ * @desc    Limpia PDFs antiguos del servidor
+ * @access  Admin only
+ * @query   dias=30 (opcional) - días de retención
+ */
+router.delete(
+  '/calibraciones/pdfs/cleanup',
+  // authMiddleware,
+  // adminMiddleware, // Solo administradores
+  limpiarPDFsAntiguos
 );
 
 export { router };

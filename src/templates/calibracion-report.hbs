@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Calibración - {{maquina}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2c5f2d;
+        }
+
+        .header h1 {
+            color: #2c5f2d;
+            font-size: 22pt;
+            margin-bottom: 10px;
+        }
+
+        .header .empresa {
+            font-size: 14pt;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .header .fecha {
+            font-size: 10pt;
+            color: #777;
+            margin-top: 5px;
+        }
+
+        .seccion {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+
+        .seccion-titulo {
+            background-color: #2c5f2d;
+            color: white;
+            padding: 10px 15px;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .datos-generales {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-left: 4px solid #2c5f2d;
+            margin-bottom: 20px;
+        }
+
+        .datos-generales table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .datos-generales td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .datos-generales td:first-child {
+            font-weight: bold;
+            width: 40%;
+            color: #2c5f2d;
+        }
+
+        .componente {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .componente-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .componente-nombre {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .estado-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 10pt;
+            text-transform: uppercase;
+        }
+
+        .excelente {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .muy-bueno {
+            background-color: #8BC34A;
+            color: white;
+        }
+
+        .bueno {
+            background-color: #CDDC39;
+            color: #333;
+        }
+
+        .regular {
+            background-color: #FFC107;
+            color: #333;
+        }
+
+        .malo {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .revisar {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        .no-aplica {
+            background-color: #9E9E9E;
+            color: white;
+        }
+
+        .observacion {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-left: 3px solid #2c5f2d;
+            font-size: 10pt;
+            font-style: italic;
+        }
+
+        .presiones-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .presiones-table th,
+        .presiones-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .presiones-table th {
+            background-color: #2c5f2d;
+            color: white;
+            font-weight: bold;
+        }
+
+        .presiones-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .variacion-presion {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+
+        .variacion-presion.revisar {
+            background-color: #fff3e0;
+            border-left-color: #FF9800;
+        }
+
+        .observaciones-finales {
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .observaciones-finales h3 {
+            color: #2c5f2d;
+            margin-bottom: 10px;
+        }
+
+        .observaciones-finales p {
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #2c5f2d;
+            text-align: center;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .footer .responsable {
+            font-weight: bold;
+            color: #2c5f2d;
+            margin-bottom: 5px;
+        }
+
+        .recomendacion {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+
+        .recomendacion::before {
+            content: "⚠ Recomendación: ";
+            font-weight: bold;
+            color: #856404;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+            }
+            .seccion {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Diagnóstico y Puesta a Punto de Pulverizadora</h1>
+        <div class="empresa">{{empresa}}</div>
+        <div class="fecha">Fecha de calibración: {{fecha}}</div>
+    </div>
+
+    <!-- DATOS GENERALES -->
+    <div class="datos-generales">
+        <table>
+            <tr>
+                <td>Máquina:</td>
+                <td>{{maquina}}</td>
+            </tr>
+            <tr>
+                <td>Modelo:</td>
+                <td>{{modelo}}</td>
+            </tr>
+            <tr>
+                <td>Ancho de trabajo:</td>
+                <td>{{ancho_trabajo}} metros</td>
+            </tr>
+            <tr>
+                <td>Distancia entre picos:</td>
+                <td>{{distancia_picos}} m</td>
+            </tr>
+            <tr>
+                <td>Número de picos:</td>
+                <td>{{numero_picos}}</td>
+            </tr>
+            <tr>
+                <td>Responsable:</td>
+                <td>{{responsable}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- OBJETIVO -->
+    <div class="seccion">
+        <div class="seccion-titulo">OBJETIVO</div>
+        <p style="padding: 0 15px;">
+            Realizar el diagnóstico técnico de la máquina pulverizadora terrestre, con el fin de detectar 
+            puntos a mejorar para así poder lograr aplicaciones eficientes.
+        </p>
+    </div>
+
+    <!-- EVALUACIÓN DE COMPONENTES -->
+    <div class="seccion">
+        <div class="seccion-titulo">EVALUACIÓN DE COMPONENTES</div>
+
+        <!-- Estado Máquina -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">ESTADO GENERAL DE LA MÁQUINA</span>
+                <span class="estado-badge {{estado_maquina.clase}}">{{estado_maquina.estado}}</span>
+            </div>
+            {{#if estado_maquina.observacion}}
+            <div class="observacion">{{estado_maquina.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Bomba -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">FUNCIONAMIENTO DE LA BOMBA</span>
+                <span class="estado-badge {{estado_bomba.clase}}">{{estado_bomba.estado}}</span>
+            </div>
+            {{#if estado_bomba.observacion}}
+            <div class="observacion">{{estado_bomba.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Agitador -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">FUNCIONAMIENTO DEL AGITADOR</span>
+                <span class="estado-badge {{estado_agitador.clase}}">{{estado_agitador.estado}}</span>
+            </div>
+            {{#if estado_agitador.observacion}}
+            <div class="observacion">{{estado_agitador.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Filtro Primario -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">FILTRO PRIMARIO</span>
+                <span class="estado-badge {{estado_filtroPrimario.clase}}">{{estado_filtroPrimario.estado}}</span>
+            </div>
+            {{#if estado_filtroPrimario.observacion}}
+            <div class="observacion">{{estado_filtroPrimario.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Filtro Secundario -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">FILTRO SECUNDARIO</span>
+                <span class="estado-badge {{estado_filtroSecundario.clase}}">{{estado_filtroSecundario.estado}}</span>
+            </div>
+            {{#if estado_filtroSecundario.observacion}}
+            <div class="observacion">{{estado_filtroSecundario.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Filtro de Línea -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">FILTRO DE LÍNEA</span>
+                <span class="estado-badge {{estado_filtroLinea.clase}}">{{estado_filtroLinea.estado}}</span>
+            </div>
+            {{#if estado_filtroLinea.observacion}}
+            <div class="observacion">{{estado_filtroLinea.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Mangueras y Conexiones -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">MANGUERAS Y CONEXIONES</span>
+                <span class="estado-badge {{estado_manguerayconexiones.clase}}">{{estado_manguerayconexiones.estado}}</span>
+            </div>
+            {{#if estado_manguerayconexiones.observacion}}
+            <div class="observacion">{{estado_manguerayconexiones.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Antigoteo -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">COMPROBACIÓN ANTIGOTEOS</span>
+                <span class="estado-badge {{estado_antigoteo.clase}}">{{estado_antigoteo.estado}}</span>
+            </div>
+            {{#if estado_antigoteo.observacion}}
+            <div class="observacion">{{estado_antigoteo.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Limpieza Tanque -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">ESTADO DEL TANQUE / LIMPIEZA</span>
+                <span class="estado-badge {{estado_limpiezaTanque.clase}}">{{estado_limpiezaTanque.estado}}</span>
+            </div>
+            {{#if estado_limpiezaTanque.observacion}}
+            <div class="observacion">{{estado_limpiezaTanque.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Pastillas -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">ESTADO DE PASTILLAS (JARREO)</span>
+                <span class="estado-badge {{estado_pastillas.clase}}">{{estado_pastillas.estado}}</span>
+            </div>
+            {{#if estado_pastillas.observacion}}
+            <div class="observacion">{{estado_pastillas.observacion}}</div>
+            {{/if}}
+        </div>
+
+        <!-- Estabilidad Botalón -->
+        <div class="componente">
+            <div class="componente-header">
+                <span class="componente-nombre">ESTABILIDAD VERTICAL DEL BOTALÓN</span>
+                <span class="estado-badge {{estabilidadVerticalBotalon.clase}}">{{estabilidadVerticalBotalon.estado}}</span>
+            </div>
+            {{#if estabilidadVerticalBotalon.observacion}}
+            <div class="observacion">{{estabilidadVerticalBotalon.observacion}}</div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- MEDICIÓN DE PRESIONES -->
+    <div class="seccion">
+        <div class="seccion-titulo">MEDICIÓN DE PRESIONES</div>
+        
+        <table class="presiones-table">
+            <thead>
+                <tr>
+                    <th>Dispositivo</th>
+                    <th>Presión (bares)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Reloj UNIMAP</td>
+                    <td>{{presion_unimap}}</td>
+                </tr>
+                <tr>
+                    <td>Computadora de Cabina</td>
+                    <td>{{presion_computadora}}</td>
+                </tr>
+                <tr>
+                    <td>Manómetro en Botalón</td>
+                    <td>{{presion_manometro}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {{#if variacion_presion.valor}}
+        <div class="variacion-presion {{#if (eq variacion_presion.estado 'REVISAR')}}revisar{{/if}}">
+            <strong>Variación de presión entre mediciones:</strong> {{variacion_presion.valor}}%
+            <br>
+            <strong>Evaluación:</strong> {{variacion_presion.estado}}
+        </div>
+        {{/if}}
+
+        {{#if observaciones_acronex}}
+        <div class="recomendacion">
+            {{observaciones_acronex}}
+        </div>
+        {{/if}}
+    </div>
+
+    <!-- OBSERVACIONES FINALES -->
+    <div class="observaciones-finales">
+        <h3>OBSERVACIONES GENERALES</h3>
+        <p>{{observaciones_generales}}</p>
+        
+        <p style="margin-top: 20px; font-style: italic; border-top: 1px solid #ddd; padding-top: 15px;">
+            "Un buen tratamiento es realizado en forma eficaz cuando el producto se distribuye de forma 
+            uniforme y en la cantidad adecuada". Esto exige contar con un equipo adecuado, en buenas 
+            condiciones, calibrado y regulado correctamente, contribuyendo a reducir el uso de producto, 
+            reducir la contaminación, mejorar la seguridad del aplicador y reducir los niveles de residuos.
+        </p>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="responsable">{{responsable_informe}}</div>
+        <div>Don Asdrúbal S.R.L – Departamento I+D</div>
+        <div style="margin-top: 10px; font-size: 9pt;">
+            Informe generado el: {{generado}}
+        </div>
+    </div>
+</body>
+</html>

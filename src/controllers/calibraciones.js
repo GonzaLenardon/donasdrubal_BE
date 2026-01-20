@@ -3,6 +3,8 @@ import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import { extractModelFields } from '../utils/payload.js';
+import PDFService from '../services/pdfService.js';
+import path from 'path';
 
 // Lista de campos que son JSON
 const camposEstadoJSON = [
@@ -218,6 +220,158 @@ export const uploadArchivoCalibracion = async (req, res) => {
     console.error(error);
     res.status(500).json({
       message: 'Error al subir el archivo',
+    });
+  }
+};
+
+// METODOS PARA GENERAR PDF DE CALIBRACIONES//
+
+/**
+ * GET /api/calibraciones/:id/pdf
+ * Genera y descarga el PDF de una calibración
+ */
+export const generarPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { download = true } = req.query; // ?download=true para forzar descarga
+
+    // Validar que existe la calibración
+    const calibracion = await Calibraciones.findByPk(id);
+    if (!calibracion) {
+      return res.status(404).json({
+        success: false,
+        message: `Calibración con ID ${id} no encontrada`
+      });
+    }
+
+    // Generar PDF
+    const resultado = await PDFService.generarInformeCalibracion(id);
+
+    if (download === 'true' || download === true) {
+      // Descargar archivo
+      res.download(resultado.path, resultado.filename, (err) => {
+        if (err) {
+          console.error('Error al enviar archivo:', err);
+          if (!res.headersSent) {
+            res.status(500).json({
+              success: false,
+              message: 'Error al descargar el archivo PDF'
+            });
+          }
+        }
+      });
+    } else {
+      // Retornar información del archivo
+      res.json({
+        success: true,
+        message: 'PDF generado exitosamente',
+        data: {
+          filename: resultado.filename,
+          path: `/reports/${resultado.filename}`,
+          downloadUrl: `/api/calibraciones/${id}/pdf?download=true`
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Error en generarPDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al generar el PDF',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/calibraciones/:id/email-pdf
+ * Genera PDF y lo envía por email (funcionalidad futura)
+ */
+export const enviarPDFPorEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email es requerido'
+      });
+    }
+
+    // Generar PDF
+    const resultado = await PDFService.generarInformeCalibracion(id);
+
+    // TODO: Implementar servicio de email
+    // await EmailService.enviarPDF(email, resultado.path);
+
+    res.json({
+      success: true,
+      message: `PDF enviado exitosamente a ${email}`,
+      data: {
+        filename: resultado.filename
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en enviarPDFPorEmail:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al enviar PDF por email',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/calibraciones/:id/preview-pdf
+ * Visualiza el PDF en el navegador
+ */
+export const previsualizarPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Generar PDF
+    const resultado = await PDFService.generarInformeCalibracion(id);
+
+    // Configurar headers para visualización en navegador
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="' + resultado.filename + '"');
+
+    // Enviar archivo
+    res.sendFile(resultado.path);
+
+  } catch (error) {
+    console.error('Error en previsualizarPDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al previsualizar el PDF',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * DELETE /api/calibraciones/pdfs/cleanup
+ * Limpia PDFs antiguos (admin only)
+ */
+export const limpiarPDFsAntiguos = async (req, res) => {
+  try {
+    const { dias = 30 } = req.query;
+
+    await PDFService.limpiarPDFsAntiguos(parseInt(dias));
+
+    res.json({
+      success: true,
+      message: `PDFs anteriores a ${dias} días eliminados exitosamente`
+    });
+
+  } catch (error) {
+    console.error('Error en limpiarPDFsAntiguos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al limpiar PDFs antiguos',
+      error: error.message
     });
   }
 };

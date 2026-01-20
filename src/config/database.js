@@ -11,7 +11,7 @@ const db = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'mysql', // MariaDB también usa mysql2
-    logging: false,
+    logging: console.log,
     dialectOptions: {
       ssl: false,
     },
