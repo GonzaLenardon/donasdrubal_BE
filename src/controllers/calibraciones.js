@@ -19,31 +19,62 @@ const camposEstadoJSON = [
   'estabilidadVerticalBotalon',
 ];
 
-const parseJSONFields = (data) => {
-  const parsed = { ...data };
+// ✅ Función que itera sobre TODO el body
+export const parseJSONFields = (body) => {
+  const bodyParsed = { ...body };
 
-  camposEstadoJSON.forEach((campo) => {
-    if (parsed[campo]) {
-      // Si es string, parsearlo a objeto
-      if (typeof parsed[campo] === 'string') {
-        try {
-          parsed[campo] = JSON.parse(parsed[campo]);
-        } catch (error) {
-          console.warn(`Error parseando ${campo}:`, error);
-          // Si falla, establecer objeto vacío
-          parsed[campo] = {
-            estado: '',
-            observacion: '',
-            nombre_archivo: '',
-            path: '',
-          };
-        }
-      }
-      // Si ya es objeto, dejarlo como está
+  // ⭐ Iterar sobre cada campo JSON
+  for (const campo of camposEstadoJSON) {
+    if (bodyParsed[campo]) {
+      bodyParsed[campo] = parseEstadoField(bodyParsed[campo]);
     }
-  });
+  }
 
-  return parsed;
+  return bodyParsed;
+};
+
+// ✅ Función que parsea UN campo individual
+const parseEstadoField = (field) => {
+  if (typeof field === 'string') {
+    try {
+      let parsed = JSON.parse(field);
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed);
+      }
+      return normalizeEstadoObject(parsed);
+    } catch (error) {
+      return getDefaultEstado();
+    }
+  }
+  // ...
+};
+
+const normalizeEstadoObject = (obj) => {
+  return {
+    estado: obj.estado || '',
+    observacion: obj.observacion || '',
+    nombreArchivo: obj.nombreArchivo || obj.nombre_archivo || '',
+    path: obj.path || '',
+    // ✅ CRÍTICO: Asegurar array
+    recomendaciones: Array.isArray(obj.recomendaciones)
+      ? obj.recomendaciones.map(normalizeRecomendacion)
+      : [],
+  };
+};
+
+const normalizeRecomendacion = (rec) => {
+  if (typeof rec === 'object' && rec !== null) {
+    return {
+      id: rec.id || Date.now(),
+      texto: rec.texto || '',
+      fecha: rec.fecha || new Date().toISOString(),
+    };
+  }
+  return {
+    id: Date.now(),
+    texto: String(rec || ''),
+    fecha: new Date().toISOString(),
+  };
 };
 
 export const addCalibraciones = async (req, res) => {
@@ -72,34 +103,46 @@ export const updateCalibraciones = async (req, res) => {
   try {
     const { calibracion_id } = req.params;
 
+    console.log('esto llega del body', req.body);
+
     if (!calibracion_id) {
-      return res.status(400).json({ error: 'Calibración ID no proporcionado' });
+      return res.status(400).json({ error: 'ID no proporcionado' });
     }
 
-    // ✅ PASO 1: Parsear campos JSON que vienen como strings
+    // ✅ Este helper ahora maneja recomendaciones correctamente
     const bodyParsed = parseJSONFields(req.body);
 
-    console.log('Body parseado:', JSON.stringify(bodyParsed, null, 2));
+    // ✅ Validación adicional (opcional pero recomendada)
+    const camposEstado = [
+      'estado_maquina',
+      'estado_bomba',
+      'estado_agitador',
+      // ... todos los campos
+    ];
 
-    // ✅ PASO 2: Extraer solo los campos del modelo
+    for (const campo of camposEstado) {
+      if (bodyParsed[campo]) {
+        if (!Array.isArray(bodyParsed[campo].recomendaciones)) {
+          bodyParsed[campo].recomendaciones = [];
+        }
+      }
+    }
+
     const payload = extractModelFields(Calibraciones, bodyParsed);
-
-    // ✅ PASO 3: Buscar la calibración
     const calibracion = await Calibraciones.findByPk(calibracion_id);
 
     if (!calibracion) {
-      return res.status(404).json({ error: 'Calibración no encontrada' });
+      return res.status(404).json({ error: 'No encontrada' });
     }
 
-    // ✅ PASO 4: Actualizar
     const resp = await calibracion.update(payload);
 
     return res.status(200).json({
-      message: 'Calibración actualizada correctamente',
+      message: 'Actualizada correctamente',
       data: resp,
     });
   } catch (error) {
-    console.error('Error al actualizar calibración:', error);
+    console.error('Error:', error);
     return res.status(500).json({
       error: 'Error en el servidor',
       details: error.message,
