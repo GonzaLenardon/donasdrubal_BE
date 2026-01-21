@@ -9,4 +9,4 @@ build/
 npm-debug.log
 package-lock.json
 src/uploads/calibraciones/
-uploads/calibraciones/
+uploads/

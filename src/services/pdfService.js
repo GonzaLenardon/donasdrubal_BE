@@ -8,6 +8,7 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,7 +16,33 @@ const __dirname = path.dirname(__filename);
 class PDFService {
   constructor() {
     this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
-    this.outputDir = path.join(__dirname, '../../uploads/reports');
+    this.outputDir = path.join(__dirname, '../../public/reports');
+    this.registrarHelpers();
+  }
+
+  /**
+   * Registra helpers personalizados de Handlebars
+   */
+  registrarHelpers() {
+    // Helper para comparar valores (eq = equals)
+    handlebars.registerHelper('eq', function(a, b) {
+      return a === b;
+    });
+
+    // Helper para comparar "no igual" (opcional)
+    handlebars.registerHelper('ne', function(a, b) {
+      return a !== b;
+    });
+
+    // Helper para mayor que (opcional)
+    handlebars.registerHelper('gt', function(a, b) {
+      return a > b;
+    });
+
+    // Helper para menor que (opcional)
+    handlebars.registerHelper('lt', function(a, b) {
+      return a < b;
+    });
   }
 
   /**
@@ -54,7 +81,6 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
   ]
 });
 
-
       if (!calibracion) {
         throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
       }
@@ -84,6 +110,8 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
    * Prepara los datos de calibración para el template
    */
   prepararDatosTemplate(calibracion) {
+
+    console.log('Calibracion para preparar datos:', calibracion.toJSON());
     const fecha = new Date(calibracion.fecha);
     
     return {
@@ -93,13 +121,14 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
         month: '2-digit', 
         year: 'numeric' 
       }),
-      empresa: calibracion.cliente?.razon_social || 'Don Asdrúbal S.R.L',
-      maquina: calibracion.maquina?.tipo?.nombre || 'N/A',
+      empresa: calibracion.maquina?.cliente?.razon_social || 'Don Asdrúbal S.R.L',
+      maquina: calibracion.maquina?.tipo?.marca || 'N/A',
       modelo: calibracion.maquina?.tipo?.modelo || 'N/A',
-      ancho_trabajo: calibracion.maquina?.ancho_trabajo || 'N/A',
-      distancia_picos: calibracion.maquina?.distancia_picos || 'N/A',
-      numero_picos: calibracion.maquina?.numero_picos || 'N/A',
-      responsable: calibracion.responsable || 'N/A',
+      tipo: calibracion.maquina?.tipo?.tipo || 'N/A',
+      ancho_trabajo: calibracion.maquina?.ancho_trabajo || '0',
+      distancia_picos: calibracion.maquina?.distancia_entrePicos || '0',
+      numero_picos: calibracion.maquina?.numero_picos || '0',
+      responsable: calibracion.responsable,
 
       // Estados de componentes
       estado_maquina: this.formatearEstado(calibracion.estado_maquina),
@@ -174,15 +203,19 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
       calibracion.presion_manometro
     ].filter(p => p > 0);
 
-    if (presiones.length === 0) return 'N/A';
+    if (presiones.length === 0) return null;
 
     const max = Math.max(...presiones);
     const min = Math.min(...presiones);
     const variacion = ((max - min) / min * 100).toFixed(2);
 
+    const estado = variacion < 5 ? 'MUY BUENA' : variacion < 10 ? 'BUENA' : 'REVISAR';
+    const clase = variacion < 5 ? '' : variacion < 10 ? '' : 'revisar';
+
     return {
       valor: variacion,
-      estado: variacion < 5 ? 'MUY BUENA' : variacion < 10 ? 'BUENA' : 'REVISAR'
+      estado: estado,
+      clase: clase
     };
   }
 
@@ -200,7 +233,7 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
     }
   }
 
-  /**
+    /**
    * Genera el PDF usando Puppeteer
    */
   async generarPDF(html, calibracionId) {
@@ -214,10 +247,19 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
       const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
       const outputPath = path.join(this.outputDir, filename);
 
-      // Iniciar navegador
+      // Iniciar navegador con configuración para evitar conflictos
       browser = await puppeteer.launch({
         headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+        // NO usar userDataDir para evitar conflictos
       });
 
       const page = await browser.newPage();
@@ -242,7 +284,7 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
         headerTemplate: '<div></div>',
         footerTemplate: `
           <div style="font-size: 10px; text-align: center; width: 100%; color: #666;">
-            <span>Don Asdrúbal S.R.L – Departamento I+D</span>
+            <span>Don Asdrúbal S.R.L – 2026</span>
             <span style="margin-left: 20px;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></span>
           </div>
         `

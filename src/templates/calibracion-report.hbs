@@ -449,7 +449,7 @@
         </table>
 
         {{#if variacion_presion.valor}}
-        <div class="variacion-presion {{#if (eq variacion_presion.estado 'REVISAR')}}revisar{{/if}}">
+        <div class="variacion-presion {{variacion_presion.clase}}">
             <strong>Variación de presión entre mediciones:</strong> {{variacion_presion.valor}}%
             <br>
             <strong>Evaluación:</strong> {{variacion_presion.estado}}
