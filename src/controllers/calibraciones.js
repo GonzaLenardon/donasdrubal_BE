@@ -7,7 +7,7 @@ import PDFService from '../services/pdfService.js';
 import path from 'path';
 
 // Lista de campos que son JSON
-const camposEstadoJSON = [
+const CAMPOS_ESTADO_JSON = [
   'estado_maquina',
   'estado_bomba',
   'estado_agitador',
@@ -19,14 +19,37 @@ const camposEstadoJSON = [
   'estado_limpiezaTanque',
   'estado_pastillas',
   'estabilidadVerticalBotalon',
+  'mixer',
 ];
 
-// ✅ Función que itera sobre TODO el body
+// Estructura por defecto de un estado
+const ESTADO_DEFAULT = {
+  estado: '',
+  modelo: '',
+  materiales: '',
+  observacion: '',
+  nombreArchivo: '',
+  color: '',
+  numero: '',
+  presenciaORing: '',
+  path: '',
+  recomendaciones: [],
+};
+
+/**
+ * Parsea todos los campos JSON del body de la request
+ * @param {Object} body - Body de la request
+ * @returns {Object} Body con campos parseados
+ */
 export const parseJSONFields = (body) => {
+  if (!body || typeof body !== 'object') {
+    return {};
+  }
+
   const bodyParsed = { ...body };
 
-  // ⭐ Iterar sobre cada campo JSON
-  for (const campo of camposEstadoJSON) {
+  // Parsear cada campo de estado
+  for (const campo of CAMPOS_ESTADO_JSON) {
     if (bodyParsed[campo]) {
       bodyParsed[campo] = parseEstadoField(bodyParsed[campo]);
     }
@@ -35,57 +58,135 @@ export const parseJSONFields = (body) => {
   return bodyParsed;
 };
 
-// ✅ Función que parsea UN campo individual
+/**
+ * Parsea un campo individual que puede ser string JSON
+ * @param {string|Object} field - Campo a parsear
+ * @returns {Object} Campo parseado y normalizado
+ */
+
 const parseEstadoField = (field) => {
+  // Si ya es objeto, normalizar directamente
+  if (typeof field === 'object' && field !== null) {
+    return normalizeEstadoObject(field);
+  }
+
+  // Si es string, intentar parsear
   if (typeof field === 'string') {
     try {
       let parsed = JSON.parse(field);
+
+      // Parseo doble en caso de double-encoding
       if (typeof parsed === 'string') {
         parsed = JSON.parse(parsed);
       }
+
       return normalizeEstadoObject(parsed);
     } catch (error) {
+      console.warn(`⚠️ Error parseando campo:`, error.message);
       return getDefaultEstado();
     }
   }
-  // ...
+
+  // Valor no válido
+  return getDefaultEstado();
 };
 
+/**
+ * Normaliza un objeto de recomendación
+ * @param {Object|string} rec - Recomendación a normalizar
+ * @returns {Object} Recomendación normalizada
+ */
+const normalizeRecomendacion = (rec) => {
+  if (typeof rec === 'object' && rec !== null) {
+    return {
+      id: rec.id || Date.now() + Math.random(), // Evitar IDs duplicados
+      texto: rec.texto || '',
+      fecha: rec.fecha || new Date().toISOString(),
+    };
+  }
+
+  return {
+    id: Date.now() + Math.random(),
+    texto: String(rec || ''),
+    fecha: new Date().toISOString(),
+  };
+};
+
+/**
+ * Normaliza un objeto de estado componente
+ * @param {Object} obj - Objeto a normalizar
+ * @returns {Object} Objeto normalizado con todos los campos
+ */
 const normalizeEstadoObject = (obj) => {
+  if (!obj || typeof obj !== 'object') {
+    return { ...ESTADO_DEFAULT };
+  }
+
   return {
     estado: obj.estado || '',
+    modelo: obj.modelo || '', // ✅ CRÍTICO: Incluir modelo
+    materiales: obj.materiales || '', // ✅ CRÍTICO: Incluir materiales
     observacion: obj.observacion || '',
     nombreArchivo: obj.nombreArchivo || obj.nombre_archivo || '',
+    color: obj.color || '',
+    presenciaORing: obj.presenciaORing || '',
+    numero: obj.numero || '',
     path: obj.path || '',
-    // ✅ CRÍTICO: Asegurar array
     recomendaciones: Array.isArray(obj.recomendaciones)
       ? obj.recomendaciones.map(normalizeRecomendacion)
       : [],
   };
 };
 
-const normalizeRecomendacion = (rec) => {
-  if (typeof rec === 'object' && rec !== null) {
-    return {
-      id: rec.id || Date.now(),
-      texto: rec.texto || '',
-      fecha: rec.fecha || new Date().toISOString(),
-    };
+/**
+ * Retorna un objeto de estado por defecto
+ * @returns {Object} Estado por defecto
+ */
+const getDefaultEstado = () => ({ ...ESTADO_DEFAULT });
+
+/**
+ * Valida y asegura la estructura de recomendaciones
+ * @param {Object} bodyParsed - Body ya parseado
+ * @returns {Object} Body validado
+ */
+const validateRecomendaciones = (bodyParsed) => {
+  for (const campo of CAMPOS_ESTADO_JSON) {
+    if (bodyParsed[campo]) {
+      // Asegurar que recomendaciones sea array
+      if (!Array.isArray(bodyParsed[campo].recomendaciones)) {
+        bodyParsed[campo].recomendaciones = [];
+      }
+
+      // Validar cada recomendación
+      bodyParsed[campo].recomendaciones = bodyParsed[campo].recomendaciones
+        .filter((rec) => rec && rec.texto) // Eliminar vacías
+        .map(normalizeRecomendacion); // Normalizar
+    }
   }
-  return {
-    id: Date.now(),
-    texto: String(rec || ''),
-    fecha: new Date().toISOString(),
-  };
+
+  return bodyParsed;
 };
 
 export const addCalibraciones = async (req, res) => {
   try {
-    // Parsear campos JSON
-    const bodyParsed = parseJSONFields(req.body);
+    // 1. Parsear campos JSON
+    let bodyParsed = parseJSONFields(req.body);
 
+    // 2. Validar estructura
+    bodyParsed = validateRecomendaciones(bodyParsed);
+
+    // 3. Extraer solo campos del modelo
     const payload = extractModelFields(Calibraciones, bodyParsed);
 
+    // 4. Log para debugging (remover en producción)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📦 Payload a guardar:', {
+        ...payload,
+        estado_bomba: payload.estado_bomba,
+      });
+    }
+
+    // 5. Crear registro
     const nuevaCalibracion = await Calibraciones.create(payload);
 
     return res.status(201).json({
@@ -93,61 +194,67 @@ export const addCalibraciones = async (req, res) => {
       data: nuevaCalibracion,
     });
   } catch (error) {
-    console.error('Error al crear calibración:', error);
+    console.error('❌ Error al crear calibración:', error);
     return res.status(500).json({
       error: 'Error en el servidor',
-      details: error.message,
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
+/**
+ * Actualiza una calibración existente
+ */
 export const updateCalibraciones = async (req, res) => {
   try {
     const { calibracion_id } = req.params;
 
-    console.log('esto llega del body', req.body);
-
+    // 1. Validar ID
     if (!calibracion_id) {
-      return res.status(400).json({ error: 'ID no proporcionado' });
+      return res.status(400).json({
+        error: 'ID no proporcionado',
+      });
     }
 
-    // ✅ Este helper ahora maneja recomendaciones correctamente
-    const bodyParsed = parseJSONFields(req.body);
+    // 2. Parsear y validar campos JSON
+    let bodyParsed = parseJSONFields(req.body);
+    bodyParsed = validateRecomendaciones(bodyParsed);
 
-    // ✅ Validación adicional (opcional pero recomendada)
-    const camposEstado = [
-      'estado_maquina',
-      'estado_bomba',
-      'estado_agitador',
-      // ... todos los campos
-    ];
-
-    for (const campo of camposEstado) {
-      if (bodyParsed[campo]) {
-        if (!Array.isArray(bodyParsed[campo].recomendaciones)) {
-          bodyParsed[campo].recomendaciones = [];
-        }
-      }
-    }
-
+    // 3. Extraer campos del modelo
     const payload = extractModelFields(Calibraciones, bodyParsed);
+
+    // 4. Log para debugging (remover en producción)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📝 Actualizando calibración:', calibracion_id);
+      console.log('📦 Payload:', {
+        ...payload,
+        estado_bomba: payload.estado_bomba,
+      });
+    }
+
+    // 5. Buscar registro
     const calibracion = await Calibraciones.findByPk(calibracion_id);
 
     if (!calibracion) {
-      return res.status(404).json({ error: 'No encontrada' });
+      return res.status(404).json({
+        error: 'Calibración no encontrada',
+      });
     }
 
-    const resp = await calibracion.update(payload);
+    // 6. Actualizar
+    const calibracionActualizada = await calibracion.update(payload);
 
     return res.status(200).json({
-      message: 'Actualizada correctamente',
-      data: resp,
+      message: 'Calibración actualizada correctamente',
+      data: calibracionActualizada,
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error al actualizar calibración:', error);
     return res.status(500).json({
       error: 'Error en el servidor',
-      details: error.message,
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -240,7 +347,7 @@ export const generarPDF = async (req, res) => {
     if (!calibracion) {
       return res.status(404).json({
         success: false,
-        message: `Calibración con ID ${id} no encontrada`
+        message: `Calibración con ID ${id} no encontrada`,
       });
     }
 
@@ -255,7 +362,7 @@ export const generarPDF = async (req, res) => {
           if (!res.headersSent) {
             res.status(500).json({
               success: false,
-              message: 'Error al descargar el archivo PDF'
+              message: 'Error al descargar el archivo PDF',
             });
           }
         }
@@ -268,17 +375,16 @@ export const generarPDF = async (req, res) => {
         data: {
           filename: resultado.filename,
           path: `/reports/${resultado.filename}`,
-          downloadUrl: `/api/calibraciones/${id}/pdf?download=true`
-        }
+          downloadUrl: `/api/calibraciones/${id}/pdf?download=true`,
+        },
       });
     }
-
   } catch (error) {
     console.error('Error en generarPDF:', error);
     res.status(500).json({
       success: false,
       message: 'Error al generar el PDF',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -295,7 +401,7 @@ export const enviarPDFPorEmail = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'El email es requerido'
+        message: 'El email es requerido',
       });
     }
 
@@ -309,16 +415,15 @@ export const enviarPDFPorEmail = async (req, res) => {
       success: true,
       message: `PDF enviado exitosamente a ${email}`,
       data: {
-        filename: resultado.filename
-      }
+        filename: resultado.filename,
+      },
     });
-
   } catch (error) {
     console.error('Error en enviarPDFPorEmail:', error);
     res.status(500).json({
       success: false,
       message: 'Error al enviar PDF por email',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -336,17 +441,19 @@ export const previsualizarPDF = async (req, res) => {
 
     // Configurar headers para visualización en navegador
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="' + resultado.filename + '"');
+    res.setHeader(
+      'Content-Disposition',
+      'inline; filename="' + resultado.filename + '"',
+    );
 
     // Enviar archivo
     res.sendFile(resultado.path);
-
   } catch (error) {
     console.error('Error en previsualizarPDF:', error);
     res.status(500).json({
       success: false,
       message: 'Error al previsualizar el PDF',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -363,15 +470,14 @@ export const limpiarPDFsAntiguos = async (req, res) => {
 
     res.json({
       success: true,
-      message: `PDFs anteriores a ${dias} días eliminados exitosamente`
+      message: `PDFs anteriores a ${dias} días eliminados exitosamente`,
     });
-
   } catch (error) {
     console.error('Error en limpiarPDFsAntiguos:', error);
     res.status(500).json({
       success: false,
       message: 'Error al limpiar PDFs antiguos',
-      error: error.message
+      error: error.message,
     });
   }
 };

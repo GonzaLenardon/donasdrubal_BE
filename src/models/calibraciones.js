@@ -11,6 +11,15 @@ const estadoJSON = () => ({
   path: '',
 });
 
+const estadoJSONBomba = () => ({
+  estado: ESTADOS_CALIDAD.NO_APLICA,
+  observacion: '',
+  modelo: '',
+  materiales: '',
+  nombre_archivo: '',
+  path: '',
+});
+
 Calibraciones.init(
   {
     id: {
@@ -39,7 +48,7 @@ Calibraciones.init(
     estado_bomba: {
       type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: estadoJSON,
+      defaultValue: estadoJSONBomba,
     },
 
     estado_agitador: {
@@ -95,6 +104,11 @@ Calibraciones.init(
       allowNull: false,
       defaultValue: estadoJSON,
     },
+    mixer: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: estadoJSON,
+    },
 
     presion_unimap: {
       type: DataTypes.FLOAT,
@@ -112,6 +126,11 @@ Calibraciones.init(
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
+    },
+
+    secciones: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
     observaciones_acronex: {
