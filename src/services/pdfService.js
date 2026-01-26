@@ -22,7 +22,7 @@ async function lanzarBrowser() {
 
     // En Linux/Plesk usamos Chromium del sistema si existe
     executablePath: esLinux
-      ? process.env.CHROME_BIN || undefined
+      ? process.env.CHROMIUM_PATH || undefined
       : undefined,
 
     args: [
