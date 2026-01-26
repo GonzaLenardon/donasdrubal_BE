@@ -379,7 +379,7 @@
             {{/if}}
             {{#if estado_maquina.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_maquina.imagen_base64}}" alt="Estado de la máquina">
+                <img src="{{estado_maquina.imagen_url}}" alt="Estado de la máquina">
                 <div class="caption">Imagen: {{estado_maquina.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -406,7 +406,7 @@
             {{/if}}
             {{#if estado_bomba.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_bomba.imagen_base64}}" alt="Bomba de pulverización">
+                <img src="{{estado_bomba.imagen_url}}" alt="Bomba de pulverización">
                 <div class="caption">Imagen: {{estado_bomba.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -433,7 +433,7 @@
             {{/if}}
             {{#if estado_agitador.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_agitador.imagen_base64}}" alt="Agitador">
+                <img src="{{estado_agitador.imagen_url}}" alt="Agitador">
                 <div class="caption">Imagen: {{estado_agitador.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -460,7 +460,7 @@
             {{/if}}
             {{#if estado_filtroPrimario.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_filtroPrimario.imagen_base64}}" alt="Filtro Primario">
+                <img src="{{estado_filtroPrimario.imagen_url}}" alt="Filtro Primario">
                 <div class="caption">Imagen: {{estado_filtroPrimario.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -487,7 +487,7 @@
             {{/if}}
             {{#if estado_filtroSecundario.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_filtroSecundario.imagen_base64}}" alt="Filtro Secundario">
+                <img src="{{estado_filtroSecundario.imagen_url}}" alt="Filtro Secundario">
                 <div class="caption">Imagen: {{estado_filtroSecundario.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -514,7 +514,7 @@
             {{/if}}
             {{#if estado_filtroLinea.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_filtroLinea.imagen_base64}}" alt="Filtro de Línea">
+                <img src="{{estado_filtroLinea.imagen_url}}" alt="Filtro de Línea">
                 <div class="caption">Imagen: {{estado_filtroLinea.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -541,7 +541,7 @@
             {{/if}}
             {{#if estado_manguerayconexiones.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_manguerayconexiones.imagen_base64}}" alt="Mangueras y Conexiones">
+                <img src="{{estado_manguerayconexiones.imagen_url}}" alt="Mangueras y Conexiones">
                 <div class="caption">Imagen: {{estado_manguerayconexiones.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -568,7 +568,7 @@
             {{/if}}
             {{#if estado_antigoteo.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_antigoteo.imagen_base64}}" alt="Antigoteos">
+                <img src="{{estado_antigoteo.imagen_url}}" alt="Antigoteos">
                 <div class="caption">Imagen: {{estado_antigoteo.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -595,8 +595,8 @@
             {{/if}}
             {{#if estado_limpiezaTanque.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_limpiezaTanque.imagen_base64}}" alt="Tanque">
-                <div class="caption">Imagen: {{estado_limpiezaTanque.nombre_archivo}}</div>
+                <img src="{{estado_limpiezaTanque.imagen_url}}" alt="Tanque">
+                <div class="caption">Imagen: {{estado_limpiezaTanque.imagen_url}}</div>
             </div>
             {{/if}}
         </div>
@@ -622,7 +622,7 @@
             {{/if}}
             {{#if estado_pastillas.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_pastillas.imagen_base64}}" alt="Pastillas">
+                <img src="{{estado_pastillas.imagen_url}}" alt="Pastillas">
                 <div class="caption">Imagen: {{estado_pastillas.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -649,7 +649,7 @@
             {{/if}}
             {{#if estabilidadVerticalBotalon.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estabilidadVerticalBotalon.imagen_base64}}" alt="Botalón">
+                <img src="{{estabilidadVerticalBotalon.imagen_url}}" alt="Botalón">
                 <div class="caption">Imagen: {{estabilidadVerticalBotalon.nombre_archivo}}</div>
             </div>
             {{/if}}
@@ -714,7 +714,7 @@
     <!-- FOOTER -->
     <div class="footer">
         <div class="responsable">{{responsable_informe}}</div>
-        <div>Don Asdrúbal S.R.L – Departamento I+D</div>
+        <div>Don Asdrúbal S.R.L</div>
         <div style="margin-top: 10px; font-size: 9pt;">
             Informe generado el: {{generado}}
         </div>
