@@ -9,29 +9,9 @@ import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import { log } from 'console';
-import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-async function lanzarBrowser() {
-  const esLinux = os.platform() === 'linux';
-
-  return puppeteer.launch({
-    headless: 'new',
-
-    // En Linux/Plesk usamos Chromium del sistema si existe
-    executablePath: esLinux
-      ? process.env.CHROME_BIN || undefined
-      : undefined,
-
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu'
-    ]
-  });
-}
 
 class PDFService {
   constructor() {
@@ -64,8 +44,6 @@ class PDFService {
       return a < b;
     });
   }
-
-  
 
   /**
    * Genera el PDF de una calibración específica
@@ -107,20 +85,17 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
   ]
 });
 
-if (!calibracion) {
+        if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
 
         // 2. Procesar datos para el template
         const datosTemplate = this.prepararDatosTemplate(calibracion);
 
-        // 3. Cargar imágenes en base64
-        await this.cargarImagenesEstados(datosTemplate);
-
-        // 4. Generar HTML desde template
+        // 3. Generar HTML desde template
         const html = await this.generarHTML(datosTemplate);
 
-        // 5. Generar PDF con Puppeteer
+        // 4. Generar PDF con Puppeteer
         const pdfPath = await this.generarPDF(html, calibracionId);
 
         return {
@@ -150,13 +125,15 @@ if (!calibracion) {
 
     // Si llegamos aquí, todos los intentos fallaron
     throw ultimoError;
-  }
+  }// src/services/pdfService.js
+
 
   /**
    * Prepara los datos de calibración para el template
    */
   prepararDatosTemplate(calibracion) {
 
+    console.log('Calibracion para preparar datos:', calibracion.toJSON());
     const fecha = new Date(calibracion.fecha);
     
     return {
@@ -167,16 +144,15 @@ if (!calibracion) {
         year: 'numeric' 
       }),
       empresa: calibracion.maquina?.cliente?.razon_social || 'Don Asdrúbal S.R.L',
-      cliente_cuit: calibracion.maquina?.cliente?.cuil_cuit || '',
       maquina: calibracion.maquina?.tipo?.marca || 'N/A',
       modelo: calibracion.maquina?.tipo?.modelo || 'N/A',
-      tipo_maquina: calibracion.maquina?.tipo?.tipo || 'N/A',
-      ancho_trabajo: calibracion.maquina?.ancho_trabajo || 'N/A',
-      distancia_picos: calibracion.maquina?.distancia_entrePicos || 'N/A',
-      numero_picos: calibracion.maquina?.numero_picos || 'N/A',
+      tipo: calibracion.maquina?.tipo?.tipo || 'N/A',
+      ancho_trabajo: calibracion.maquina?.ancho_trabajo || '0',
+      distancia_picos: calibracion.maquina?.distancia_entrePicos || '0',
+      numero_picos: calibracion.maquina?.numero_picos || '0',
       responsable: calibracion.responsable,
 
-      // Estados de componentes (con recomendaciones e imágenes)
+      // Estados de componentes
       estado_maquina: this.formatearEstado(calibracion.estado_maquina),
       estado_bomba: this.formatearEstado(calibracion.estado_bomba),
       estado_agitador: this.formatearEstado(calibracion.estado_agitador),
@@ -218,10 +194,9 @@ if (!calibracion) {
         clase: 'no-aplica',
         observacion: '',
         tiene_archivo: false,
-        imagen_base64: '',
+        imagen_url: '',
         nombre_archivo: '',
-        recomendaciones: [],
-        tiene_recomendaciones: false
+        recomendaciones: []
       };
     }
 
@@ -251,93 +226,16 @@ if (!calibracion) {
         }))
       : [];
 
-    // Determinar si tiene archivo
-    const nombreArchivo = estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '';
-    const tieneArchivo = !!nombreArchivo;
-
     return {
       estado: estadoJSON.estado || 'NO APLICA',
       clase: claseMap[estadoJSON.estado] || 'no-aplica',
       observacion: estadoJSON.observacion || '',
-      tiene_archivo: tieneArchivo,
-      imagen_base64: '', // Se cargará después de forma asíncrona
-      nombre_archivo: nombreArchivo,
+      tiene_archivo: !!(estadoJSON.path || estadoJSON.nombreArchivo),
+      imagen_url: estadoJSON.path || '',
+      nombre_archivo: estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '',
       recomendaciones: recomendaciones,
       tiene_recomendaciones: recomendaciones.length > 0
     };
-  }
-
-  /**
-   * Convierte una imagen a base64
-   */
-  async convertirImagenABase64(nombreArchivo) {
-    if (!nombreArchivo) return '';
-
-    try {
-      const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
-      const rutaCompleta = path.join(uploadPath, nombreArchivo);
-
-      // Verificar si el archivo existe
-      try {
-        await fs.access(rutaCompleta);
-      } catch {
-        console.warn(`Imagen no encontrada: ${rutaCompleta}`);
-        return '';
-      }
-
-      // Leer el archivo
-      const imageBuffer = await fs.readFile(rutaCompleta);
-      
-      // Detectar el tipo MIME basado en la extensión
-      const extension = path.extname(nombreArchivo).toLowerCase();
-      const mimeTypes = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp',
-        '.bmp': 'image/bmp'
-      };
-      
-      const mimeType = mimeTypes[extension] || 'image/jpeg';
-      
-      // Convertir a base64
-      const base64 = imageBuffer.toString('base64');
-      return `data:${mimeType};base64,${base64}`;
-
-    } catch (error) {
-      console.error(`Error convirtiendo imagen ${nombreArchivo}:`, error);
-      return '';
-    }
-  }
-
-  /**
-   * Carga las imágenes en base64 para los estados
-   */
-  async cargarImagenesEstados(datosTemplate) {
-    const estadosConImagenes = [
-      'estado_maquina',
-      'estado_bomba',
-      'estado_agitador',
-      'estado_filtroPrimario',
-      'estado_filtroSecundario',
-      'estado_filtroLinea',
-      'estado_manguerayconexiones',
-      'estado_antigoteo',
-      'estado_limpiezaTanque',
-      'estado_pastillas',
-      'estabilidadVerticalBotalon'
-    ];
-
-    for (const estadoKey of estadosConImagenes) {
-      const estado = datosTemplate[estadoKey];
-      if (estado && estado.tiene_archivo && estado.nombre_archivo) {
-        const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
-        estado.imagen_base64 = imagenBase64;
-      }
-    }
-
-    return datosTemplate;
   }
 
   /**
@@ -380,66 +278,74 @@ if (!calibracion) {
     }
   }
 
-  /**
+    /**
    * Genera el PDF usando Puppeteer
    */
   async generarPDF(html, calibracionId) {
-  let browser;
-  let page;
+    let browser;
+    
+    try {
+      // Asegurar que existe el directorio de salida
+      await fs.mkdir(this.outputDir, { recursive: true });
 
-  try {
-    await fs.mkdir(this.outputDir, { recursive: true });
+      // Nombre del archivo
+      const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
+      const outputPath = path.join(this.outputDir, filename);
 
-    const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-    const outputPath = path.join(this.outputDir, filename);
+      // Iniciar navegador con configuración para evitar conflictos
+      browser = await puppeteer.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+        // NO usar userDataDir para evitar conflictos
+      });
 
-    // browser = await puppeteer.launch({
-    //   headless: 'new',
-    //   executablePath: process.env.CHROME_BIN || undefined,
-    //   args: [
-    //     '--no-sandbox',
-    //     '--disable-setuid-sandbox',
-    //     '--disable-gpu',
-    //     '--font-render-hinting=none'
-    //   ]
-    // });
+      const page = await browser.newPage();
+      
+      // Cargar HTML
+      await page.setContent(html, {
+        waitUntil: 'networkidle0'
+      });
 
-    // page = await browser.newPage();
-    browser = await lanzarBrowser();
-    page = await browser.newPage();
+      // Generar PDF con configuración profesional
+      await page.pdf({
+        path: outputPath,
+        format: 'A4',
+        margin: {
+          top: '20mm',
+          right: '15mm',
+          bottom: '20mm',
+          left: '15mm'
+        },
+        printBackground: true,
+        displayHeaderFooter: true,
+        headerTemplate: '<div></div>',
+        footerTemplate: `
+          <div style="font-size: 10px; text-align: center; width: 100%; color: #666;">
+            <span>Don Asdrúbal S.R.L – 2026</span>
+            <span style="margin-left: 20px;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></span>
+          </div>
+        `
+      });
 
-    await page.setContent(html, {
-      waitUntil: 'networkidle0'
-    });
+      return outputPath;
 
-    await page.pdf({
-      path: outputPath,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '15mm',
-        right: '15mm'
-      },
-      displayHeaderFooter: true,
-      headerTemplate: '<div></div>',
-      footerTemplate: `
-        <div style="font-size:10px;width:100%;text-align:center;color:#666;">
-          Don Asdrúbal S.R.L – Departamento I+D —
-          Página <span class="pageNumber"></span> de <span class="totalPages"></span>
-        </div>
-      `
-    });
-
-    return outputPath;
-
-  } finally {
-    if (page) await page.close().catch(() => {});
-    if (browser) await browser.close().catch(() => {});
+    } catch (error) {
+      console.error('Error en generación de PDF con Puppeteer:', error);
+      throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
   }
-}
-
 
   /**
    * Elimina PDFs antiguos (opcional - limpieza)
@@ -461,45 +367,6 @@ if (!calibracion) {
       }
     } catch (error) {
       console.error('Error limpiando PDFs antiguos:', error);
-    }
-  }
-
-  /**
-   * Limpia directorios temporales de Puppeteer
-   */
-  async limpiarDirectoriosTemporales() {
-    try {
-      const tmpDir = path.join(__dirname, '../../tmp');
-      
-      // Verificar si existe el directorio
-      try {
-        await fs.access(tmpDir);
-      } catch {
-        return; // No existe, no hay nada que limpiar
-      }
-
-      const archivos = await fs.readdir(tmpDir);
-      const ahora = Date.now();
-      const unMinuto = 60 * 1000;
-
-      for (const archivo of archivos) {
-        if (archivo.startsWith('puppeteer_')) {
-          const rutaArchivo = path.join(tmpDir, archivo);
-          try {
-            const stats = await fs.stat(rutaArchivo);
-            
-            // Eliminar directorios temporales de más de 1 minuto
-            if (ahora - stats.mtimeMs > unMinuto) {
-              await fs.rm(rutaArchivo, { recursive: true, force: true });
-              console.log(`Directorio temporal eliminado: ${archivo}`);
-            }
-          } catch (err) {
-            console.error(`Error procesando ${archivo}:`, err.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error limpiando directorios temporales:', error);
     }
   }
 }
