@@ -1,6 +1,8 @@
 // src/services/pdfService.js
-import puppeteer from 'puppeteer';
-import handlebars from 'handlebars';
+// import puppeteer from 'puppeteer';
+// import handlebars from 'handlebars';
+// import os from 'os';
+
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,64 +10,19 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import pdfServicePdfLib from './pdfServicePdfLib.js';
 import { log } from 'console';
-import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function lanzarBrowser() {
-  const esLinux = os.platform() === 'linux';
 
-  return puppeteer.launch({
-    headless: 'new',
-
-    // En Linux/Plesk usamos Chromium del sistema si existe
-    executablePath: esLinux
-      ? process.env.CHROMIUM_PATH || undefined
-      : undefined,
-
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu'
-    ]
-  });
-}
 
 class PDFService {
   constructor() {
-    this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
+    // this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
     this.outputDir = path.join(__dirname, '../../public/reports');
-    this.registrarHelpers();
   }
-
-  /**
-   * Registra helpers personalizados de Handlebars
-   */
-  registrarHelpers() {
-    // Helper para comparar valores (eq = equals)
-    handlebars.registerHelper('eq', function(a, b) {
-      return a === b;
-    });
-
-    // Helper para comparar "no igual" (opcional)
-    handlebars.registerHelper('ne', function(a, b) {
-      return a !== b;
-    });
-
-    // Helper para mayor que (opcional)
-    handlebars.registerHelper('gt', function(a, b) {
-      return a > b;
-    });
-
-    // Helper para menor que (opcional)
-    handlebars.registerHelper('lt', function(a, b) {
-      return a < b;
-    });
-  }
-
-  
 
   /**
    * Genera el PDF de una calibración específica
@@ -110,6 +67,7 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
 if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
+        console.log('Calibración encontrada:', calibracion.toJSON());
 
         // 2. Procesar datos para el template
         const datosTemplate = this.prepararDatosTemplate(calibracion);
@@ -117,11 +75,25 @@ if (!calibracion) {
         // 3. Cargar imágenes en base64
         await this.cargarImagenesEstados(datosTemplate);
 
-        // 4. Generar HTML desde template
-        const html = await this.generarHTML(datosTemplate);
+        // 4. Generar PDF con pdf-lib
+        const pdfPath = await pdfServicePdfLib.generarInformeCalibracion({
+          ...datosTemplate,
 
-        // 5. Generar PDF con Puppeteer
-        const pdfPath = await this.generarPDF(html, calibracionId);
+        // Normalizamos estructura para pdf-lib
+          componentes: [
+            { titulo: 'Estado general de la máquina', ...datosTemplate.estado_maquina },
+            { titulo: 'Bomba', ...datosTemplate.estado_bomba },
+            { titulo: 'Agitador', ...datosTemplate.estado_agitador },
+            { titulo: 'Filtro primario', ...datosTemplate.estado_filtroPrimario },
+            { titulo: 'Filtro secundario', ...datosTemplate.estado_filtroSecundario },
+            { titulo: 'Filtro de línea', ...datosTemplate.estado_filtroLinea },
+            { titulo: 'Mangueras y conexiones', ...datosTemplate.estado_manguerayconexiones },
+            { titulo: 'Sistema antigoteo', ...datosTemplate.estado_antigoteo },
+            { titulo: 'Limpieza de tanque', ...datosTemplate.estado_limpiezaTanque },
+            { titulo: 'Pastillas', ...datosTemplate.estado_pastillas },
+            { titulo: 'Estabilidad vertical del botalón', ...datosTemplate.estabilidadVerticalBotalon },
+          ]
+        });
 
         return {
           success: true,
@@ -268,6 +240,24 @@ if (!calibracion) {
   }
 
   /**
+   * Convierte una imagen a buffer
+   */
+async convertirImagenABuffer(nombreArchivo) {
+  if (!nombreArchivo) return null;
+
+  const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
+  const rutaCompleta = path.join(uploadPath, nombreArchivo);
+
+  try {
+    await fs.access(rutaCompleta);
+    return await fs.readFile(rutaCompleta);
+  } catch {
+    return null;
+  }
+}
+
+
+  /**
    * Convierte una imagen a base64
    */
   async convertirImagenABase64(nombreArchivo) {
@@ -334,6 +324,7 @@ if (!calibracion) {
       if (estado && estado.tiene_archivo && estado.nombre_archivo) {
         const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
         estado.imagen_base64 = imagenBase64;
+        estado.imagen_buffer = await this.convertirImagenABuffer(estado.nombre_archivo);
       }
     }
 
@@ -366,79 +357,9 @@ if (!calibracion) {
     };
   }
 
-  /**
-   * Genera HTML desde el template Handlebars
-   */
-  async generarHTML(datos) {
-    try {
-      const templateContent = await fs.readFile(this.templatePath, 'utf-8');
-      const template = handlebars.compile(templateContent);
-      return template(datos);
-    } catch (error) {
-      console.error('Error generando HTML:', error);
-      throw new Error('Error al procesar template HTML');
-    }
-  }
 
-  /**
-   * Genera el PDF usando Puppeteer
-   */
-  async generarPDF(html, calibracionId) {
-  let browser;
-  let page;
 
-  try {
-    await fs.mkdir(this.outputDir, { recursive: true });
 
-    const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-    const outputPath = path.join(this.outputDir, filename);
-
-    // browser = await puppeteer.launch({
-    //   headless: 'new',
-    //   executablePath: process.env.CHROME_BIN || undefined,
-    //   args: [
-    //     '--no-sandbox',
-    //     '--disable-setuid-sandbox',
-    //     '--disable-gpu',
-    //     '--font-render-hinting=none'
-    //   ]
-    // });
-
-    // page = await browser.newPage();
-    browser = await lanzarBrowser();
-    page = await browser.newPage();
-
-    await page.setContent(html, {
-      waitUntil: 'networkidle0'
-    });
-
-    await page.pdf({
-      path: outputPath,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '15mm',
-        right: '15mm'
-      },
-      displayHeaderFooter: true,
-      headerTemplate: '<div></div>',
-      footerTemplate: `
-        <div style="font-size:10px;width:100%;text-align:center;color:#666;">
-          Don Asdrúbal S.R.L – Departamento I+D —
-          Página <span class="pageNumber"></span> de <span class="totalPages"></span>
-        </div>
-      `
-    });
-
-    return outputPath;
-
-  } finally {
-    if (page) await page.close().catch(() => {});
-    if (browser) await browser.close().catch(() => {});
-  }
-}
 
 
   /**
@@ -464,44 +385,7 @@ if (!calibracion) {
     }
   }
 
-  /**
-   * Limpia directorios temporales de Puppeteer
-   */
-  async limpiarDirectoriosTemporales() {
-    try {
-      const tmpDir = path.join(__dirname, '../../tmp');
-      
-      // Verificar si existe el directorio
-      try {
-        await fs.access(tmpDir);
-      } catch {
-        return; // No existe, no hay nada que limpiar
-      }
 
-      const archivos = await fs.readdir(tmpDir);
-      const ahora = Date.now();
-      const unMinuto = 60 * 1000;
-
-      for (const archivo of archivos) {
-        if (archivo.startsWith('puppeteer_')) {
-          const rutaArchivo = path.join(tmpDir, archivo);
-          try {
-            const stats = await fs.stat(rutaArchivo);
-            
-            // Eliminar directorios temporales de más de 1 minuto
-            if (ahora - stats.mtimeMs > unMinuto) {
-              await fs.rm(rutaArchivo, { recursive: true, force: true });
-              console.log(`Directorio temporal eliminado: ${archivo}`);
-            }
-          } catch (err) {
-            console.error(`Error procesando ${archivo}:`, err.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error limpiando directorios temporales:', error);
-    }
-  }
 }
 
 export default new PDFService();
