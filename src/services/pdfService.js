@@ -91,6 +91,7 @@ if (!calibracion) {
             { titulo: 'Sistema antigoteo', ...datosTemplate.estado_antigoteo },
             { titulo: 'Limpieza de tanque', ...datosTemplate.estado_limpiezaTanque },
             { titulo: 'Pastillas', ...datosTemplate.estado_pastillas },
+            { titulo: 'Mixer', ...datosTemplate.mixer },
             { titulo: 'Estabilidad vertical del botalón', ...datosTemplate.estabilidadVerticalBotalon },
           ]
         });
@@ -159,12 +160,17 @@ if (!calibracion) {
       estado_antigoteo: this.formatearEstado(calibracion.estado_antigoteo),
       estado_limpiezaTanque: this.formatearEstado(calibracion.estado_limpiezaTanque),
       estado_pastillas: this.formatearEstado(calibracion.estado_pastillas),
+      estado_mixer: this.formatearEstado(calibracion.mixer),
       estabilidadVerticalBotalon: this.formatearEstado(calibracion.estabilidadVerticalBotalon),
 
       // Mediciones de presión
       presion_unimap: calibracion.presion_unimap?.toFixed(2) || '0.00',
       presion_computadora: calibracion.presion_computadora?.toFixed(2) || '0.00',
       presion_manometro: calibracion.presion_manometro?.toFixed(2) || '0.00',
+
+      secciones: calibracion.secciones
+        ? JSON.parse(calibracion.secciones)
+        : {},
 
       // Observaciones
       observaciones_acronex: calibracion.observaciones_acronex || 'Sin observaciones',
@@ -186,15 +192,28 @@ if (!calibracion) {
     console.log('Formateando estado:', estadoJSON);
     if (!estadoJSON || typeof estadoJSON !== 'object') {
       return {
-        estado: 'NO APLICA',
-        clase: 'no-aplica',
-        observacion: '',
-        tiene_archivo: false,
+        estado: estadoJSON.estado || 'NO APLICA',
+        clase: claseMap[estadoJSON.estado] || 'no-aplica',
+
+        // 🔹 NUEVOS CAMPOS
+        color: estadoJSON.color || '',
+        modelo: estadoJSON.modelo || '',
+        numero: estadoJSON.numero || '',
+        materiales: estadoJSON.materiales || '',
+        presenciaORing: estadoJSON.presenciaORing || '',
+        valor_medido: estadoJSON.valor_medido || '',
+
+        observacion: estadoJSON.observacion || '',
+
+        tiene_archivo: tieneArchivo,
         imagen_base64: '',
-        nombre_archivo: '',
-        recomendaciones: [],
-        tiene_recomendaciones: false
+        imagen_buffer: null,
+        nombre_archivo: nombreArchivo,
+
+        recomendaciones,
+        tiene_recomendaciones: recomendaciones.length > 0
       };
+
     }
 
     const claseMap = {
@@ -316,6 +335,7 @@ async convertirImagenABuffer(nombreArchivo) {
       'estado_antigoteo',
       'estado_limpiezaTanque',
       'estado_pastillas',
+      'estado_mixer',
       'estabilidadVerticalBotalon'
     ];
 

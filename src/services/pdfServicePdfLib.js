@@ -18,6 +18,9 @@ class PDFServicePdfLib {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+    this.font = font;
+    this.fontBold = fontBold;
+
     let page = pdfDoc.addPage();
     let { height } = page.getSize();
 
@@ -144,6 +147,36 @@ class PDFServicePdfLib {
     });
     y -= 16;
 
+const detalles = [];
+
+if (estado.modelo) detalles.push(`Modelo: ${estado.modelo}`);
+if (estado.materiales) detalles.push(`Material: ${estado.materiales}`);
+if (estado.color) detalles.push(`Color: ${estado.color}`);
+if (estado.numero) detalles.push(`N°: ${estado.numero}`);
+if (estado.presenciaORing)
+  detalles.push(`O-Ring: ${estado.presenciaORing}`);
+
+if (detalles.length) {
+  page.drawText(detalles.join(' | '), {
+    x: 50,
+    y,
+    size: 10,
+    font
+  });
+  y -= 14;
+}
+
+if (estado.valor_medido) {
+  page.drawText(`Valor medido: ${estado.valor_medido}`, {
+    x: 50,
+    y,
+    size: 10,
+    font
+  });
+  y -= 14;
+}
+
+
     if (estado.observacion) {
       y = this.drawSection(page, 'Observaciones', estado.observacion, y, font, fontBold);
     }
@@ -185,7 +218,7 @@ class PDFServicePdfLib {
     return y;
   }
 
-  drawTablaPresiones(page, datos, y, font) {
+  drawTablaPresiones(page, datos, y, font, fontBold) {
     const rows = [
       ['Reloj UNIMAP', datos.presion_unimap],
       ['Computadora', datos.presion_computadora],
@@ -197,6 +230,28 @@ class PDFServicePdfLib {
       page.drawText(`${value} bar`, { x: 250, y, size: 11, font });
       y -= 16;
     }
+
+if (datos.secciones && Object.keys(datos.secciones).length) {
+  y = this.drawSection(
+    page,
+    'PRESIÓN POR SECCIONES',
+    '',
+    y,
+    font,
+    fontBold
+  );
+
+  for (const [sec, val] of Object.entries(datos.secciones)) {
+    page.drawText(`Sección ${sec}: ${val} bar`, {
+      x: 60,
+      y,
+      size: 11,
+      font
+    });
+    y -= 14;
+  }
+}
+    
 
     return y;
   }
