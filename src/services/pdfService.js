@@ -3,409 +3,187 @@
 // import handlebars from 'handlebars';
 // import os from 'os';
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import axios from 'axios';
 import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
-import pdfServicePdfLib from './pdfServicePdfLib.js';
-import { log } from 'console';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const BASE_URL = 'https://donasdrubal.com.ar';
+const BASE_URL = 'http://localhost:3000';
+const pdfAxios = axios.create(); // sin interceptores
 
-
-
+function normalizarImagen(nombreArchivo) {
+  if (!nombreArchivo) return null;
+  return `${BASE_URL}/uploads/calibraciones/${nombreArchivo}`;
+}
 class PDFService {
   constructor() {
     // this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
-    this.outputDir = path.join(__dirname, '../../public/reports');
+    // this.outputDir = path.join(__dirname, '../../public/reports');
   }
 
   /**
    * Genera el PDF de una calibración específica
    */
- async generarInformeCalibracion(calibracionId) {
+  async generarInformeCalibracion(calibracionId) {
     const maxReintentos = 3;
     let ultimoError;
 
     for (let intento = 1; intento <= maxReintentos; intento++) {
       try {
         // 1. Obtener datos de la calibración con relaciones
-const calibracion = await Calibraciones.findByPk(calibracionId, {
-  minifyAliases: true,
-    include: [
-    {
-      model: Maquinas,
-      as: 'maquina',
-      attributes: [
-        'id',
-        'ancho_trabajo',
-        'distancia_entrePicos',
-        'numero_picos',
-        'tipo_maquina',
-        'cliente_id'
-      ],
-      include: [
-        {
-          model: MaquinaTipo,
-          as: 'tipo',
-          attributes: ['id', 'tipo', 'marca', 'modelo']
-        },
-        {
-          model: Clientes,
-          as: 'cliente',
-          attributes: ['id', 'razon_social', 'cuil_cuit']
-        }
-      ]
-    }
-  ]
-});
+        const calibracion = await Calibraciones.findByPk(calibracionId, {
+          minifyAliases: true,
+          include: [
+            {
+              model: Maquinas,
+              as: 'maquina',
+              attributes: [
+                'id',
+                'ancho_trabajo',
+                'distancia_entrePicos',
+                'numero_picos',
+                'tipo_maquina',
+                'cliente_id'
+              ],
+              include: [
+                {
+                  model: MaquinaTipo,
+                  as: 'tipo',
+                  attributes: ['id', 'tipo', 'marca', 'modelo']
+                },
+                {
+                  model: Clientes,
+                  as: 'cliente',
+                  attributes: ['id', 'razon_social', 'cuil_cuit']
+                }
+              ]
+            }
+          ]
+        });
 
-if (!calibracion) {
+        if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
         console.log('Calibración encontrada:', calibracion.toJSON());
 
-        // 2. Procesar datos para el template
-        const datosTemplate = this.prepararDatosTemplate(calibracion);
+        const datos = this.prepararDatos(calibracion);
+        console.log('JSON ENVIADO A PHP:', JSON.stringify(datos, null, 2));
 
-        // 3. Cargar imágenes en base64
-        await this.cargarImagenesEstados(datosTemplate);
+        return await this.generarPDFviaPHP(datos);
 
-        // 4. Generar PDF con pdf-lib
-        const pdfPath = await pdfServicePdfLib.generarInformeCalibracion({
-          ...datosTemplate,
 
-        // Normalizamos estructura para pdf-lib
-          componentes: [
-            { titulo: 'Estado general de la máquina', ...datosTemplate.estado_maquina },
-            { titulo: 'Bomba', ...datosTemplate.estado_bomba },
-            { titulo: 'Agitador', ...datosTemplate.estado_agitador },
-            { titulo: 'Filtro primario', ...datosTemplate.estado_filtroPrimario },
-            { titulo: 'Filtro secundario', ...datosTemplate.estado_filtroSecundario },
-            { titulo: 'Filtro de línea', ...datosTemplate.estado_filtroLinea },
-            { titulo: 'Mangueras y conexiones', ...datosTemplate.estado_manguerayconexiones },
-            { titulo: 'Sistema antigoteo', ...datosTemplate.estado_antigoteo },
-            { titulo: 'Limpieza de tanque', ...datosTemplate.estado_limpiezaTanque },
-            { titulo: 'Pastillas', ...datosTemplate.estado_pastillas },
-            { titulo: 'Mixer', ...datosTemplate.mixer },
-            { titulo: 'Estabilidad vertical del botalón', ...datosTemplate.estabilidadVerticalBotalon },
-          ]
-        });
-
-        return {
-          success: true,
-          path: pdfPath,
-          filename: path.basename(pdfPath)
-        };
+        // return {
+        //   success: true,
+        //   path: pdfPath,
+        //   filename: path.basename(pdfPath)
+        // };
 
       } catch (error) {
-        ultimoError = error;
-        console.error(`Error en intento ${intento}/${maxReintentos}:`, error.message);
-        
-        // Si es un error de navegador en uso, esperar y reintentar
-        if (error.message.includes('browser is already running')) {
-          if (intento < maxReintentos) {
-            const tiempoEspera = intento * 1000; // 1s, 2s, 3s
-            console.log(`Esperando ${tiempoEspera}ms antes de reintentar...`);
-            await new Promise(resolve => setTimeout(resolve, tiempoEspera));
-            continue;
-          }
-        }
-        
-        // Si es otro tipo de error, lanzarlo inmediatamente
+        console.error(`Error al generar el PDF`, error.message);
         throw error;
       }
-    }
-
-    // Si llegamos aquí, todos los intentos fallaron
-    throw ultimoError;
+    }  
   }
 
-  /**
-   * Prepara los datos de calibración para el template
-   */
-  prepararDatosTemplate(calibracion) {
+prepararDatos(calibracion) {
+  const c = calibracion.toJSON();
 
-    const fecha = new Date(calibracion.fecha);
-    
-    return {
-      // Datos generales
-      fecha: fecha.toLocaleDateString('es-AR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      }),
-      empresa: calibracion.maquina?.cliente?.razon_social || 'Don Asdrúbal S.R.L',
-      cliente_cuit: calibracion.maquina?.cliente?.cuil_cuit || '',
-      maquina: calibracion.maquina?.tipo?.marca || 'N/A',
-      modelo: calibracion.maquina?.tipo?.modelo || 'N/A',
-      tipo_maquina: calibracion.maquina?.tipo?.tipo || 'N/A',
-      ancho_trabajo: calibracion.maquina?.ancho_trabajo || 'N/A',
-      distancia_picos: calibracion.maquina?.distancia_entrePicos || 'N/A',
-      numero_picos: calibracion.maquina?.numero_picos || 'N/A',
-      responsable: calibracion.responsable,
+const normalizarEstado = (e = {}) => ({
+  estado: e.estado || 'NO APLICA',
+  observacion: e.observacion || '',
+  color: e.color || '',
+  numero: e.numero || '',
+  modelo: e.modelo || '',
+  materiales: e.materiales || '',
+  presenciaORing: e.presenciaORing || '',
 
-      // Estados de componentes (con recomendaciones e imágenes)
-      estado_maquina: this.formatearEstado(calibracion.estado_maquina),
-      estado_bomba: this.formatearEstado(calibracion.estado_bomba),
-      estado_agitador: this.formatearEstado(calibracion.estado_agitador),
-      estado_filtroPrimario: this.formatearEstado(calibracion.estado_filtroPrimario),
-      estado_filtroSecundario: this.formatearEstado(calibracion.estado_filtroSecundario),
-      estado_filtroLinea: this.formatearEstado(calibracion.estado_filtroLinea),
-      estado_manguerayconexiones: this.formatearEstado(calibracion.estado_manguerayconexiones),
-      estado_antigoteo: this.formatearEstado(calibracion.estado_antigoteo),
-      estado_limpiezaTanque: this.formatearEstado(calibracion.estado_limpiezaTanque),
-      estado_pastillas: this.formatearEstado(calibracion.estado_pastillas),
-      estado_mixer: this.formatearEstado(calibracion.mixer),
-      estabilidadVerticalBotalon: this.formatearEstado(calibracion.estabilidadVerticalBotalon),
+  imagen: normalizarImagen(e.nombreArchivo),
 
-      // Mediciones de presión
-      presion_unimap: calibracion.presion_unimap?.toFixed(2) || '0.00',
-      presion_computadora: calibracion.presion_computadora?.toFixed(2) || '0.00',
-      presion_manometro: calibracion.presion_manometro?.toFixed(2) || '0.00',
+  recomendaciones: Array.isArray(e.recomendaciones)
+    ? e.recomendaciones.map(r => ({
+        texto: r.texto || r.recomendacion || '',
+        prioridad: r.prioridad || 'media'
+      }))
+    : []
+});
 
-      secciones: calibracion.secciones
-        ? JSON.parse(calibracion.secciones)
-        : {},
 
-      // Observaciones
-      observaciones_acronex: calibracion.observaciones_acronex || 'Sin observaciones',
-      observaciones_generales: calibracion.Observaciones || 'Sin observaciones adicionales',
-
-      // Calcular variación de presión
-      variacion_presion: this.calcularVariacionPresion(calibracion),
-      
-      // Metadata
-      generado: new Date().toLocaleString('es-AR'),
-      responsable_informe: 'Ing. Agr. Montiel, Franco Mat: 82-2-1666'
-    };
-  }
-
-  /**
-   * Formatea el estado JSON de cada componente
-   */
-  formatearEstado(estadoJSON) {
-    console.log('Formateando estado:', estadoJSON);
-    if (!estadoJSON || typeof estadoJSON !== 'object') {
-      return {
-        estado: estadoJSON.estado || 'NO APLICA',
-        clase: claseMap[estadoJSON.estado] || 'no-aplica',
-
-        // 🔹 NUEVOS CAMPOS
-        color: estadoJSON.color || '',
-        modelo: estadoJSON.modelo || '',
-        numero: estadoJSON.numero || '',
-        materiales: estadoJSON.materiales || '',
-        presenciaORing: estadoJSON.presenciaORing || '',
-        valor_medido: estadoJSON.valor_medido || '',
-
-        observacion: estadoJSON.observacion || '',
-
-        tiene_archivo: tieneArchivo,
-        imagen_base64: '',
-        imagen_buffer: null,
-        nombre_archivo: nombreArchivo,
-
-        recomendaciones,
-        tiene_recomendaciones: recomendaciones.length > 0
-      };
-
-    }
-
-    const claseMap = {
-      'EXCELENTE': 'excelente',
-      'Excelente': 'excelente',
-      'MUY BUENO': 'muy-bueno',
-      'Muy bueno': 'muy-bueno',
-      'BUENO': 'bueno',
-      'Bueno': 'bueno',
-      'REGULAR': 'regular',
-      'Regular': 'regular',
-      'MALO': 'malo',
-      'Malo': 'malo',
-      'REVISAR': 'revisar',
-      'Revisar': 'revisar',
-      'NO APLICA': 'no-aplica',
-      'No aplica': 'no-aplica'
-    };
-
-    // Procesar recomendaciones
-    const recomendaciones = Array.isArray(estadoJSON.recomendaciones) 
-      ? estadoJSON.recomendaciones.map((rec, index) => ({
-          numero: index + 1,
-          texto: rec.texto || rec.recomendacion || rec.descripcion || '',
-          prioridad: rec.prioridad || 'media'
-        }))
-      : [];
-
-    // Determinar si tiene archivo
-    const nombreArchivo = estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '';
-    const tieneArchivo = !!nombreArchivo;
-
-    return {
-      estado: estadoJSON.estado || 'NO APLICA',
-      clase: claseMap[estadoJSON.estado] || 'no-aplica',
-      observacion: estadoJSON.observacion || '',
-      tiene_archivo: tieneArchivo,
-      imagen_base64: '', // Se cargará después de forma asíncrona
-      nombre_archivo: nombreArchivo,
-      recomendaciones: recomendaciones,
-      tiene_recomendaciones: recomendaciones.length > 0
-    };
-  }
-
-  /**
-   * Convierte una imagen a buffer
-   */
-async convertirImagenABuffer(nombreArchivo) {
-  if (!nombreArchivo) return null;
-
-  const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
-  const rutaCompleta = path.join(uploadPath, nombreArchivo);
-
+  // Presiones por sección
+  let secciones = [];
   try {
-    await fs.access(rutaCompleta);
-    return await fs.readFile(rutaCompleta);
+    const parsed = JSON.parse(c.secciones || '{}');
+    secciones = Object.entries(parsed).map(([k, v]) => ({
+      seccion: k,
+      presion: v
+    }));
   } catch {
-    return null;
+    secciones = [];
   }
+
+  return {
+    id: c.id,
+    fecha: c.fecha,
+    responsable: c.responsable,
+
+    cliente: {
+      razon_social: c.maquina?.cliente?.razon_social || '',
+      cuil_cuit: c.maquina?.cliente?.cuil_cuit || ''
+    },
+
+    maquina: {
+      tipo: c.maquina?.tipo?.tipo || '',
+      marca: c.maquina?.tipo?.marca || '',
+      modelo: c.maquina?.tipo?.modelo || '',
+      ancho_trabajo: c.maquina?.ancho_trabajo || 0,
+      distancia_picos: c.maquina?.distancia_entrePicos || 0,
+      numero_picos: c.maquina?.numero_picos || 0
+    },
+
+    estados: {
+      maquina: normalizarEstado(c.estado_maquina),
+      bomba: normalizarEstado(c.estado_bomba),
+      agitador: normalizarEstado(c.estado_agitador),
+      filtro_primario: normalizarEstado(c.estado_filtroPrimario),
+      filtro_secundario: normalizarEstado(c.estado_filtroSecundario),
+      filtro_linea: normalizarEstado(c.estado_filtroLinea),
+      mangueras: normalizarEstado(c.estado_manguerayconexiones),
+      antigoteo: normalizarEstado(c.estado_antigoteo),
+      limpieza_tanque: normalizarEstado(c.estado_limpiezaTanque),
+      pastillas: normalizarEstado(c.estado_pastillas),
+      botalon: normalizarEstado(c.estabilidadVerticalBotalon),
+      mixer: normalizarEstado(c.mixer)
+    },
+
+    presiones: {
+      unimap: c.presion_unimap || 0,
+      computadora: c.presion_computadora || 0,
+      manometro: c.presion_manometro || 0,
+      secciones
+    },
+
+    observaciones: {
+      acronex: c.observaciones_acronex || '',
+      generales: c.Observaciones || ''
+    }
+  };
 }
 
 
-  /**
-   * Convierte una imagen a base64
-   */
-  async convertirImagenABase64(nombreArchivo) {
-    if (!nombreArchivo) return '';
+  async generarPDFviaPHP(datos) {
+    const PHP_PDF_URL =
+  'http://127.0.0.1:8080/donasdrubal_be/pdf_services/generar_pdf_calibracion.php';
+  console.log('➡️ Llamando a PHP:', PHP_PDF_URL);
 
-    try {
-      const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
-      const rutaCompleta = path.join(uploadPath, nombreArchivo);
+    const response = await pdfAxios.get(
+      PHP_PDF_URL,
+      datos,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
 
-      // Verificar si el archivo existe
-      try {
-        await fs.access(rutaCompleta);
-      } catch {
-        console.warn(`Imagen no encontrada: ${rutaCompleta}`);
-        return '';
-      }
-
-      // Leer el archivo
-      const imageBuffer = await fs.readFile(rutaCompleta);
-      
-      // Detectar el tipo MIME basado en la extensión
-      const extension = path.extname(nombreArchivo).toLowerCase();
-      const mimeTypes = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp',
-        '.bmp': 'image/bmp'
-      };
-      
-      const mimeType = mimeTypes[extension] || 'image/jpeg';
-      
-      // Convertir a base64
-      const base64 = imageBuffer.toString('base64');
-      return `data:${mimeType};base64,${base64}`;
-
-    } catch (error) {
-      console.error(`Error convirtiendo imagen ${nombreArchivo}:`, error);
-      return '';
-    }
+    return response.data;
   }
-
-  /**
-   * Carga las imágenes en base64 para los estados
-   */
-  async cargarImagenesEstados(datosTemplate) {
-    const estadosConImagenes = [
-      'estado_maquina',
-      'estado_bomba',
-      'estado_agitador',
-      'estado_filtroPrimario',
-      'estado_filtroSecundario',
-      'estado_filtroLinea',
-      'estado_manguerayconexiones',
-      'estado_antigoteo',
-      'estado_limpiezaTanque',
-      'estado_pastillas',
-      'estado_mixer',
-      'estabilidadVerticalBotalon'
-    ];
-
-    for (const estadoKey of estadosConImagenes) {
-      const estado = datosTemplate[estadoKey];
-      if (estado && estado.tiene_archivo && estado.nombre_archivo) {
-        const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
-        estado.imagen_base64 = imagenBase64;
-        estado.imagen_buffer = await this.convertirImagenABuffer(estado.nombre_archivo);
-      }
-    }
-
-    return datosTemplate;
-  }
-
-  /**
-   * Calcula la variación de presión entre mediciones
-   */
-  calcularVariacionPresion(calibracion) {
-    const presiones = [
-      calibracion.presion_unimap,
-      calibracion.presion_computadora,
-      calibracion.presion_manometro
-    ].filter(p => p > 0);
-
-    if (presiones.length === 0) return null;
-
-    const max = Math.max(...presiones);
-    const min = Math.min(...presiones);
-    const variacion = ((max - min) / min * 100).toFixed(2);
-
-    const estado = variacion < 5 ? 'MUY BUENA' : variacion < 10 ? 'BUENA' : 'REVISAR';
-    const clase = variacion < 5 ? '' : variacion < 10 ? '' : 'revisar';
-
-    return {
-      valor: variacion,
-      estado: estado,
-      clase: clase
-    };
-  }
-
-
-
-
-
-
-  /**
-   * Elimina PDFs antiguos (opcional - limpieza)
-   */
-  async limpiarPDFsAntiguos(diasRetencion = 30) {
-    try {
-      const archivos = await fs.readdir(this.outputDir);
-      const ahora = Date.now();
-      const milisegundiosRetencion = diasRetencion * 24 * 60 * 60 * 1000;
-
-      for (const archivo of archivos) {
-        const rutaArchivo = path.join(this.outputDir, archivo);
-        const stats = await fs.stat(rutaArchivo);
-        
-        if (ahora - stats.mtimeMs > milisegundiosRetencion) {
-          await fs.unlink(rutaArchivo);
-          console.log(`PDF antiguo eliminado: ${archivo}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error limpiando PDFs antiguos:', error);
-    }
-  }
-
-
 }
 
 export default new PDFService();

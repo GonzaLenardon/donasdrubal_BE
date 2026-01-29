@@ -10,3 +10,4 @@ npm-debug.log
 src/uploads/calibraciones/
 uploads/
 public/reports/
+pdf_services/vendor/

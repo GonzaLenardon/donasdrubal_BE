@@ -434,29 +434,27 @@ export const enviarPDFPorEmail = async (req, res) => {
  */
 export const previsualizarPDF = async (req, res) => {
   try {
-    const { id } = req.params;
+      const { id } = req.params;
 
-    // Generar PDF
-    const resultado = await PDFService.generarInformeCalibracion(id);
+      const resultado = await PDFService.generarInformeCalibracion(id);
 
-    // Configurar headers para visualización en navegador
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      'inline; filename="' + resultado.filename + '"',
-    );
+      if (!resultado.success || !resultado.url) {
+        throw new Error('No se pudo generar el PDF');
+      }
 
-    // Enviar archivo
-    res.sendFile(resultado.path);
-  } catch (error) {
-    console.error('Error en previsualizarPDF:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al previsualizar el PDF',
-      error: error.message,
-    });
-  }
-};
+      // Redirige directamente al PDF generado por PHP
+      return res.redirect(resultado.url);
+
+    } catch (error) {
+      console.error('Error en previsualizarPDF:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al previsualizar el PDF',
+        error: error.message,
+      });
+    }
+  };
+
 
 /**
  * DELETE /api/calibraciones/pdfs/cleanup
