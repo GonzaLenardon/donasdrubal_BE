@@ -1,6 +1,8 @@
 // src/services/pdfService.js
-import puppeteer from 'puppeteer';
-import handlebars from 'handlebars';
+// import puppeteer from 'puppeteer';
+// import handlebars from 'handlebars';
+// import os from 'os';
+
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,41 +10,18 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import pdfServicePdfLib from './pdfServicePdfLib.js';
 import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
+
 class PDFService {
   constructor() {
-    this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
+    // this.templatePath = path.join(__dirname, '../templates/calibracion-report.hbs');
     this.outputDir = path.join(__dirname, '../../public/reports');
-    this.registrarHelpers();
-  }
-
-  /**
-   * Registra helpers personalizados de Handlebars
-   */
-  registrarHelpers() {
-    // Helper para comparar valores (eq = equals)
-    handlebars.registerHelper('eq', function(a, b) {
-      return a === b;
-    });
-
-    // Helper para comparar "no igual" (opcional)
-    handlebars.registerHelper('ne', function(a, b) {
-      return a !== b;
-    });
-
-    // Helper para mayor que (opcional)
-    handlebars.registerHelper('gt', function(a, b) {
-      return a > b;
-    });
-
-    // Helper para menor que (opcional)
-    handlebars.registerHelper('lt', function(a, b) {
-      return a < b;
-    });
   }
 
   /**
@@ -85,18 +64,37 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
   ]
 });
 
-        if (!calibracion) {
+if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
+        console.log('Calibración encontrada:', calibracion.toJSON());
 
         // 2. Procesar datos para el template
         const datosTemplate = this.prepararDatosTemplate(calibracion);
 
-        // 3. Generar HTML desde template
-        const html = await this.generarHTML(datosTemplate);
+        // 3. Cargar imágenes en base64
+        await this.cargarImagenesEstados(datosTemplate);
 
-        // 4. Generar PDF con Puppeteer
-        const pdfPath = await this.generarPDF(html, calibracionId);
+        // 4. Generar PDF con pdf-lib
+        const pdfPath = await pdfServicePdfLib.generarInformeCalibracion({
+          ...datosTemplate,
+
+        // Normalizamos estructura para pdf-lib
+          componentes: [
+            { titulo: 'Estado general de la máquina', ...datosTemplate.estado_maquina },
+            { titulo: 'Bomba', ...datosTemplate.estado_bomba },
+            { titulo: 'Agitador', ...datosTemplate.estado_agitador },
+            { titulo: 'Filtro primario', ...datosTemplate.estado_filtroPrimario },
+            { titulo: 'Filtro secundario', ...datosTemplate.estado_filtroSecundario },
+            { titulo: 'Filtro de línea', ...datosTemplate.estado_filtroLinea },
+            { titulo: 'Mangueras y conexiones', ...datosTemplate.estado_manguerayconexiones },
+            { titulo: 'Sistema antigoteo', ...datosTemplate.estado_antigoteo },
+            { titulo: 'Limpieza de tanque', ...datosTemplate.estado_limpiezaTanque },
+            { titulo: 'Pastillas', ...datosTemplate.estado_pastillas },
+            { titulo: 'Mixer', ...datosTemplate.mixer },
+            { titulo: 'Estabilidad vertical del botalón', ...datosTemplate.estabilidadVerticalBotalon },
+          ]
+        });
 
         return {
           success: true,
@@ -125,15 +123,13 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
 
     // Si llegamos aquí, todos los intentos fallaron
     throw ultimoError;
-  }// src/services/pdfService.js
-
+  }
 
   /**
    * Prepara los datos de calibración para el template
    */
   prepararDatosTemplate(calibracion) {
 
-    console.log('Calibracion para preparar datos:', calibracion.toJSON());
     const fecha = new Date(calibracion.fecha);
     
     return {
@@ -144,15 +140,16 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
         year: 'numeric' 
       }),
       empresa: calibracion.maquina?.cliente?.razon_social || 'Don Asdrúbal S.R.L',
+      cliente_cuit: calibracion.maquina?.cliente?.cuil_cuit || '',
       maquina: calibracion.maquina?.tipo?.marca || 'N/A',
       modelo: calibracion.maquina?.tipo?.modelo || 'N/A',
-      tipo: calibracion.maquina?.tipo?.tipo || 'N/A',
-      ancho_trabajo: calibracion.maquina?.ancho_trabajo || '0',
-      distancia_picos: calibracion.maquina?.distancia_entrePicos || '0',
-      numero_picos: calibracion.maquina?.numero_picos || '0',
+      tipo_maquina: calibracion.maquina?.tipo?.tipo || 'N/A',
+      ancho_trabajo: calibracion.maquina?.ancho_trabajo || 'N/A',
+      distancia_picos: calibracion.maquina?.distancia_entrePicos || 'N/A',
+      numero_picos: calibracion.maquina?.numero_picos || 'N/A',
       responsable: calibracion.responsable,
 
-      // Estados de componentes
+      // Estados de componentes (con recomendaciones e imágenes)
       estado_maquina: this.formatearEstado(calibracion.estado_maquina),
       estado_bomba: this.formatearEstado(calibracion.estado_bomba),
       estado_agitador: this.formatearEstado(calibracion.estado_agitador),
@@ -163,12 +160,17 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
       estado_antigoteo: this.formatearEstado(calibracion.estado_antigoteo),
       estado_limpiezaTanque: this.formatearEstado(calibracion.estado_limpiezaTanque),
       estado_pastillas: this.formatearEstado(calibracion.estado_pastillas),
+      estado_mixer: this.formatearEstado(calibracion.mixer),
       estabilidadVerticalBotalon: this.formatearEstado(calibracion.estabilidadVerticalBotalon),
 
       // Mediciones de presión
       presion_unimap: calibracion.presion_unimap?.toFixed(2) || '0.00',
       presion_computadora: calibracion.presion_computadora?.toFixed(2) || '0.00',
       presion_manometro: calibracion.presion_manometro?.toFixed(2) || '0.00',
+
+      secciones: calibracion.secciones
+        ? JSON.parse(calibracion.secciones)
+        : {},
 
       // Observaciones
       observaciones_acronex: calibracion.observaciones_acronex || 'Sin observaciones',
@@ -190,14 +192,28 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
     console.log('Formateando estado:', estadoJSON);
     if (!estadoJSON || typeof estadoJSON !== 'object') {
       return {
-        estado: 'NO APLICA',
-        clase: 'no-aplica',
-        observacion: '',
-        tiene_archivo: false,
-        imagen_url: '',
-        nombre_archivo: '',
-        recomendaciones: []
+        estado: estadoJSON.estado || 'NO APLICA',
+        clase: claseMap[estadoJSON.estado] || 'no-aplica',
+
+        // 🔹 NUEVOS CAMPOS
+        color: estadoJSON.color || '',
+        modelo: estadoJSON.modelo || '',
+        numero: estadoJSON.numero || '',
+        materiales: estadoJSON.materiales || '',
+        presenciaORing: estadoJSON.presenciaORing || '',
+        valor_medido: estadoJSON.valor_medido || '',
+
+        observacion: estadoJSON.observacion || '',
+
+        tiene_archivo: tieneArchivo,
+        imagen_base64: '',
+        imagen_buffer: null,
+        nombre_archivo: nombreArchivo,
+
+        recomendaciones,
+        tiene_recomendaciones: recomendaciones.length > 0
       };
+
     }
 
     const claseMap = {
@@ -226,16 +242,113 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
         }))
       : [];
 
+    // Determinar si tiene archivo
+    const nombreArchivo = estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '';
+    const tieneArchivo = !!nombreArchivo;
+
     return {
       estado: estadoJSON.estado || 'NO APLICA',
       clase: claseMap[estadoJSON.estado] || 'no-aplica',
       observacion: estadoJSON.observacion || '',
-      tiene_archivo: !!(estadoJSON.path || estadoJSON.nombreArchivo),
-      imagen_url: estadoJSON.path || '',
-      nombre_archivo: estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '',
+      tiene_archivo: tieneArchivo,
+      imagen_base64: '', // Se cargará después de forma asíncrona
+      nombre_archivo: nombreArchivo,
       recomendaciones: recomendaciones,
       tiene_recomendaciones: recomendaciones.length > 0
     };
+  }
+
+  /**
+   * Convierte una imagen a buffer
+   */
+async convertirImagenABuffer(nombreArchivo) {
+  if (!nombreArchivo) return null;
+
+  const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
+  const rutaCompleta = path.join(uploadPath, nombreArchivo);
+
+  try {
+    await fs.access(rutaCompleta);
+    return await fs.readFile(rutaCompleta);
+  } catch {
+    return null;
+  }
+}
+
+
+  /**
+   * Convierte una imagen a base64
+   */
+  async convertirImagenABase64(nombreArchivo) {
+    if (!nombreArchivo) return '';
+
+    try {
+      const uploadPath = path.join(process.cwd(), 'uploads', 'calibraciones');
+      const rutaCompleta = path.join(uploadPath, nombreArchivo);
+
+      // Verificar si el archivo existe
+      try {
+        await fs.access(rutaCompleta);
+      } catch {
+        console.warn(`Imagen no encontrada: ${rutaCompleta}`);
+        return '';
+      }
+
+      // Leer el archivo
+      const imageBuffer = await fs.readFile(rutaCompleta);
+      
+      // Detectar el tipo MIME basado en la extensión
+      const extension = path.extname(nombreArchivo).toLowerCase();
+      const mimeTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.bmp': 'image/bmp'
+      };
+      
+      const mimeType = mimeTypes[extension] || 'image/jpeg';
+      
+      // Convertir a base64
+      const base64 = imageBuffer.toString('base64');
+      return `data:${mimeType};base64,${base64}`;
+
+    } catch (error) {
+      console.error(`Error convirtiendo imagen ${nombreArchivo}:`, error);
+      return '';
+    }
+  }
+
+  /**
+   * Carga las imágenes en base64 para los estados
+   */
+  async cargarImagenesEstados(datosTemplate) {
+    const estadosConImagenes = [
+      'estado_maquina',
+      'estado_bomba',
+      'estado_agitador',
+      'estado_filtroPrimario',
+      'estado_filtroSecundario',
+      'estado_filtroLinea',
+      'estado_manguerayconexiones',
+      'estado_antigoteo',
+      'estado_limpiezaTanque',
+      'estado_pastillas',
+      'estado_mixer',
+      'estabilidadVerticalBotalon'
+    ];
+
+    for (const estadoKey of estadosConImagenes) {
+      const estado = datosTemplate[estadoKey];
+      if (estado && estado.tiene_archivo && estado.nombre_archivo) {
+        const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
+        estado.imagen_base64 = imagenBase64;
+        estado.imagen_buffer = await this.convertirImagenABuffer(estado.nombre_archivo);
+      }
+    }
+
+    return datosTemplate;
   }
 
   /**
@@ -264,88 +377,10 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
     };
   }
 
-  /**
-   * Genera HTML desde el template Handlebars
-   */
-  async generarHTML(datos) {
-    try {
-      const templateContent = await fs.readFile(this.templatePath, 'utf-8');
-      const template = handlebars.compile(templateContent);
-      return template(datos);
-    } catch (error) {
-      console.error('Error generando HTML:', error);
-      throw new Error('Error al procesar template HTML');
-    }
-  }
 
-    /**
-   * Genera el PDF usando Puppeteer
-   */
-  async generarPDF(html, calibracionId) {
-    let browser;
-    
-    try {
-      // Asegurar que existe el directorio de salida
-      await fs.mkdir(this.outputDir, { recursive: true });
 
-      // Nombre del archivo
-      const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-      const outputPath = path.join(this.outputDir, filename);
 
-      // Iniciar navegador con configuración para evitar conflictos
-      browser = await puppeteer.launch({
-        headless: 'new',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu'
-        ]
-        // NO usar userDataDir para evitar conflictos
-      });
 
-      const page = await browser.newPage();
-      
-      // Cargar HTML
-      await page.setContent(html, {
-        waitUntil: 'networkidle0'
-      });
-
-      // Generar PDF con configuración profesional
-      await page.pdf({
-        path: outputPath,
-        format: 'A4',
-        margin: {
-          top: '20mm',
-          right: '15mm',
-          bottom: '20mm',
-          left: '15mm'
-        },
-        printBackground: true,
-        displayHeaderFooter: true,
-        headerTemplate: '<div></div>',
-        footerTemplate: `
-          <div style="font-size: 10px; text-align: center; width: 100%; color: #666;">
-            <span>Don Asdrúbal S.R.L – 2026</span>
-            <span style="margin-left: 20px;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></span>
-          </div>
-        `
-      });
-
-      return outputPath;
-
-    } catch (error) {
-      console.error('Error en generación de PDF con Puppeteer:', error);
-      throw error;
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
-  }
 
   /**
    * Elimina PDFs antiguos (opcional - limpieza)
@@ -369,6 +404,8 @@ const calibracion = await Calibraciones.findByPk(calibracionId, {
       console.error('Error limpiando PDFs antiguos:', error);
     }
   }
+
+
 }
 
 export default new PDFService();

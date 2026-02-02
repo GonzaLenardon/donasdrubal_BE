@@ -1,0 +1,7 @@
+<FilesMatch "(composer\.json|composer\.lock)">
+  Require all denied
+</FilesMatch>
+
+<Directory "vendor">
+  Require all denied
+</Directory>
