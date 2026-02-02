@@ -35,7 +35,7 @@ const addUser = async (req, res) => {
         telefono,
         password,
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     // Crear relación user_roles
@@ -44,7 +44,7 @@ const addUser = async (req, res) => {
         user_id: resp.id, //new user_id
         role_id: role_id,
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     //Confirmar transacción

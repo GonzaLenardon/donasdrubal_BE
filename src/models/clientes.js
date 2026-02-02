@@ -10,33 +10,34 @@ Clientes.init(
       primaryKey: true,
       autoIncrement: true,
     },
+
     user_id: {
-      // Relación con users
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
+
     categoria: {
       type: DataTypes.ENUM('alto', 'medio', 'bajo'),
       allowNull: false,
       defaultValue: 'medio',
     },
+
     razon_social: {
-      // Razon Social
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     direccion_fiscal: {
-      // Direccion Razon Social
       type: DataTypes.STRING,
       allowNull: true,
     },
+
     cuil_cuit: {
-      //CUIT
       type: DataTypes.STRING,
       allowNull: true,
     },
+
     iva_id: {
-      //Condición frente al IVA
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -45,6 +46,7 @@ Clientes.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -71,34 +73,32 @@ Clientes.init(
     },
 
     estado: {
-      // estado de cliente:"Nuevo", "En Proceso", "Contactado", "Calificado", "Cliente", "Perdido"
       type: DataTypes.STRING,
       defaultValue: 'Nuevo',
     },
 
     modo_ingreso: {
-      // Cómo llegó el cliente: Web, campaña, referido, redes sociales, etc.
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    ingeniero_id: {
-      // Razon Social
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 11,  // Asignar a "Sin Ingeniero" por defecto
     },
 
     notas: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+
+    // ✅ FK lógica (sin references)
+    tipo_cliente_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     sequelize: db,
-    modelName: 'Cliente',
+    modelName: 'Clientes',
     tableName: 'clientes',
     timestamps: false,
-  }
+  },
 );
 
 export default Clientes;
