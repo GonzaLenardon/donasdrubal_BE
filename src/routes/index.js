@@ -60,6 +60,7 @@ import {
   enviarPDFPorEmail,
   limpiarPDFsAntiguos,
 } from '../controllers/calibraciones.js';
+import { allTipoClientes } from '../controllers/tipoClientes.js';
 
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
 
@@ -67,7 +68,6 @@ import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
-
 
 const router = express.Router();
 
@@ -134,18 +134,18 @@ router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
 router.post('/calibraciones', addCalibraciones);
 router.get(
   '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
-  calibracionesMaquinas
+  calibracionesMaquinas,
 );
 router.put('/calibraciones/:calibracion_id', updateCalibraciones);
-router.post('/calibraciones/upload',  
+router.post(
+  '/calibraciones/upload',
   (req, res, next) => {
     console.log('Request de upload recibida');
     next();
-  }, 
-  uploadCalibraciones.single('file'), 
-  uploadArchivoCalibracion
+  },
+  uploadCalibraciones.single('file'),
+  uploadArchivoCalibracion,
 );
-
 
 // ========================================
 // RUTAS PROTEGIDAS - ROLES (Solo Admin)
@@ -163,19 +163,19 @@ router.delete('/roles/:role_id', verifyRole([ROLES.ADMIN]), deleteRole);
 router.get(
   '/permissions/:permission_id',
   verifyRole([ROLES.ADMIN]),
-  getPermissionById
+  getPermissionById,
 );
 router.post('/permissions', verifyRole([ROLES.ADMIN]), addPermission);
 router.get('/permissions', verifyRole([ROLES.ADMIN]), allPermissions);
 router.put(
   '/permissions/:permission_id',
   verifyRole([ROLES.ADMIN]),
-  updatePermission
+  updatePermission,
 );
 router.delete(
   '/permissions/:permission_id',
   verifyRole([ROLES.ADMIN]),
-  downPermission
+  downPermission,
 );
 
 // ========================================
@@ -210,27 +210,27 @@ router.delete(
 router.get(
   '/maquinas_tipos',
   verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.allMaquinaTipo
+  maquinaTipoController.allMaquinaTipo,
 );
 router.post(
   '/maquina_tipo',
   verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.addMaquinaTipo
+  maquinaTipoController.addMaquinaTipo,
 );
 router.put(
   '/maquina_tipo/:maquina_tipo_id',
   verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.updateMaquinaTipo
+  maquinaTipoController.updateMaquinaTipo,
 );
 router.delete(
   '/maquina_tipo',
   verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.downMaquinaTipo
+  maquinaTipoController.downMaquinaTipo,
 );
 router.get(
   '/maquina_tipo/:maquina_tipo_id',
   verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.getMaquinaTipo
+  maquinaTipoController.getMaquinaTipo,
 );
 
 // ========================================
@@ -250,28 +250,28 @@ router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 router.get('/muestras_agua', muestrasAguaController.allMuestrasAgua);
 router.get(
   '/muestras_agua/:muestra_agua_id',
-  muestrasAguaController.getMuestrasAgua
+  muestrasAguaController.getMuestrasAgua,
 );
 router.post('/muestras_agua', muestrasAguaController.addMuestraAgua);
 router.put(
   '/muestras_agua/:muestra_agua_id',
-  muestrasAguaController.updateMuestraAgua
+  muestrasAguaController.updateMuestraAgua,
 );
 router.get(
   '/pozos/:pozo_id/muestras_agua',
-  muestrasAguaController.getMuestrasAguaPozo
+  muestrasAguaController.getMuestrasAguaPozo,
 );
 router.get(
   '/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
-  muestrasAguaController.getMuestraAguaPozo
+  muestrasAguaController.getMuestraAguaPozo,
 );
 router.get(
   '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua',
-  muestrasAguaController.getMuestrasAguaPozoCliente
+  muestrasAguaController.getMuestrasAguaPozoCliente,
 );
 router.get(
   '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
-  muestrasAguaController.getMuestraAguaPozoCliente
+  muestrasAguaController.getMuestraAguaPozoCliente,
 );
 
 // ========================================
@@ -284,9 +284,14 @@ router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
 router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
 router.put(
   '/cliente/:cliente_id/jornadas/:jornada_id',
-  jornadaController.updateJornada
+  jornadaController.updateJornada,
 );
 
+// ========================================
+// RUTAS PROTEGIDAS - TIPO CLIENTES
+// ========================================
+
+router.get('/tipoclientes', allTipoClientes);
 
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INF=ORMES PDF CALIBRACIONES
@@ -301,9 +306,8 @@ router.put(
 router.get(
   '/calibraciones/:id/pdf',
   // authMiddleware, // Descomentar si usas autenticación
-  generarPDF
+  generarPDF,
 );
-
 
 /**
  * @route   GET /api/calibraciones/:id/preview-pdf
@@ -313,7 +317,7 @@ router.get(
 router.get(
   '/calibraciones/:id/preview-pdf',
   // authMiddleware,
-  previsualizarPDF
+  previsualizarPDF,
 );
 
 /**
@@ -325,7 +329,7 @@ router.get(
 router.post(
   '/calibraciones/:id/email-pdf',
   // authMiddleware,
-  enviarPDFPorEmail
+  enviarPDFPorEmail,
 );
 
 /**
@@ -338,7 +342,7 @@ router.delete(
   '/calibraciones/pdfs/cleanup',
   // authMiddleware,
   // adminMiddleware, // Solo administradores
-  limpiarPDFsAntiguos
+  limpiarPDFsAntiguos,
 );
 
 export { router };
