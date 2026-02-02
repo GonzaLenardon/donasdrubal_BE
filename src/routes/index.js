@@ -83,8 +83,21 @@ router.get('/', (req, res) => {
   });
 });
 
+
 router.post('/login', login);
 router.post('/user', addUser);
+
+
+/**
+ * @route   GET /api/calibraciones/:id/preview-pdf
+ * @desc    Visualiza el PDF en el navegador
+ * @access  Private
+ */
+router.get(
+  '/calibraciones/:id/preview-pdf',
+  // authMiddleware,
+  previsualizarPDF
+);
 
 // ========================================
 // APLICAR MIDDLEWARE A TODAS LAS RUTAS SIGUIENTES
@@ -314,11 +327,12 @@ router.get(
  * @desc    Visualiza el PDF en el navegador
  * @access  Private
  */
-router.get(
-  '/calibraciones/:id/preview-pdf',
-  // authMiddleware,
-  previsualizarPDF,
-);
+
+// router.get(
+//   '/calibraciones/:id/preview-pdf',
+//   // authMiddleware,
+//   previsualizarPDF
+// );
 
 /**
  * @route   POST /api/calibraciones/:id/email-pdf
