@@ -173,10 +173,10 @@ const normalizarEstado = (e = {}) => ({
 
   async generarPDFviaPHP(datos) {
     const PHP_PDF_URL =
-  'http://127.0.0.1:8080/donasdrubal_be/pdf_services/generar_pdf_calibracion.php';
+  'http://donasdrubal_be.test/otra_cosa/generar_pdf_calibracion.php';
   console.log('➡️ Llamando a PHP:', PHP_PDF_URL);
 
-    const response = await pdfAxios.get(
+    const response = await pdfAxios.post(
       PHP_PDF_URL,
       datos,
       { headers: { 'Content-Type': 'application/json' } }
