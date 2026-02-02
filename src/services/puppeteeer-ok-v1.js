@@ -8,11 +8,30 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
-import { getBrowser } from './puppeteer.service.js';
+import { log } from 'console';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+async function lanzarBrowser() {
+  const esLinux = os.platform() === 'linux';
+
+  return puppeteer.launch({
+    headless: 'new',
+
+    // En Linux/Plesk usamos Chromium del sistema si existe
+    executablePath: esLinux
+      ? process.env.CHROME_BIN || undefined
+      : undefined,
+
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu'
+    ]
+  });
+}
 
 class PDFService {
   constructor() {
@@ -372,14 +391,21 @@ if (!calibracion) {
     await fs.mkdir(this.outputDir, { recursive: true });
 
     const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-    const outputPath = path.join(
-    process.cwd(),
-    'public',
-    'reports',
-    filename
-  );
+    const outputPath = path.join(this.outputDir, filename);
 
-    browser = await getBrowser();
+    // browser = await puppeteer.launch({
+    //   headless: 'new',
+    //   executablePath: process.env.CHROME_BIN || undefined,
+    //   args: [
+    //     '--no-sandbox',
+    //     '--disable-setuid-sandbox',
+    //     '--disable-gpu',
+    //     '--font-render-hinting=none'
+    //   ]
+    // });
+
+    // page = await browser.newPage();
+    browser = await lanzarBrowser();
     page = await browser.newPage();
 
     await page.setContent(html, {
@@ -405,7 +431,6 @@ if (!calibracion) {
         </div>
       `
     });
-     await page.close();
 
     return outputPath;
 
