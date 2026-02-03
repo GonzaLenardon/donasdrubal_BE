@@ -1,3 +1,4 @@
+// models/index.js
 import db from '../config/database.js';
 import Users from './users.js';
 import Roles from './roles.js';
@@ -7,60 +8,201 @@ import RolePermissions from './role_permissions.js';
 import Maquinas from './maquinas.js';
 import Calibraciones from './calibraciones.js';
 import Clientes from './clientes.js';
+import ClienteIngenieros from './clientesIngenieros.js';
+
 import MaquinaTipo from './maquina_tipo.js';
 import Pozo from './pozo.js';
 import MuestraAgua from './muestra_agua.js';
 import Jornada from './jornada.js';
 
-// -------------------------------
-// Relaciones entre los modelos
-// -------------------------------
+import TipoClientes from './tipoClientes.js';
+// ============================================================================
+// ASOCIACIONES USERS - ROLES - PERMISSIONS
+// ============================================================================
 
-// Un usuario puede tener varios roles
-Users.belongsToMany(Roles, { through: UserRoles, foreignKey: 'user_id', otherKey: 'role_id', as: 'roles'});
-Users.hasOne(Clientes, { foreignKey: 'user_id', as: 'clienteInfo'});
-// Un usuario ingeniero puede tener muchos clientes asignados
-Users.hasMany(Clientes, {foreignKey: 'ingeniero_id', as: 'clientesAsignados',});
+Users.belongsToMany(Roles, {
+  through: UserRoles,
+  foreignKey: 'user_id',
+  otherKey: 'role_id',
+  as: 'roles',
+  constraints: false, // ✅ AGREGAR
+});
 
-// Un rol puede pertenecer a varios usuarios
-Roles.belongsToMany(Users, { through: UserRoles, foreignKey: 'role_id',otherKey: 'user_id' });
-// Un rol puede tener varios permisos
-Roles.belongsToMany(Permissions, { through: RolePermissions,foreignKey: 'role_id', otherKey: 'permission_id',});
+Roles.belongsToMany(Users, {
+  through: UserRoles,
+  foreignKey: 'role_id',
+  otherKey: 'user_id',
+  as: 'usuarios',
+  constraints: false, // ✅ AGREGAR
+});
 
-// Un permiso puede pertenecer a varios roles
-Permissions.belongsToMany(Roles, {through: RolePermissions, foreignKey: 'permission_id', otherKey: 'role_id',});
+Roles.belongsToMany(Permissions, {
+  through: RolePermissions,
+  foreignKey: 'role_id',
+  otherKey: 'permission_id',
+  as: 'permisos',
+  constraints: false, // ✅ AGREGAR
+});
 
-Clientes.belongsTo(Users, { foreignKey: 'user_id', as: 'user' });
-// Un cliente tiene asignado UN ingeniero (usuario)
-Clientes.belongsTo(Users, { foreignKey: 'ingeniero_id', as: 'ingenieroAsignado'});
-Clientes.hasMany(Maquinas, { foreignKey: 'cliente_id', as: 'maquinas' });
-Clientes.hasMany(Pozo, { foreignKey: 'cliente_id', as: 'pozos' });
-Clientes.hasMany(Jornada, { foreignKey: 'cliente_id', as: 'jornadas' });
+Permissions.belongsToMany(Roles, {
+  through: RolePermissions,
+  foreignKey: 'permission_id',
+  otherKey: 'role_id',
+  as: 'roles',
+  constraints: false, // ✅ AGREGAR
+});
 
-Maquinas.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
-Maquinas.hasMany(Calibraciones, { foreignKey: 'maquina_id', as: 'calibracionesmaquina',});
-Maquinas.belongsTo(MaquinaTipo, { foreignKey: 'tipo_maquina', as: 'tipo' });
+// ============================================================================
+// ASOCIACIONES USERS - CLIENTES
+// ============================================================================
 
-MaquinaTipo.hasMany(Maquinas, { foreignKey: 'tipo_maquina', as: 'maquinas' });
+// User → Cliente (One-to-One)
+Users.hasOne(Clientes, {
+  foreignKey: 'user_id',
+  as: 'clienteInfo',
+  constraints: false, // ✅ AGREGAR
+});
 
-Calibraciones.belongsTo(Maquinas, {foreignKey: 'maquina_id',as: 'maquina',});
+Clientes.belongsTo(Users, {
+  foreignKey: 'user_id',
+  as: 'user',
+  constraints: false, // ✅ AGREGAR
+});
 
-Pozo.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
-Pozo.hasMany(MuestraAgua, { foreignKey: 'pozo_id', as: 'muestrasAgua' }); 
+// Clientes ↔ Ingenieros (Many-to-Many)
+Clientes.belongsToMany(Users, {
+  through: ClienteIngenieros,
+  foreignKey: 'cliente_id',
+  otherKey: 'user_id',
+  as: 'ingenieros',
+  constraints: false, // ✅ AGREGAR
+});
 
-MuestraAgua.belongsTo(Pozo, { foreignKey: 'pozo_id', as: 'pozo' });
+Users.belongsToMany(Clientes, {
+  through: ClienteIngenieros,
+  foreignKey: 'user_id',
+  otherKey: 'cliente_id',
+  as: 'clientesAsignados',
+  constraints: false, // ✅ AGREGAR
+});
 
-Jornada.belongsTo(Clientes, { foreignKey: 'cliente_id', as: 'cliente' });
+// ============================================================================
+// ASOCIACIONES CLIENTES - TIPO CLIENTES
+// ============================================================================
 
+Clientes.belongsTo(TipoClientes, {
+  foreignKey: 'tipo_cliente_id',
+  as: 'tipoCliente',
+  constraints: false, // ✅ AGREGAR
+});
 
+TipoClientes.hasMany(Clientes, {
+  foreignKey: 'tipo_cliente_id',
+  as: 'clientes',
+  constraints: false, // ✅ AGREGAR
+});
+
+// ============================================================================
+// ASOCIACIONES CLIENTES - ENTIDADES RELACIONADAS
+// ============================================================================
+
+Clientes.hasMany(Maquinas, {
+  foreignKey: 'cliente_id',
+  as: 'maquinas',
+  constraints: false, // ✅ AGREGAR
+});
+
+Maquinas.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+  constraints: false, // ✅ AGREGAR
+});
+
+Clientes.hasMany(Pozo, {
+  foreignKey: 'cliente_id',
+  as: 'pozos',
+  constraints: false, // ✅ AGREGAR
+});
+
+Pozo.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+  constraints: false, // ✅ AGREGAR
+});
+
+Clientes.hasMany(Jornada, {
+  foreignKey: 'cliente_id',
+  as: 'jornadas',
+  constraints: false, // ✅ AGREGAR
+});
+
+Jornada.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+  constraints: false, // ✅ AGREGAR
+});
+
+// ============================================================================
+// ASOCIACIONES MAQUINAS
+// ============================================================================
+
+Maquinas.belongsTo(MaquinaTipo, {
+  foreignKey: 'tipo_maquina',
+  as: 'tipo',
+  constraints: false, // ✅ AGREGAR
+});
+
+MaquinaTipo.hasMany(Maquinas, {
+  foreignKey: 'tipo_maquina',
+  as: 'maquinas',
+  constraints: false, // ✅ AGREGAR
+});
+
+Maquinas.hasMany(Calibraciones, {
+  foreignKey: 'maquina_id',
+  as: 'calibracionesmaquina',
+  constraints: false, // ✅ AGREGAR
+});
+
+Calibraciones.belongsTo(Maquinas, {
+  foreignKey: 'maquina_id',
+  as: 'maquina',
+  constraints: false, // ✅ AGREGAR
+});
+
+// ============================================================================
+// ASOCIACIONES POZOS - MUESTRAS DE AGUA
+// ============================================================================
+
+Pozo.hasMany(MuestraAgua, {
+  foreignKey: 'pozo_id',
+  as: 'muestrasAgua',
+  constraints: false, // ✅ AGREGAR
+});
+
+MuestraAgua.belongsTo(Pozo, {
+  foreignKey: 'pozo_id',
+  as: 'pozo',
+  constraints: false, // ✅ AGREGAR
+});
+
+// ============================================================================
+// EXPORTAR TODO
+// ============================================================================
 export { db };
-export { Users, Maquinas, Calibraciones };
-export { Roles };
-export { Permissions };
-export { UserRoles };
-export { RolePermissions };
-export { Clientes };
-export { MaquinaTipo };
-export { Pozo };
-export { MuestraAgua }; 
-export { Jornada };
+export {
+  Users,
+  Roles,
+  Permissions,
+  UserRoles,
+  RolePermissions,
+  Clientes,
+  ClienteIngenieros,
+  Maquinas,
+  Calibraciones,
+  MaquinaTipo,
+  Pozo,
+  MuestraAgua,
+  Jornada,
+  TipoClientes,
+};

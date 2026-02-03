@@ -27,19 +27,7 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    /* 
-    cuit: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    domicilio: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    datosImpositivos: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    }, */
+
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -53,24 +41,17 @@ Users.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    // is_active:
-    // { type: DataTypes.BOOLEAN,
-    //   defaultValue: true,
-    // },
-    salt: {
-      type: DataTypes.STRING,
-    },
 
-    rol: {
+    salt: {
       type: DataTypes.STRING,
     },
   },
   {
     sequelize: db,
-    modelName: 'users',
+    modelName: 'Users',
     tableName: 'users',
     timestamps: false,
-  }
+  },
 );
 
 // Hook para encriptar antes de crear
