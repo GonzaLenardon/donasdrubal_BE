@@ -34,8 +34,6 @@ app.use(
 );
 // app.options(/.*/, cors());
 
-// 🔓 RUTAS SIN AUTENTICACIÓN
-app.use('/pdf_services', pdfRouter);
 
 // 🔐 RUTAS CON AUTENTICACIÓN
 app.use('/', router);
@@ -43,9 +41,11 @@ app.use('/', router);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const uploadsPath = path.join(process.cwd(), 'uploads');
+// const uploadsPath = path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/reports', express.static(path.join(process.cwd(), 'public', 'reports')));
 
-app.use('/uploads', express.static(uploadsPath));
+
 
 const PORT = process.env.SERVER_PORT || 3000;
 

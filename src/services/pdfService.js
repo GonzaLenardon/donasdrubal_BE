@@ -13,6 +13,8 @@ import { getBrowser } from './puppeteer.service.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
 
 class PDFService {
   constructor() {
@@ -96,7 +98,7 @@ if (!calibracion) {
         const datosTemplate = this.prepararDatosTemplate(calibracion);
 
         // 3. Cargar imágenes en base64
-        await this.cargarImagenesEstados(datosTemplate);
+        // await this.cargarImagenesEstados(datosTemplate);
 
         // 4. Generar HTML desde template
         const html = await this.generarHTML(datosTemplate);
@@ -199,11 +201,12 @@ if (!calibracion) {
         clase: 'no-aplica',
         observacion: '',
         tiene_archivo: false,
-        imagen_base64: '',
+        imagen_src: '',
         nombre_archivo: '',
         recomendaciones: [],
         tiene_recomendaciones: false
       };
+
     }
 
     const claseMap = {
@@ -241,7 +244,9 @@ if (!calibracion) {
       clase: claseMap[estadoJSON.estado] || 'no-aplica',
       observacion: estadoJSON.observacion || '',
       tiene_archivo: tieneArchivo,
-      imagen_base64: '', // Se cargará después de forma asíncrona
+          imagen_src: nombreArchivo
+      ? `${BASE_URL}/uploads/calibraciones/${nombreArchivo}`
+      : '',
       nombre_archivo: nombreArchivo,
       recomendaciones: recomendaciones,
       tiene_recomendaciones: recomendaciones.length > 0
@@ -314,7 +319,7 @@ if (!calibracion) {
       const estado = datosTemplate[estadoKey];
       if (estado && estado.tiene_archivo && estado.nombre_archivo) {
         const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
-        estado.imagen_base64 = imagenBase64;
+        estado.imagen_src = imagenBase64;
       }
     }
 
@@ -354,7 +359,11 @@ if (!calibracion) {
     try {
       const templateContent = await fs.readFile(this.templatePath, 'utf-8');
       const template = handlebars.compile(templateContent);
-      return template(datos);
+  
+      console.log('Generando HTML con datos:', datos);
+      const elhtml = template(datos);
+      console.log('HTML generado:', elhtml);   
+      return elhtml;
     } catch (error) {
       console.error('Error generando HTML:', error);
       throw new Error('Error al procesar template HTML');
