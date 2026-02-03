@@ -1,132 +1,81 @@
-
 import { ROLES } from '../config/constants/roles.js';
 import Cliente from '../models/clientes.js';
 import Roles from '../models/roles.js';
-import UserRoles from '../models/user_roles.js';  
+import UserRoles from '../models/user_roles.js';
 import { createUser } from '../services/userService.js';
 import db from '../config/database.js';
+import TipoClientes from '../models/tipoClientes.js';
+import ClienteIngenieros from '../models/clientesIngenieros.js';
+import Users from '../models/users.js';
 
 // const bcrypt = require('bcrypt');
 
 const addClient = async (req, res) => {
-  // Iniciar transacción
-  const t = await db.transaction();
+  console.log('📝 Crear cliente - Body:', req.body);
+
+  const { ingenieros, tipoCliente, ...clienteData } = req.body;
 
   try {
-    const {
-      categoria,
-      razon_social,
-      direccion_fiscal,
-      cuil_cuit,
-      email,
-      iva_id,
-      telefono,
-      direccion,
-      ciudad,
-      provincia,
-      pais,
-      estado,
-      modo_ingreso,
-      ingeniero_id,
-      notas,
-    } = req.body;
-
-    console.log('esto llega al body', req.body);
-
     // Validaciones
-
-    if (!email || !razon_social || !cuil_cuit) {
-      await t.rollback();
+    if (!Array.isArray(ingenieros) || ingenieros.length === 0) {
       return res.status(400).json({
         ok: false,
-        error: 'Faltan datos del cliente ',
+        mensaje: 'Debe asignar al menos un ingeniero',
       });
     }
 
-    // 1️⃣ Crear usuario dentro de la transacción
-    
-    const newUser = await User.create(
-      {
-        nombre: razon_social,
-        email: email,
-        password: '123456',
-        telefono: telefono,
-        // rol: 'cliente',
-        active: true,
-      },
-      { transaction: t } // 👈 Usar transacción
-    );
-
-    // Busco el id del rol Cliente
-    const role = await Roles.findOne(
-      { where: { nombre: [ROLES.CLIENTE] } },
-      { transaction: t }
-    ); 
-    if (!role) {
-      throw new Error('Rol "Cliente" no existe');
+    if (ingenieros.length > 1) {
+      const tienePrincipal = ingenieros.some((ing) => ing.es_principal);
+      if (!tienePrincipal) {
+        return res.status(400).json({
+          ok: false,
+          mensaje: 'Debe seleccionar un ingeniero principal',
+        });
+      }
     }
-    await UserRoles.create(
-      {
-        user_id: newUser.id, //new user_id
-        role_id: role.id,
-      },
-      { transaction: t }
-    );
 
-    console.log('✅ Usuario creado:', newUser.email);
+    // Crear cliente
+    const nuevoCliente = await Cliente.create(clienteData);
 
-    // 2️⃣ Crear cliente dentro de la transacción
-    const newClient = await Cliente.create(
-      {
-        user_id: newUser.id,
-        categoria: categoria || 'medio',
-        razon_social,
-        direccion_fiscal,
-        cuil_cuit,
-        iva_id,
-        telefono,
-        direccion,
-        ciudad,
-        provincia: provincia || 'Entre Ríos',
-        pais: pais || 'Argentina',
-        estado: estado || 'Nuevo',
-        modo_ingreso: modo_ingreso || 'Web',
-        ingeniero_id,
-        notas,
-        email,
-      },
-      { transaction: t } // 👈 Usar transacción
-    );
+    // Crear relaciones con ingenieros
+    const relacionesIngenieros = ingenieros.map((ing) => ({
+      cliente_id: nuevoCliente.id,
+      user_id: parseInt(ing.user_id),
+      es_principal: !!ing.es_principal,
+    }));
 
-    console.log('✅ Cliente creado:', newClient.razon_social);
+    await ClienteIngenieros.bulkCreate(relacionesIngenieros);
 
-    // ✅ Si todo salió bien, confirmar transacción
-    await t.commit();
+    // Cargar cliente con ingenieros
+    const clienteCompleto = await Cliente.findByPk(nuevoCliente.id, {
+      include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          through: {
+            attributes: ['es_principal'],
+          },
+          attributes: ['id', 'nombre', 'email'],
+        },
+        {
+          model: TipoClientes,
+          as: 'tipoCliente',
+          attributes: ['id', 'tipoClientes'],
+        },
+      ],
+    });
 
-    res.status(201).json({
+    return res.status(201).json({
       ok: true,
-      message: 'Cliente y usuario creados correctamente',
-      cliente: {
-        id: newClient.id,
-        razon_social: newClient.razon_social,
-        categoria: newClient.categoria,
-      },
-      usuario: {
-        id: newUser.id,
-        nombre: newUser.name,
-        email: newUser.email,
-      },
+      mensaje: 'Cliente creado exitosamente',
+      cliente: clienteCompleto,
     });
   } catch (error) {
-    // ❌ Si hay error, revertir TODO
-    await t.rollback();
-
     console.error('❌ Error al crear cliente:', error);
-
-    res.status(500).json({
+    return res.status(500).json({
       ok: false,
+      mensaje: 'Error al crear cliente',
       error: error.message,
-      tipo: error.name,
     });
   }
 };
@@ -134,26 +83,56 @@ const addClient = async (req, res) => {
 // Listar clientes con usuario
 const allClientes = async (req, res) => {
   try {
-    /* const clients = await Cliente.findAll({
-      include: [{ model: User, as: 'user' }],
-    }); */
+    const clientes = await Cliente.findAll({
+      include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          through: {
+            attributes: ['es_principal'],
+          },
+          attributes: ['id', 'nombre', 'email'],
+        },
+        {
+          model: TipoClientes,
+          as: 'tipoCliente',
+          attributes: ['id', 'tipoClientes'],
+        },
+      ],
+      order: [['razon_social', 'ASC']],
+    });
 
-    const clients = await Cliente.findAll();
-    return res.status(200).json({
-      message: 'Clientes obtenidos correctamente',
-      data: clients,
+    // Formatear respuesta para incluir es_principal en cada ingeniero
+    const clientesFormateados = clientes.map((cliente) => {
+      const clienteJSON = cliente.toJSON();
+
+      if (clienteJSON.ingenieros) {
+        clienteJSON.ingenieros = clienteJSON.ingenieros.map((ing) => ({
+          user_id: ing.id,
+          nombre: ing.nombre,
+          email: ing.email,
+          es_principal: ing.ClienteIngenieros?.es_principal || false,
+        }));
+      }
+
+      return clienteJSON;
+    });
+
+    return res.json({
+      ok: true,
+      data: clientesFormateados,
     });
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
+    console.error('❌ Error al obtener clientes:', error);
     return res.status(500).json({
-      error: 'Error en el servidor',
-      details: error.message,
+      ok: false,
+      error: error.message,
     });
   }
 };
 
 // Actualizar cliente + usuario
-const upCliente = async (req, res) => {
+/* const upCliente = async (req, res) => {
   console.log('📝 Actualizar cliente - Body:', req.body);
   console.log('📝 Actualizar cliente - Params:', req.params);
 
@@ -197,7 +176,107 @@ const upCliente = async (req, res) => {
       error: error.message,
     });
   }
+}; */
+
+const upCliente = async (req, res) => {
+  console.log('📝 Actualizar cliente - Body:', req.body);
+  console.log('📝 Actualizar cliente - Params:', req.params);
+
+  const { ingenieros, ...clienteData } = req.body;
+  const { cliente_id } = req.params;
+
+  try {
+    if (!cliente_id) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'ID del cliente es requerido',
+      });
+    }
+
+    // Buscar cliente
+    const cliente = await Cliente.findByPk(cliente_id);
+
+    if (!cliente) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: 'Cliente no encontrado',
+      });
+    }
+
+    // Validar ingenieros
+    if (Array.isArray(ingenieros)) {
+      if (ingenieros.length === 0) {
+        return res.status(400).json({
+          ok: false,
+          mensaje: 'Debe asignar al menos un ingeniero',
+        });
+      }
+
+      if (ingenieros.length > 1) {
+        const tienePrincipal = ingenieros.some((ing) => ing.es_principal);
+        if (!tienePrincipal) {
+          return res.status(400).json({
+            ok: false,
+            mensaje: 'Debe seleccionar un ingeniero principal',
+          });
+        }
+      }
+    }
+
+    // Actualizar datos del cliente
+    await cliente.update(clienteData);
+
+    // Actualizar ingenieros
+    if (Array.isArray(ingenieros)) {
+      // Eliminar relaciones anteriores
+      await ClienteIngenieros.destroy({
+        where: { cliente_id },
+      });
+
+      // Crear nuevas relaciones
+      const relacionesIngenieros = ingenieros.map((ing) => ({
+        cliente_id: parseInt(cliente_id),
+        user_id: parseInt(ing.user_id),
+        es_principal: !!ing.es_principal,
+      }));
+
+      await ClienteIngenieros.bulkCreate(relacionesIngenieros);
+    }
+
+    // Cargar cliente actualizado con ingenieros
+    const clienteActualizado = await Cliente.findByPk(cliente_id, {
+      include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          through: {
+            attributes: ['es_principal'],
+          },
+          attributes: ['id', 'nombre', 'email'],
+        },
+        {
+          model: TipoClientes,
+          as: 'tipoCliente',
+          attributes: ['id', 'tipoClientes'],
+        },
+      ],
+    });
+
+    return res.json({
+      ok: true,
+      mensaje: 'Cliente actualizado exitosamente',
+      cliente: clienteActualizado,
+    });
+  } catch (error) {
+    console.error('❌ Error al actualizar cliente:', error);
+    return res.status(500).json({
+      ok: false,
+      mensaje: 'Error al actualizar cliente',
+      error: error.message,
+    });
+  }
 };
+
 //  Eliminar cliente + usuario
 const deleteClient = async (req, res) => {
   try {
