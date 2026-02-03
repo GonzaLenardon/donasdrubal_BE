@@ -49,6 +49,10 @@ app.use('/uploads', express.static(uploadsPath));
 
 const PORT = process.env.SERVER_PORT || 3000;
 
+process.on('SIGTERM', async () => {
+  if (browserInstance) await browserInstance.close();
+});
+
 const startServer = async () => {
   try {
     // 🔹 Primero probar conexión
