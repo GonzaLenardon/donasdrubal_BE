@@ -1,5 +1,5 @@
 // src/services/pdfService.js
-import puppeteer from 'puppeteer';
+// import puppeteer from 'puppeteer';
 import handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
@@ -9,6 +9,7 @@ import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import { getBrowser } from './puppeteer.service.js';
+import { acquireLock, releaseLock } from './pdfMutex.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,32 +29,32 @@ class PDFService {
    */
   registrarHelpers() {
     // Helper para comparar valores (eq = equals)
-    handlebars.registerHelper('eq', function(a, b) {
+    handlebars.registerHelper('eq', function (a, b) {
       return a === b;
     });
 
     // Helper para comparar "no igual" (opcional)
-    handlebars.registerHelper('ne', function(a, b) {
+    handlebars.registerHelper('ne', function (a, b) {
       return a !== b;
     });
 
     // Helper para mayor que (opcional)
-    handlebars.registerHelper('gt', function(a, b) {
+    handlebars.registerHelper('gt', function (a, b) {
       return a > b;
     });
 
     // Helper para menor que (opcional)
-    handlebars.registerHelper('lt', function(a, b) {
+    handlebars.registerHelper('lt', function (a, b) {
       return a < b;
     });
   }
 
-  
+
 
   /**
    * Genera el PDF de una calibración específica
    */
- async generarInformeCalibracion(calibracionId) {
+  async generarInformeCalibracion(calibracionId) {
     const maxReintentos = 3;
     let ultimoError;
 
@@ -62,7 +63,7 @@ class PDFService {
         // 1. Obtener datos de la calibración con relaciones
         const calibracion = await Calibraciones.findByPk(calibracionId, {
           minifyAliases: true,
-            include: [
+          include: [
             {
               model: Maquinas,
               as: 'maquina',
@@ -115,7 +116,7 @@ class PDFService {
       } catch (error) {
         ultimoError = error;
         console.error(`Error en intento ${intento}/${maxReintentos}:`, error.message);
-        
+
         // // Si es un error de navegador en uso, esperar y reintentar
         // if (error.message.includes('browser is already running')) {
         //   if (intento < maxReintentos) {
@@ -125,7 +126,7 @@ class PDFService {
         //     continue;
         //   }
         // }
-        
+
         // Si es otro tipo de error, lanzarlo inmediatamente
         throw error;
       }
@@ -141,13 +142,13 @@ class PDFService {
   prepararDatosTemplate(calibracion) {
 
     const fecha = new Date(calibracion.fecha);
-    
+
     return {
       // Datos generales
-      fecha: fecha.toLocaleDateString('es-AR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
+      fecha: fecha.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       }),
       empresa: calibracion.maquina?.cliente?.razon_social || 'Don Asdrúbal S.R.L',
       cliente_cuit: calibracion.maquina?.cliente?.cuil_cuit || '',
@@ -183,7 +184,7 @@ class PDFService {
 
       // Calcular variación de presión
       variacion_presion: this.calcularVariacionPresion(calibracion),
-      
+
       // Metadata
       generado: new Date().toLocaleString('es-AR'),
       responsable_informe: 'Ing. Agr. Montiel, Franco Mat: 82-2-1666'
@@ -227,17 +228,25 @@ class PDFService {
     };
 
     // Procesar recomendaciones
-    const recomendaciones = Array.isArray(estadoJSON.recomendaciones) 
+    const recomendaciones = Array.isArray(estadoJSON.recomendaciones)
       ? estadoJSON.recomendaciones.map((rec, index) => ({
-          numero: index + 1,
-          texto: rec.texto || rec.recomendacion || rec.descripcion || '',
-          prioridad: rec.prioridad || 'media'
-        }))
+        numero: index + 1,
+        texto: rec.texto || rec.recomendacion || rec.descripcion || '',
+        prioridad: rec.prioridad || 'media'
+      }))
       : [];
 
     // Determinar si tiene archivo
     const nombreArchivo = estadoJSON.nombreArchivo || estadoJSON.nombre_archivo || '';
     const tieneArchivo = !!nombreArchivo;
+    const imagePath = path.join(
+      process.cwd(),
+      'uploads',
+      'calibraciones',
+      nombreArchivo
+    );
+
+const imagen_src = `file:///${imagePath.replace(/\\/g, '/')}`;
 
     return {
       estado: estadoJSON.estado || 'NO APLICA',
@@ -245,9 +254,9 @@ class PDFService {
       observacion: estadoJSON.observacion || '',
       tiene_archivo: tieneArchivo,
       imagen_url: nombreArchivo
-      ? `${BASE_URL}/uploads/calibraciones/${nombreArchivo}`
-      : '',
-      nombre_archivo: nombreArchivo,
+        ? imagen_src
+        : '',
+      nombre_archivo: imagen_src,
       recomendaciones: recomendaciones,
       tiene_recomendaciones: recomendaciones.length > 0
     };
@@ -273,7 +282,7 @@ class PDFService {
 
       // Leer el archivo
       const imageBuffer = await fs.readFile(rutaCompleta);
-      
+
       // Detectar el tipo MIME basado en la extensión
       const extension = path.extname(nombreArchivo).toLowerCase();
       const mimeTypes = {
@@ -284,9 +293,9 @@ class PDFService {
         '.webp': 'image/webp',
         '.bmp': 'image/bmp'
       };
-      
+
       const mimeType = mimeTypes[extension] || 'image/jpeg';
-      
+
       // Convertir a base64
       const base64 = imageBuffer.toString('base64');
       return `data:${mimeType};base64,${base64}`;
@@ -359,10 +368,10 @@ class PDFService {
     try {
       const templateContent = await fs.readFile(this.templatePath, 'utf-8');
       const template = handlebars.compile(templateContent);
-  
+
       console.log('Generando HTML con datos:', datos);
       const elhtml = template(datos);
-      console.log('HTML generado:', elhtml);   
+      console.log('HTML generado:', elhtml);
       return elhtml;
     } catch (error) {
       console.error('Error generando HTML:', error);
@@ -374,55 +383,74 @@ class PDFService {
    * Genera el PDF usando Puppeteer
    */
   async generarPDF(html, calibracionId) {
-  let browser;
-  let page;
+    // let browser;
+    let page;
 
-  try {
-    await fs.mkdir(this.outputDir, { recursive: true });
+    await acquireLock(); //Nunca hay dos newPage() simultáneos
+    try {
+      await fs.mkdir(this.outputDir, { recursive: true });
 
-    const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-    const outputPath = path.join(
-    process.cwd(),
-    'public',
-    'reports',
-    filename
-  );
-console.log('Generando PDF en:', outputPath);
-    browser = await getBrowser();
-    page = await browser.newPage();
+      const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
+      const outputPath = path.join(
+        process.cwd(),
+        'public',
+        'reports',
+        filename
+      );
+      console.log('Generando PDF en:', outputPath);
+      const browser = await getBrowser();
+      page = await browser.newPage();
 
-    await page.setContent(html, {
-      waitUntil: 'networkidle0'
-    });
+      // A VER SI CON ESTO ANDA
+   const tempDir = path.join(process.cwd(), 'tmp');
+await fs.mkdir(tempDir, { recursive: true });
 
-    await page.pdf({
-      path: outputPath ,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '15mm',
-        right: '15mm'
-      },
-      displayHeaderFooter: true,
-      headerTemplate: '<div></div>',
-      footerTemplate: `
-        <div style="font-size:10px;width:100%;text-align:center;color:#666;">
-          Don Asdrúbal S.R.L – Departamento I+D —
-          Página <span class="pageNumber"></span> de <span class="totalPages"></span>
-        </div>
-      `
-    });
-     await page.close();
+const htmlPath = path.join(tempDir, `reporte_${Date.now()}.html`);
+await fs.writeFile(htmlPath, html, 'utf8');
 
-    return outputPath;
+console.log('HTML generado en:', htmlPath);
 
-  } finally {
-    if (page) await page.close().catch(() => {});
-    if (browser) await browser.close().catch(() => {});
+      await page.goto(`file:///${htmlPath.replace(/\\/g, '/')}`, {
+        waitUntil: 'networkidle0',
+        timeout: 0,
+      });
+      await page.pdf({ path: outputPath, format: 'A4' });
+
+
+      // await page.setContent(html, {
+      //   waitUntil: 'networkidle0',
+      //   timeout: 120000
+      // });
+
+      // await page.pdf({
+      //   path: outputPath,
+      //   format: 'A4',
+      //   printBackground: true,
+      //   margin: {
+      //     top: '20mm',
+      //     bottom: '20mm',
+      //     left: '15mm',
+      //     right: '15mm'
+      //   },
+      //   displayHeaderFooter: true,
+      //   headerTemplate: '<div></div>',
+      //   footerTemplate: `
+      //   <div style="font-size:10px;width:100%;text-align:center;color:#666;">
+      //     Don Asdrúbal S.R.L – Departamento I+D —
+      //     Página <span class="pageNumber"></span> de <span class="totalPages"></span>
+      //   </div>
+      // `
+      // });
+      await page.close();
+
+      return outputPath;
+
+    } finally {
+      if (page) await page.close().catch(() => { });
+      // if (browser) await browser.close().catch(() => { });
+      releaseLock();
+    }
   }
-}
 
 
   /**
@@ -437,7 +465,7 @@ console.log('Generando PDF en:', outputPath);
       for (const archivo of archivos) {
         const rutaArchivo = path.join(this.outputDir, archivo);
         const stats = await fs.stat(rutaArchivo);
-        
+
         if (ahora - stats.mtimeMs > milisegundiosRetencion) {
           await fs.unlink(rutaArchivo);
           console.log(`PDF antiguo eliminado: ${archivo}`);
@@ -454,7 +482,7 @@ console.log('Generando PDF en:', outputPath);
   async limpiarDirectoriosTemporales() {
     try {
       const tmpDir = path.join(__dirname, '../../tmp');
-      
+
       // Verificar si existe el directorio
       try {
         await fs.access(tmpDir);
@@ -471,7 +499,7 @@ console.log('Generando PDF en:', outputPath);
           const rutaArchivo = path.join(tmpDir, archivo);
           try {
             const stats = await fs.stat(rutaArchivo);
-            
+
             // Eliminar directorios temporales de más de 1 minuto
             if (ahora - stats.mtimeMs > unMinuto) {
               await fs.rm(rutaArchivo, { recursive: true, force: true });
