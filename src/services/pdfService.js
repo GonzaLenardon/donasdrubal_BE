@@ -60,37 +60,37 @@ class PDFService {
     for (let intento = 1; intento <= maxReintentos; intento++) {
       try {
         // 1. Obtener datos de la calibración con relaciones
-const calibracion = await Calibraciones.findByPk(calibracionId, {
-  minifyAliases: true,
-    include: [
-    {
-      model: Maquinas,
-      as: 'maquina',
-      attributes: [
-        'id',
-        'ancho_trabajo',
-        'distancia_entrePicos',
-        'numero_picos',
-        'tipo_maquina',
-        'cliente_id'
-      ],
-      include: [
-        {
-          model: MaquinaTipo,
-          as: 'tipo',
-          attributes: ['id', 'tipo', 'marca', 'modelo']
-        },
-        {
-          model: Clientes,
-          as: 'cliente',
-          attributes: ['id', 'razon_social', 'cuil_cuit']
-        }
-      ]
-    }
-  ]
-});
+        const calibracion = await Calibraciones.findByPk(calibracionId, {
+          minifyAliases: true,
+            include: [
+            {
+              model: Maquinas,
+              as: 'maquina',
+              attributes: [
+                'id',
+                'ancho_trabajo',
+                'distancia_entrePicos',
+                'numero_picos',
+                'tipo_maquina',
+                'cliente_id'
+              ],
+              include: [
+                {
+                  model: MaquinaTipo,
+                  as: 'tipo',
+                  attributes: ['id', 'tipo', 'marca', 'modelo']
+                },
+                {
+                  model: Clientes,
+                  as: 'cliente',
+                  attributes: ['id', 'razon_social', 'cuil_cuit']
+                }
+              ]
+            }
+          ]
+        });
 
-if (!calibracion) {
+        if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
 
@@ -116,15 +116,15 @@ if (!calibracion) {
         ultimoError = error;
         console.error(`Error en intento ${intento}/${maxReintentos}:`, error.message);
         
-        // Si es un error de navegador en uso, esperar y reintentar
-        if (error.message.includes('browser is already running')) {
-          if (intento < maxReintentos) {
-            const tiempoEspera = intento * 1000; // 1s, 2s, 3s
-            console.log(`Esperando ${tiempoEspera}ms antes de reintentar...`);
-            await new Promise(resolve => setTimeout(resolve, tiempoEspera));
-            continue;
-          }
-        }
+        // // Si es un error de navegador en uso, esperar y reintentar
+        // if (error.message.includes('browser is already running')) {
+        //   if (intento < maxReintentos) {
+        //     const tiempoEspera = intento * 1000; // 1s, 2s, 3s
+        //     console.log(`Esperando ${tiempoEspera}ms antes de reintentar...`);
+        //     await new Promise(resolve => setTimeout(resolve, tiempoEspera));
+        //     continue;
+        //   }
+        // }
         
         // Si es otro tipo de error, lanzarlo inmediatamente
         throw error;
@@ -201,7 +201,7 @@ if (!calibracion) {
         clase: 'no-aplica',
         observacion: '',
         tiene_archivo: false,
-        imagen_src: '',
+        imagen_url: '',
         nombre_archivo: '',
         recomendaciones: [],
         tiene_recomendaciones: false
@@ -244,7 +244,7 @@ if (!calibracion) {
       clase: claseMap[estadoJSON.estado] || 'no-aplica',
       observacion: estadoJSON.observacion || '',
       tiene_archivo: tieneArchivo,
-          imagen_src: nombreArchivo
+      imagen_url: nombreArchivo
       ? `${BASE_URL}/uploads/calibraciones/${nombreArchivo}`
       : '',
       nombre_archivo: nombreArchivo,
@@ -387,7 +387,7 @@ if (!calibracion) {
     'reports',
     filename
   );
-
+console.log('Generando PDF en:', outputPath);
     browser = await getBrowser();
     page = await browser.newPage();
 
@@ -396,7 +396,7 @@ if (!calibracion) {
     });
 
     await page.pdf({
-      path: outputPath,
+      path: outputPath ,
       format: 'A4',
       printBackground: true,
       margin: {
