@@ -13,6 +13,8 @@ import { getBrowser } from './puppeteer.service.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
 
 class PDFService {
   constructor() {
@@ -58,37 +60,37 @@ class PDFService {
     for (let intento = 1; intento <= maxReintentos; intento++) {
       try {
         // 1. Obtener datos de la calibración con relaciones
-const calibracion = await Calibraciones.findByPk(calibracionId, {
-  minifyAliases: true,
-    include: [
-    {
-      model: Maquinas,
-      as: 'maquina',
-      attributes: [
-        'id',
-        'ancho_trabajo',
-        'distancia_entrePicos',
-        'numero_picos',
-        'tipo_maquina',
-        'cliente_id'
-      ],
-      include: [
-        {
-          model: MaquinaTipo,
-          as: 'tipo',
-          attributes: ['id', 'tipo', 'marca', 'modelo']
-        },
-        {
-          model: Clientes,
-          as: 'cliente',
-          attributes: ['id', 'razon_social', 'cuil_cuit']
-        }
-      ]
-    }
-  ]
-});
+        const calibracion = await Calibraciones.findByPk(calibracionId, {
+          minifyAliases: true,
+            include: [
+            {
+              model: Maquinas,
+              as: 'maquina',
+              attributes: [
+                'id',
+                'ancho_trabajo',
+                'distancia_entrePicos',
+                'numero_picos',
+                'tipo_maquina',
+                'cliente_id'
+              ],
+              include: [
+                {
+                  model: MaquinaTipo,
+                  as: 'tipo',
+                  attributes: ['id', 'tipo', 'marca', 'modelo']
+                },
+                {
+                  model: Clientes,
+                  as: 'cliente',
+                  attributes: ['id', 'razon_social', 'cuil_cuit']
+                }
+              ]
+            }
+          ]
+        });
 
-if (!calibracion) {
+        if (!calibracion) {
           throw new Error(`Calibración con ID ${calibracionId} no encontrada`);
         }
 
@@ -96,7 +98,7 @@ if (!calibracion) {
         const datosTemplate = this.prepararDatosTemplate(calibracion);
 
         // 3. Cargar imágenes en base64
-        await this.cargarImagenesEstados(datosTemplate);
+        // await this.cargarImagenesEstados(datosTemplate);
 
         // 4. Generar HTML desde template
         const html = await this.generarHTML(datosTemplate);
@@ -114,15 +116,15 @@ if (!calibracion) {
         ultimoError = error;
         console.error(`Error en intento ${intento}/${maxReintentos}:`, error.message);
         
-        // Si es un error de navegador en uso, esperar y reintentar
-        if (error.message.includes('browser is already running')) {
-          if (intento < maxReintentos) {
-            const tiempoEspera = intento * 1000; // 1s, 2s, 3s
-            console.log(`Esperando ${tiempoEspera}ms antes de reintentar...`);
-            await new Promise(resolve => setTimeout(resolve, tiempoEspera));
-            continue;
-          }
-        }
+        // // Si es un error de navegador en uso, esperar y reintentar
+        // if (error.message.includes('browser is already running')) {
+        //   if (intento < maxReintentos) {
+        //     const tiempoEspera = intento * 1000; // 1s, 2s, 3s
+        //     console.log(`Esperando ${tiempoEspera}ms antes de reintentar...`);
+        //     await new Promise(resolve => setTimeout(resolve, tiempoEspera));
+        //     continue;
+        //   }
+        // }
         
         // Si es otro tipo de error, lanzarlo inmediatamente
         throw error;
@@ -199,11 +201,12 @@ if (!calibracion) {
         clase: 'no-aplica',
         observacion: '',
         tiene_archivo: false,
-        imagen_base64: '',
+        imagen_url: '',
         nombre_archivo: '',
         recomendaciones: [],
         tiene_recomendaciones: false
       };
+
     }
 
     const claseMap = {
@@ -241,7 +244,9 @@ if (!calibracion) {
       clase: claseMap[estadoJSON.estado] || 'no-aplica',
       observacion: estadoJSON.observacion || '',
       tiene_archivo: tieneArchivo,
-      imagen_base64: '', // Se cargará después de forma asíncrona
+      imagen_url: nombreArchivo
+      ? `${BASE_URL}/uploads/calibraciones/${nombreArchivo}`
+      : '',
       nombre_archivo: nombreArchivo,
       recomendaciones: recomendaciones,
       tiene_recomendaciones: recomendaciones.length > 0
@@ -314,7 +319,7 @@ if (!calibracion) {
       const estado = datosTemplate[estadoKey];
       if (estado && estado.tiene_archivo && estado.nombre_archivo) {
         const imagenBase64 = await this.convertirImagenABase64(estado.nombre_archivo);
-        estado.imagen_base64 = imagenBase64;
+        estado.imagen_src = imagenBase64;
       }
     }
 
@@ -354,7 +359,11 @@ if (!calibracion) {
     try {
       const templateContent = await fs.readFile(this.templatePath, 'utf-8');
       const template = handlebars.compile(templateContent);
-      return template(datos);
+  
+      console.log('Generando HTML con datos:', datos);
+      const elhtml = template(datos);
+      console.log('HTML generado:', elhtml);   
+      return elhtml;
     } catch (error) {
       console.error('Error generando HTML:', error);
       throw new Error('Error al procesar template HTML');
@@ -378,7 +387,7 @@ if (!calibracion) {
     'reports',
     filename
   );
-
+console.log('Generando PDF en:', outputPath);
     browser = await getBrowser();
     page = await browser.newPage();
 
@@ -387,7 +396,7 @@ if (!calibracion) {
     });
 
     await page.pdf({
-      path: outputPath,
+      path: outputPath ,
       format: 'A4',
       printBackground: true,
       margin: {

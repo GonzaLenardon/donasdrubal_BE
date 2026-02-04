@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Calibración - {{maquina}}</title>
+    <title>Diagnóstico de Calibración - Honda</title>
     <style>
         * {
             margin: 0;
@@ -297,8 +297,8 @@
     <!-- HEADER -->
     <div class="header">
         <h1>Diagnóstico y Puesta a Punto de Pulverizadora</h1>
-        <div class="empresa">{{empresa}}</div>
-        <div class="fecha">Fecha de calibración: {{fecha}}</div>
+        <div class="empresa">JP Servicios SRL - sucursal 2</div>
+        <div class="fecha">Fecha de calibración: 05/01/2026</div>
     </div>
 
     <!-- DATOS GENERALES -->
@@ -306,41 +306,39 @@
         <table>
             <tr>
                 <td>Cliente:</td>
-                <td>{{empresa}}</td>
+                <td>JP Servicios SRL - sucursal 2</td>
             </tr>
-            {{#if cliente_cuit}}
             <tr>
                 <td>CUIT/CUIL:</td>
-                <td>{{cliente_cuit}}</td>
+                <td>20-12345678-9</td>
             </tr>
-            {{/if}}
             <tr>
                 <td>Tipo de Máquina:</td>
-                <td>{{tipo_maquina}}</td>
+                <td>Motorizada</td>
             </tr>
             <tr>
                 <td>Marca:</td>
-                <td>{{maquina}}</td>
+                <td>Honda</td>
             </tr>
             <tr>
                 <td>Modelo:</td>
-                <td>{{modelo}}</td>
+                <td>WJR2525</td>
             </tr>
             <tr>
                 <td>Ancho de trabajo:</td>
-                <td>{{ancho_trabajo}} metros</td>
+                <td>N/A metros</td>
             </tr>
             <tr>
                 <td>Distancia entre picos:</td>
-                <td>{{distancia_picos}} m</td>
+                <td>0.00 m</td>
             </tr>
             <tr>
                 <td>Número de picos:</td>
-                <td>{{numero_picos}}</td>
+                <td>N/A</td>
             </tr>
             <tr>
                 <td>Responsable:</td>
-                <td>{{responsable}}</td>
+                <td>Pepito</td>
             </tr>
         </table>
     </div>
@@ -349,7 +347,7 @@
     <div class="seccion">
         <div class="seccion-titulo">OBJETIVO</div>
         <p style="padding: 0 15px;">
-            Realizar el diagnóstico técnico de la máquina pulverizadora terrestre, con el fin de detectar 
+            Realizar el diagnóstico técnico de la máquina pulverizadora terrestre, con el fin de detectar
             puntos a mejorar para así poder lograr aplicaciones eficientes.
         </p>
     </div>
@@ -362,304 +360,138 @@
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">ESTADO GENERAL DE LA MÁQUINA</span>
-                <span class="estado-badge {{estado_maquina.clase}}">{{estado_maquina.estado}}</span>
+                <span class="estado-badge bueno">Bueno</span>
             </div>
-            {{#if estado_maquina.observacion}}
-            <div class="observacion">{{estado_maquina.observacion}}</div>
-            {{/if}}
-            {{#if estado_maquina.tiene_recomendaciones}}
+            <div class="observacion">aca va comentario general de la maquina</div>
             <div class="recomendaciones-lista">
                 <h4>Recomendaciones:</h4>
                 <ul>
-                    {{#each estado_maquina.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
+                    <li>Remmedaciones Remmedaciones Remmedaciones</li>
+                    <li>Remmedaciones Remmedaciones Remmedaciones Remmedaciones</li>
                 </ul>
             </div>
-            {{/if}}
-            {{#if estado_maquina.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_maquina.imagen_url}}" alt="Estado de la máquina">
-                <div class="caption">Imagen: {{estado_maquina.nombre_archivo}}</div>
+                <img src="" alt="Estado de la máquina">
+                <div class="caption">Imagen: estado_maquina_1769020051526_tractor.jpg</div>
             </div>
-            {{/if}}
         </div>
 
         <!-- Bomba -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">FUNCIONAMIENTO DE LA BOMBA</span>
-                <span class="estado-badge {{estado_bomba.clase}}">{{estado_bomba.estado}}</span>
+                <span class="estado-badge muy-bueno">Muy bueno</span>
             </div>
-            {{#if estado_bomba.observacion}}
-            <div class="observacion">{{estado_bomba.observacion}}</div>
-            {{/if}}
-            {{#if estado_bomba.tiene_recomendaciones}}
+            <div class="observacion">Observaciones Observaciones Observaciones Observaciones Observaciones </div>
             <div class="recomendaciones-lista">
                 <h4>Recomendaciones:</h4>
                 <ul>
-                    {{#each estado_bomba.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
+                    <li>Remmedaciones Remmedaciones Remmedaciones Remmedaciones</li>
+                    <li>Remmedaciones Remmedaciones Remmedaciones Remmedaciones</li>
+                    <li>Remmedaciones Remmedaciones Remmedaciones Remmedaciones Remmedaciones Remmedaciones Remmedaciones Remmedaciones Remmedaciones</li>
                 </ul>
             </div>
-            {{/if}}
-            {{#if estado_bomba.tiene_archivo}}
             <div class="imagen-componente">
-                <img src="{{estado_bomba.imagen_url}}" alt="Bomba de pulverización">
-                <div class="caption">Imagen: {{estado_bomba.nombre_archivo}}</div>
+                <img src="" alt="Bomba de pulverización">
+                <div class="caption">Imagen: estado_bomba_1768402180528_tractor.jpg</div>
             </div>
-            {{/if}}
         </div>
 
         <!-- Agitador -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">FUNCIONAMIENTO DEL AGITADOR</span>
-                <span class="estado-badge {{estado_agitador.clase}}">{{estado_agitador.estado}}</span>
+                <span class="estado-badge no-aplica">No aplica</span>
             </div>
-            {{#if estado_agitador.observacion}}
-            <div class="observacion">{{estado_agitador.observacion}}</div>
-            {{/if}}
-            {{#if estado_agitador.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_agitador.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_agitador.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estado_agitador.imagen_url}}" alt="Agitador">
-                <div class="caption">Imagen: {{estado_agitador.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones Observaciones </div>
         </div>
 
         <!-- Filtro Primario -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">FILTRO PRIMARIO</span>
-                <span class="estado-badge {{estado_filtroPrimario.clase}}">{{estado_filtroPrimario.estado}}</span>
+                <span class="estado-badge regular">Regular</span>
             </div>
-            {{#if estado_filtroPrimario.observacion}}
-            <div class="observacion">{{estado_filtroPrimario.observacion}}</div>
-            {{/if}}
-            {{#if estado_filtroPrimario.tiene_recomendaciones}}
+            <div class="observacion">Observaciones Observaciones Observaciones </div>
             <div class="recomendaciones-lista">
                 <h4>Recomendaciones:</h4>
                 <ul>
-                    {{#each estado_filtroPrimario.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
+                    <li>Observaciones Observaciones Observaciones</li>
                 </ul>
             </div>
-            {{/if}}
-            {{#if estado_filtroPrimario.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estado_filtroPrimario.imagen_url}}" alt="Filtro Primario">
-                <div class="caption">Imagen: {{estado_filtroPrimario.nombre_archivo}}</div>
-            </div>
-            {{/if}}
         </div>
 
         <!-- Filtro Secundario -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">FILTRO SECUNDARIO</span>
-                <span class="estado-badge {{estado_filtroSecundario.clase}}">{{estado_filtroSecundario.estado}}</span>
+                <span class="estado-badge regular">Regular</span>
             </div>
-            {{#if estado_filtroSecundario.observacion}}
-            <div class="observacion">{{estado_filtroSecundario.observacion}}</div>
-            {{/if}}
-            {{#if estado_filtroSecundario.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_filtroSecundario.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_filtroSecundario.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{BASE_URL}}{{estado_filtroSecundario.imagen_url}}" alt="Filtro Secundario">
-                <div class="caption">Imagen: {{estado_filtroSecundario.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones Observaciones Observaciones </div>
         </div>
 
         <!-- Filtro de Línea -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">FILTRO DE LÍNEA</span>
-                <span class="estado-badge {{estado_filtroLinea.clase}}">{{estado_filtroLinea.estado}}</span>
+                <span class="estado-badge no-aplica">No aplica</span>
             </div>
-            {{#if estado_filtroLinea.observacion}}
-            <div class="observacion">{{estado_filtroLinea.observacion}}</div>
-            {{/if}}
-            {{#if estado_filtroLinea.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_filtroLinea.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_filtroLinea.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{BASE_URL}}{{estado_filtroLinea.imagen_url}}" alt="Filtro de Línea">
-                <div class="caption">Imagen: {{estado_filtroLinea.nombre_archivo}}</div>
-            </div>
-            {{/if}}
         </div>
 
         <!-- Mangueras y Conexiones -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">MANGUERAS Y CONEXIONES</span>
-                <span class="estado-badge {{estado_manguerayconexiones.clase}}">{{estado_manguerayconexiones.estado}}</span>
+                <span class="estado-badge no-aplica">No aplica</span>
             </div>
-            {{#if estado_manguerayconexiones.observacion}}
-            <div class="observacion">{{estado_manguerayconexiones.observacion}}</div>
-            {{/if}}
-            {{#if estado_manguerayconexiones.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_manguerayconexiones.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_manguerayconexiones.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estado_manguerayconexiones.imagen_url}}" alt="Mangueras y Conexiones">
-                <div class="caption">Imagen: {{estado_manguerayconexiones.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones </div>
         </div>
 
         <!-- Antigoteo -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">COMPROBACIÓN ANTIGOTEOS</span>
-                <span class="estado-badge {{estado_antigoteo.clase}}">{{estado_antigoteo.estado}}</span>
+                <span class="estado-badge bueno">Bueno</span>
             </div>
-            {{#if estado_antigoteo.observacion}}
-            <div class="observacion">{{estado_antigoteo.observacion}}</div>
-            {{/if}}
-            {{#if estado_antigoteo.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_antigoteo.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_antigoteo.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estado_antigoteo.imagen_url}}" alt="Antigoteos">
-                <div class="caption">Imagen: {{estado_antigoteo.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones </div>
         </div>
 
         <!-- Limpieza Tanque -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">ESTADO DEL TANQUE / LIMPIEZA</span>
-                <span class="estado-badge {{estado_limpiezaTanque.clase}}">{{estado_limpiezaTanque.estado}}</span>
+                <span class="estado-badge muy-bueno">Muy bueno</span>
             </div>
-            {{#if estado_limpiezaTanque.observacion}}
-            <div class="observacion">{{estado_limpiezaTanque.observacion}}</div>
-            {{/if}}
-            {{#if estado_limpiezaTanque.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_limpiezaTanque.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_limpiezaTanque.tiene_archivo}}
+            <div class="observacion">Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones </div>
             <div class="imagen-componente">
-                <img src="{{estado_limpiezaTanque.imagen_url}}" alt="Tanque">
-                <div class="caption">Imagen: {{estado_limpiezaTanque.nombre_archivo}}</div>
+                <img src="" alt="Tanque">
+                <div class="caption">Imagen: estado_limpiezaTanque_1768402219911_trilladora.jpg</div>
             </div>
-            {{/if}}
         </div>
 
         <!-- Pastillas -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">ESTADO DE PASTILLAS (JARREO)</span>
-                <span class="estado-badge {{estado_pastillas.clase}}">{{estado_pastillas.estado}}</span>
+                <span class="estado-badge bueno">Bueno</span>
             </div>
-            {{#if estado_pastillas.observacion}}
-            <div class="observacion">{{estado_pastillas.observacion}}</div>
-            {{/if}}
-            {{#if estado_pastillas.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estado_pastillas.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estado_pastillas.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estado_pastillas.imagen_url}}" alt="Pastillas">
-                <div class="caption">Imagen: {{estado_pastillas.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones </div>
         </div>
 
         <!-- Estabilidad Botalón -->
         <div class="componente">
             <div class="componente-header">
                 <span class="componente-nombre">ESTABILIDAD VERTICAL DEL BOTALÓN</span>
-                <span class="estado-badge {{estabilidadVerticalBotalon.clase}}">{{estabilidadVerticalBotalon.estado}}</span>
+                <span class="estado-badge bueno">Bueno</span>
             </div>
-            {{#if estabilidadVerticalBotalon.observacion}}
-            <div class="observacion">{{estabilidadVerticalBotalon.observacion}}</div>
-            {{/if}}
-            {{#if estabilidadVerticalBotalon.tiene_recomendaciones}}
-            <div class="recomendaciones-lista">
-                <h4>Recomendaciones:</h4>
-                <ul>
-                    {{#each estabilidadVerticalBotalon.recomendaciones}}
-                    <li>{{this.texto}}</li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
-            {{#if estabilidadVerticalBotalon.tiene_archivo}}
-            <div class="imagen-componente">
-                <img src="{{estabilidadVerticalBotalon.imagen_url}}" alt="Botalón">
-                <div class="caption">Imagen: {{estabilidadVerticalBotalon.nombre_archivo}}</div>
-            </div>
-            {{/if}}
+            <div class="observacion">Observaciones Observaciones Observaciones </div>
         </div>
     </div>
 
     <!-- MEDICIÓN DE PRESIONES -->
     <div class="seccion">
         <div class="seccion-titulo">MEDICIÓN DE PRESIONES</div>
-        
+
         <table class="presiones-table">
             <thead>
                 <tr>
@@ -670,53 +502,51 @@
             <tbody>
                 <tr>
                     <td>Reloj UNIMAP</td>
-                    <td>{{presion_unimap}}</td>
+                    <td>3.00</td>
                 </tr>
                 <tr>
                     <td>Computadora de Cabina</td>
-                    <td>{{presion_computadora}}</td>
+                    <td>3.00</td>
                 </tr>
                 <tr>
                     <td>Manómetro en Botalón</td>
-                    <td>{{presion_manometro}}</td>
+                    <td>3.00</td>
                 </tr>
             </tbody>
         </table>
 
-        {{#if variacion_presion.valor}}
-        <div class="variacion-presion {{variacion_presion.clase}}">
-            <strong>Variación de presión entre mediciones:</strong> {{variacion_presion.valor}}%
+        <div class="variacion-presion ">
+            <strong>Variación de presión entre mediciones:</strong> 0.00%
             <br>
-            <strong>Evaluación:</strong> {{variacion_presion.estado}}
+            <strong>Evaluación:</strong> MUY BUENA
         </div>
-        {{/if}}
 
-        {{#if observaciones_acronex}}
         <div class="recomendacion">
-            {{observaciones_acronex}}
+            Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observacione
+s Observaciones Observaciones Observaciones Observaciones
         </div>
-        {{/if}}
     </div>
 
     <!-- OBSERVACIONES FINALES -->
     <div class="observaciones-finales">
         <h3>OBSERVACIONES GENERALES</h3>
-        <p>{{observaciones_generales}}</p>
-        
+        <p>Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones Observaciones
+ </p>
+
         <p style="margin-top: 20px; font-style: italic; border-top: 1px solid #ddd; padding-top: 15px;">
-            "Un buen tratamiento es realizado en forma eficaz cuando el producto se distribuye de forma 
-            uniforme y en la cantidad adecuada". Esto exige contar con un equipo adecuado, en buenas 
-            condiciones, calibrado y regulado correctamente, contribuyendo a reducir el uso de producto, 
+            "Un buen tratamiento es realizado en forma eficaz cuando el producto se distribuye de forma
+            uniforme y en la cantidad adecuada". Esto exige contar con un equipo adecuado, en buenas
+            condiciones, calibrado y regulado correctamente, contribuyendo a reducir el uso de producto,
             reducir la contaminación, mejorar la seguridad del aplicador y reducir los niveles de residuos.
         </p>
     </div>
 
     <!-- FOOTER -->
     <div class="footer">
-        <div class="responsable">{{responsable_informe}}</div>
+        <div class="responsable">Ing. Agr. Montiel, Franco Mat: 82-2-1666</div>
         <div>Don Asdrúbal S.R.L – Departamento I+D</div>
         <div style="margin-top: 10px; font-size: 9pt;">
-            Informe generado el: {{generado}}
+            Informe generado el: 2/2/2026, 08:42:41
         </div>
     </div>
 </body>

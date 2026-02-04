@@ -438,12 +438,20 @@ export const previsualizarPDF = async (req, res) => {
 
       const resultado = await PDFService.generarInformeCalibracion(id);
 
-      if (!resultado.success || !resultado.url) {
+      if (!resultado.success || !resultado.path) {
         throw new Error('No se pudo generar el PDF');
       }
 
       // Redirige directamente al PDF generado por PHP
-      return res.redirect(resultado.url);
+      // return res.redirect(resultado.path);
+      return res.sendFile(
+            path.resolve(resultado.path),
+            {
+              headers: {
+                'Content-Type': 'application/pdf'
+              }
+            }
+          );      
 
     } catch (error) {
       console.error('Error en previsualizarPDF:', error);
