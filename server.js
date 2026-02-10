@@ -34,7 +34,6 @@ app.use(
 );
 // app.options(/.*/, cors());
 
-
 // 🔐 RUTAS CON AUTENTICACIÓN
 app.use('/', router);
 
@@ -43,9 +42,10 @@ const __dirname = path.dirname(__filename);
 
 // const uploadsPath = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-app.use('/reports', express.static(path.join(process.cwd(), 'public', 'reports')));
-
-
+app.use(
+  '/reports',
+  express.static(path.join(process.cwd(), 'public', 'reports')),
+);
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -61,7 +61,7 @@ const startServer = async () => {
 
     // 🔹 Luego sincronizar modelos (sin borrar datos)
     // await db.sync({ force: false });
-    await db.sync({ alter: false }); // Ajusta tablas sin borrar datos
+    await db.sync({ alter: true }); // Ajusta tablas sin borrar datos
     console.log('📦 Base de datos sincronizada.');
 
     // 🔹 Iniciar servidor Express
