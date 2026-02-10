@@ -12,13 +12,13 @@ Jornada.init(
     },
     motivo: {
       type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: 'Otro',
+      allowNull: true,
+      defaultValue: 'Nueva Jornada mezcla',
     },
     observaciones: {
       type: DataTypes.TEXT,
       allowNull: true,
-    },    
+    },
     cliente_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -27,28 +27,35 @@ Jornada.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    id_alerta_origen: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'alertas_servicios',
+        key: 'id_alerta',
+      },
+    },
     estado: {
-      type: DataTypes.ENUM('Pendiente', 'En Proceso', 'Completada'),
-      allowNull: false,
-      defaultValue: 'Pendiente'
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: 'PENDIENTE',
+      validate: {
+        isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
+      },
     },
-    activo: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true
-    },
+
     deletedAt: {
-        allowNull: true,
-        type: DataTypes.DATE,
-    },         
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
   },
   {
     sequelize: db,
-    modelName: 'jornada',
+    modelName: 'Jornada',
     tableName: 'jornadas',
-    timestamps: true,   // Necesario para paranoid
-    paranoid: true      // Activa soft delete    
-  }
+    timestamps: true, // Necesario para paranoid
+    paranoid: true, // Activa soft delete
+  },
 );
 
 export default Jornada;
