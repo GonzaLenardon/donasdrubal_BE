@@ -33,75 +33,75 @@ Calibraciones.init(
     },
     fecha: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     responsable: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     estado_maquina: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_bomba: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSONBomba,
     },
 
     estado_agitador: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_filtroPrimario: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_filtroSecundario: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_filtroLinea: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_manguerayconexiones: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_antigoteo: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_limpiezaTanque: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estado_pastillas: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
 
     estabilidadVerticalBotalon: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
       defaultValue: estadoJSON,
     },
     mixer: {
@@ -112,19 +112,19 @@ Calibraciones.init(
 
     presion_unimap: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 0,
     },
 
     presion_computadora: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 0,
     },
 
     presion_manometro: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 0,
     },
 
@@ -142,6 +142,23 @@ Calibraciones.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    id_alerta_origen: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'alertas_servicios',
+        key: 'id_alerta',
+      },
+    },
+    estado: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: 'PENDIENTE',
+      validate: {
+        isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
+      },
+    },
+
     deletedAt: {
       allowNull: true,
       type: DataTypes.DATE,

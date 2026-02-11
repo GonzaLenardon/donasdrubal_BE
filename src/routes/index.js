@@ -68,6 +68,8 @@ import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
+import controllersTipoServicios from '../controllers/tipoServicios.js';
+import controllersAlertaServicios from '../controllers/alertasServicios.js';
 
 const router = express.Router();
 
@@ -83,10 +85,8 @@ router.get('/', (req, res) => {
   });
 });
 
-
 router.post('/login', login);
 router.post('/user', addUser);
-
 
 /**
  * @route   GET /api/calibraciones/:id/preview-pdf
@@ -96,7 +96,7 @@ router.post('/user', addUser);
 router.get(
   '/calibraciones/:id/preview-pdf',
   // authMiddleware,
-  previsualizarPDF
+  previsualizarPDF,
 );
 
 // ========================================
@@ -306,8 +306,22 @@ router.put(
 
 router.get('/tipoclientes', allTipoClientes);
 
+// ========================================
+// RUTAS PROTEGIDAS - TIPOS DE SERVICIOS
+// ========================================
+
+router.post('/tiposervicios', controllersTipoServicios.add);
+
+// ========================================
+// RUTAS PROTEGIDAS - ALERTAS SERVICIOS
+// ========================================
+
+router.post('/alertaservicios', controllersAlertaServicios.add);
+
+router.post('/alertas', controllersAlertaServicios.addAllService);
+
 // =============================================================
-// RUTAS PROTEGIDAS - GENERACION INF=ORMES PDF CALIBRACIONES
+// RUTAS PROTEGIDAS - GENERACION INFORMES PDF CALIBRACIONES
 // =============================================================
 
 /**

@@ -9,13 +9,14 @@ import Maquinas from './maquinas.js';
 import Calibraciones from './calibraciones.js';
 import Clientes from './clientes.js';
 import ClienteIngenieros from './clientesIngenieros.js';
-
 import MaquinaTipo from './maquina_tipo.js';
 import Pozo from './pozo.js';
 import MuestraAgua from './muestra_agua.js';
 import Jornada from './jornada.js';
-
 import TipoClientes from './tipoClientes.js';
+import AlertasServicios from './alertasServicios.js';
+import TipoServicios from './tiposServicios.js';
+
 // ============================================================================
 // ASOCIACIONES USERS - ROLES - PERMISSIONS
 // ============================================================================
@@ -187,6 +188,80 @@ MuestraAgua.belongsTo(Pozo, {
 });
 
 // ============================================================================
+// ASOCIACIONES Alertas  <==> TiposAlertas
+// ============================================================================
+
+// Cliente -> Alertas
+Clientes.hasMany(AlertasServicios, {
+  foreignKey: 'cliente_id',
+  as: 'alertas',
+});
+
+AlertasServicios.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+});
+
+// TipoServicio -> Alertas
+TipoServicios.hasMany(AlertasServicios, {
+  foreignKey: 'tipo_servicio_id',
+  as: 'alertas',
+});
+
+AlertasServicios.belongsTo(TipoServicios, {
+  foreignKey: 'tipo_servicio_id',
+  as: 'tipoServicio',
+});
+
+// ===============================================
+// ASOCIACIONES Alertas  <==> MUESTRAS DE AGUA
+// ===============================================
+
+// 🔹 UNA alerta puede generar MUCHAS muestras
+AlertasServicios.hasMany(MuestraAgua, {
+  foreignKey: 'id_alerta_origen',
+  as: 'alertaMuestras',
+});
+
+// 🔹 UNA muestra pertenece a UNA alerta (opcional)
+MuestraAgua.belongsTo(AlertasServicios, {
+  foreignKey: 'id_alerta_origen',
+  as: 'muestrasAlerta',
+});
+
+// ===============================================
+// ASOCIACIONES Alertas  <==> CALIBRACIONES
+// ===============================================
+
+// 🔹 UNA alerta puede generar MUCHAS muestras
+AlertasServicios.hasMany(Calibraciones, {
+  foreignKey: 'id_alerta_origen',
+  as: 'calibracionesAlerta',
+});
+
+// 🔹 UNA muestra pertenece a UNA alerta (opcional)
+Calibraciones.belongsTo(AlertasServicios, {
+  foreignKey: 'id_alerta_origen',
+  as: 'alertaCalibraciones',
+});
+
+// ===============================================
+// ASOCIACIONES Alertas  <==> JORNADAS
+// ===============================================
+
+// 🔹 UNA alerta puede generar MUCHAS muestras
+AlertasServicios.hasMany(Jornada, {
+  foreignKey: 'id_alerta_origen',
+  as: 'jornadaAlerta',
+});
+
+// 🔹 UNA muestra pertenece a UNA alerta (opcional)
+Jornada.belongsTo(AlertasServicios, {
+  foreignKey: 'id_alerta_origen',
+  as: 'alertaJornada',
+});
+
+// ============================================================================
 // EXPORTAR TODO
 // ============================================================================
 export { db };
@@ -205,4 +280,6 @@ export {
   MuestraAgua,
   Jornada,
   TipoClientes,
+  TipoServicios,
+  AlertasServicios,
 };

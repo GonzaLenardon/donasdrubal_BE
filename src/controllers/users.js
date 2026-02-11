@@ -316,7 +316,7 @@ const login = async (req, res) => {
     console.log('Payload JWT:', payload);
     console.log('Payload JWT:', user.roles);
 
-    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '8h' });
 
     /*
     console.log(
