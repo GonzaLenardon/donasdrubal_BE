@@ -134,7 +134,7 @@ export const getClienteStats = async (req, res) => {
     =====================================================
     */
 
-    res.json({
+    const data = {
       pozos: {
         total: totalPozos,
         nuevos: nuevosPozos,
@@ -153,11 +153,15 @@ export const getClienteStats = async (req, res) => {
         total: totalJornadas,
         personasCapacitadas: 14 // personasCapacitadas
       }
+    }
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      data: data,
     });
 
   } catch (error) {
     console.error('Error en getClienteStats:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Error al obtener estadísticas',
       detalle: error.message
     });
