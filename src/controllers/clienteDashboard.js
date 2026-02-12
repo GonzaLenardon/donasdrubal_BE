@@ -156,8 +156,8 @@ export const getClienteStats = async (req, res) => {
     }
     return res.status(200).json({
       message: 'Estadísticas del cliente obtenidas correctamente',
-      data: data,
-    });
+      payload: data,
+      });
 
   } catch (error) {
     console.error('Error en getClienteStats:', error);
@@ -174,19 +174,23 @@ export const getClienteStats = async (req, res) => {
 
 export const getClienteServicesChart = async (req, res) => {
   // Agregaciones específicas para gráfico
-  return {
+  const data = {
     data: [
       { name: 'Calibración', value: 8, color: '#3b82f6' },
       { name: 'Análisis Agua', value: 6, color: '#f59e0b' },
       { name: 'Capacitación', value: 4, color: '#10b981' }
     ],
     total: 18
-  };
+  }
+  return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
 };
 
 export const getClienteMachinesChart = async (req, res) => {
   // Agregaciones específicas para gráfico
-  return {
+  const data = {
     data: [
       { name: 'Al día', value: 4, color: '#10b981' },
       { name: 'Próximo', value: 1, color: '#f59e0b' },
@@ -194,11 +198,15 @@ export const getClienteMachinesChart = async (req, res) => {
     ],
     total: 5
   };
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
 };
 
 export const getClienteUpcomingServices = async (req, res) => {
   // Queries de servicios próximos
-return {
+const data = {
     calibracion: [
       {
         id: 1,
@@ -252,4 +260,8 @@ return {
       }
     ]
   };  
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
 };
