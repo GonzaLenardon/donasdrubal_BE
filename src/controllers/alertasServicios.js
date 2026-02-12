@@ -103,19 +103,21 @@ const controllersAlertaServicios = {
           });
         }
 
-        const newJornada = Jornada.create({
-          cliente_id: cliente.id,
-        });
+        for (let index = 0; index < 2; index++) {
+          const newJornada = await Jornada.create({
+            cliente_id: cliente.id,
+          });
 
-        alertasGeneradas.push({
-          cliente_id: cliente.id,
-          tipo_servicio_id: tipoServicioJornada.id,
-          fecha_vencimiento,
-          fecha_alerta,
-          estado: 'PENDIENTE',
-          prioridad: 'NORMAL',
-          id_servicio_realizado: newJornada.id,
-        });
+          alertasGeneradas.push({
+            cliente_id: cliente.id,
+            tipo_servicio_id: tipoServicioJornada.id,
+            fecha_vencimiento,
+            fecha_alerta,
+            estado: 'PENDIENTE',
+            prioridad: 'NORMAL',
+            id_servicio_realizado: newJornada.id,
+          });
+        }
 
         /*   const jornada = await Jornada.findAll({
           where: { cliente_id: cliente.id },

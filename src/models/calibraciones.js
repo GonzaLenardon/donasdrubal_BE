@@ -168,7 +168,7 @@ Calibraciones.init(
     sequelize: db,
     modelName: 'Calibraciones',
     tableName: 'calibraciones',
-    timestamps: false,
+    timestamps: true,
     paranoid: true, // Activa soft delete
   },
 );
