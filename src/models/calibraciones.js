@@ -158,11 +158,6 @@ Calibraciones.init(
         isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
       },
     },
-
-    deletedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-    },
   },
   {
     sequelize: db,
