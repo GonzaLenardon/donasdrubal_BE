@@ -70,6 +70,7 @@ import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertaServicios from '../controllers/alertasServicios.js';
+import * as dashboardController from '../controllers/clienteDashboard.js';
 
 const router = express.Router();
 
@@ -81,7 +82,7 @@ router.get('/', (req, res) => {
   res.json({
     ok: true,
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
-    version: '1.2.7',
+    version: '3.1.0',
   });
 });
 
@@ -373,4 +374,30 @@ router.delete(
   limpiarPDFsAntiguos,
 );
 
+/*=========================================
+  RUTAS PROTEGIDAS - DASHBOARD CLIENTE
+=========================================*/
+
+router.get(
+  '/cliente/:cliente_id/stats', 
+  dashboardController.getClienteStats
+);
+
+router.get(
+  '/cliente/:cliente_id/services-chart', 
+  dashboardController.getClienteServicesChart
+);
+
+router.get(
+  '/cliente/:cliente_id/machines-chart',
+  dashboardController.getClienteMachinesChart
+);
+
+router.get(
+  '/cliente/:cliente_id/upcoming-services',
+  dashboardController.getClienteUpcomingServices
+);
+/*=========================================
+  FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
+=========================================*/
 export { router };
