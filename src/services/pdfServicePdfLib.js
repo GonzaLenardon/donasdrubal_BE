@@ -3,6 +3,7 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
@@ -225,43 +226,41 @@ class PDFServicePdfLib {
 
       // ================= RECOMENDACIONES =================
 
-// ================= RECOMENDACIONES =================
+      if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
 
-if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
+        page.drawText('Recomendaciones:', {
+          x: margin + 15,
+          y: lineaY,
+          size: 9,
+          font: fontBold
+        });
 
-  page.drawText('Recomendaciones:', {
-    x: margin + 15,
-    y: lineaY,
-    size: 9,
-    font: fontBold
-  });
+        lineaY -= 14;
 
-  lineaY -= 14;
+        estado.recomendaciones.forEach((rec, index) => {
 
-  estado.recomendaciones.forEach((rec, index) => {
+          const textoNumerado = `${index + 1}. ${rec.texto}`;
 
-    const textoNumerado = `${index + 1}. ${rec.texto}`;
+          const recLines = this.wrapText(
+            textoNumerado,
+            font,
+            9,
+            width - margin * 2 - 40
+          );
 
-    const recLines = this.wrapText(
-      textoNumerado,
-      font,
-      9,
-      width - margin * 2 - 40
-    );
+          recLines.forEach(line => {
+            page.drawText(line, {
+              x: margin + 25,
+              y: lineaY,
+              size: 9,
+              font
+            });
+            lineaY -= 12;
+          });
 
-    recLines.forEach(line => {
-      page.drawText(line, {
-        x: margin + 25,
-        y: lineaY,
-        size: 9,
-        font
-      });
-      lineaY -= 12;
-    });
-
-    lineaY -= 4;
-  });
-}
+          lineaY -= 4;
+        });
+      }
 
 
       // ================= IMAGEN =================
@@ -285,7 +284,47 @@ if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) 
         }
       }
 
+      // ================= SUGERENCIAS PREVENTIVAS =================
 
+      const sugerenciasFijas = this.getSugerenciasPredeterminadas(comp.titulo);
+
+      if (sugerenciasFijas.length > 0) {
+
+        lineaY -= 5;
+
+        page.drawText('Sugerencias preventivas:', {
+          x: margin + 15,
+          y: lineaY,
+          size: 9,
+          font: fontBold
+        });
+
+        lineaY -= 14;
+
+        sugerenciasFijas.forEach((texto, index) => {
+
+          const textoNumerado = `${index + 1}. ${texto}`;
+
+          const recLines = this.wrapText(
+            textoNumerado,
+            font,
+            9,
+            width - margin * 2 - 40
+          );
+
+          recLines.forEach(line => {
+            page.drawText(line, {
+              x: margin + 25,
+              y: lineaY,
+              size: 9,
+              font
+            });
+            lineaY -= 12;
+          });
+
+          lineaY -= 4;
+        });
+      }      
       cursorY -= alturaCard + 20;
     }
 
@@ -343,6 +382,163 @@ if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) 
       cursorY -= 20;
     }
 
+    // ================= GRAFICA SECCIONES =================
+// ================= GRAFICA SECCIONES ROBUSTA =================
+
+const seccionesArray = Object.entries(datos.secciones || {})
+  .sort((a, b) => Number(a[0]) - Number(b[0]));
+
+if (seccionesArray.length > 0) {
+
+  const chartWidth = 420;
+  const chartHeight = 220;
+
+  const leftMargin = 70;
+  const rightMargin = 40;
+  const bottomMargin = 60;
+
+  const titleSpacing = 25;
+  const axisSpacing = 30;
+  const legendSpacing = 25;
+
+  const totalBlockHeight =
+    titleSpacing +
+    chartHeight +
+    axisSpacing +
+    legendSpacing;
+
+  // ================= CONTROL DE SALTO DE PÁGINA =================
+  if (cursorY - totalBlockHeight < bottomMargin) {
+    page = pdfDoc.addPage();
+    const { height: newHeight } = page.getSize();
+    cursorY = newHeight - bottomMargin;
+  }
+
+  // ================= TÍTULO =================
+  page.drawText('Evaluación de presión por sección', {
+    x: leftMargin,
+    y: cursorY,
+    size: 12,
+    font: fontBold,
+  });
+
+  cursorY -= titleSpacing;
+
+  const baseY = cursorY - chartHeight;
+
+  const valores = seccionesArray.map(s => Number(s[1]));
+  const maxValor = Math.max(...valores);
+
+  const promedioEquipo =
+    (Number(datos.presion_unimap || 0) +
+     Number(datos.presion_computadora || 0) +
+     Number(datos.presion_manometro || 0)) / 3;
+
+  const tolerancia = promedioEquipo * 0.10;
+
+  const escalaMax = Math.max(maxValor, promedioEquipo) * 1.1;
+
+  const espacioEntre = chartWidth / seccionesArray.length;
+
+  // ================= EJES =================
+  page.drawLine({
+    start: { x: leftMargin, y: baseY },
+    end: { x: leftMargin + chartWidth, y: baseY },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawLine({
+    start: { x: leftMargin, y: baseY },
+    end: { x: leftMargin, y: baseY + chartHeight },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+
+  // ================= ESCALA Y =================
+  const divisiones = 5;
+  for (let i = 0; i <= divisiones; i++) {
+
+    const valorEscala = (escalaMax / divisiones) * i;
+    const yPos = baseY + (valorEscala / escalaMax) * chartHeight;
+
+    page.drawLine({
+      start: { x: leftMargin - 5, y: yPos },
+      end: { x: leftMargin, y: yPos },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(valorEscala.toFixed(1), {
+      x: leftMargin - 35,
+      y: yPos - 3,
+      size: 8,
+      font,
+    });
+  }
+
+  // ================= LÍNEA PROMEDIO =================
+  const promedioY = baseY + (promedioEquipo / escalaMax) * chartHeight;
+
+  page.drawLine({
+    start: { x: leftMargin, y: promedioY },
+    end: { x: leftMargin + chartWidth, y: promedioY },
+    thickness: 1.5,
+    color: rgb(1, 0, 0),
+  });
+
+  page.drawText(`Promedio equipo: ${promedioEquipo.toFixed(2)} bar`, {
+    x: leftMargin + chartWidth - 170,
+    y: promedioY + 5,
+    size: 8,
+    font,
+    color: rgb(1, 0, 0),
+  });
+
+  // ================= BARRAS =================
+  seccionesArray.forEach(([numero, valor], index) => {
+
+    const altura = (valor / escalaMax) * chartHeight;
+    const x = leftMargin + index * espacioEntre + espacioEntre * 0.2;
+
+    const fueraDeRango =
+      valor > promedioEquipo + tolerancia ||
+      valor < promedioEquipo - tolerancia;
+
+    page.drawRectangle({
+      x,
+      y: baseY,
+      width: espacioEntre * 0.6,
+      height: altura,
+      color: fueraDeRango
+        ? rgb(0.8, 0, 0)        // rojo si está fuera de tolerancia
+        : rgb(0.2, 0.6, 0.2),   // verde si está OK
+    });
+
+    page.drawText(numero, {
+      x: x + 3,
+      y: baseY - 12,
+      size: 8,
+      font,
+    });
+
+  });
+
+  // ================= LEYENDA =================
+  cursorY = baseY - legendSpacing;
+
+  page.drawText('Verde: dentro de tolerancia | Rojo: fuera de ±10%', {
+    x: leftMargin,
+    y: cursorY,
+    size: 8,
+    font,
+  });
+
+  cursorY -= 20;
+}
+    // FIN GRAFICA SECCIONES
+
+
     // ================= FOOTER =================
 
     const pages = pdfDoc.getPages();
@@ -367,7 +563,7 @@ if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) 
         }
       );
     });
-
+    
 
     // ===============================
     // GUARDAR PDF
@@ -432,200 +628,323 @@ if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) 
     }
 
     // ===== RECOMENDACIONES =====
-if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
+    if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
 
-  estado.recomendaciones.forEach((r) => {
+      estado.recomendaciones.forEach((r) => {
 
-    const texto = r.texto || '';
+        const texto = r.texto || '';
 
-    const lines = this.wrapText(
-      texto,
-      font,
-      fontSize,
-      maxWidth
-    );
+        const lines = this.wrapText(
+          texto,
+          font,
+          fontSize,
+          maxWidth
+        );
 
-    altura += lines.length * lineHeight + 5;
-  });
+        altura += lines.length * lineHeight + 5;
+      });
 
-  altura += 20; // espacio título sección
-}
-
-
-    // ===== IMAGEN =====
-    if (estado.nombre_archivo) {
-      altura += 120;
+      altura += 20; // espacio título sección
     }
 
-    return altura;
-  }
+    // ===== SUGERENCIAS PREVENTIVAS =====
 
-  wrapText(text, font, fontSize, maxWidth) {
+    const sugerenciasFijas = this.getSugerenciasPredeterminadas(comp.titulo);
 
-    if (!text) return [];
+    if (sugerenciasFijas.length > 0) {
 
-    const words = String(text).split(' ');
-    const lines = [];
-    let currentLine = '';
+      altura += 20;
 
-    for (const word of words) {
+      sugerenciasFijas.forEach(texto => {
 
-      const testLine = currentLine
-        ? currentLine + ' ' + word
-        : word;
+        const lines = this.wrapText(
+          texto,
+          font,
+          fontSize,
+          maxWidth
+        );
 
-      const width = font.widthOfTextAtSize(testLine, fontSize);
+        altura += lines.length * lineHeight + 5;
+      });
+    }
 
-      if (width <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
+      // ===== IMAGEN =====
+      if (estado.nombre_archivo) {
+        altura += 120;
       }
+
+
+
+      return altura;
+    }
+    // ===================================
+    // DEVUELVE ARRAY CON LÍNEAS DE TEXTO 
+    // AJUSTADAS AL ANCHO MÁXIMO 
+    // ===================================
+    wrapText(text, font, fontSize, maxWidth) {
+
+      if (!text) return [];
+
+      const words = String(text).split(' ');
+      const lines = [];
+      let currentLine = '';
+
+      for (const word of words) {
+
+        const testLine = currentLine
+          ? currentLine + ' ' + word
+          : word;
+
+        const width = font.widthOfTextAtSize(testLine, fontSize);
+
+        if (width <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+
+      if (currentLine) lines.push(currentLine);
+
+      return lines;
     }
 
-    if (currentLine) lines.push(currentLine);
+    // ===============================
+    // PREPARAR DATOS
+    // ===============================
 
-    return lines;
-  }
+    prepararDatosTemplate(calibracion) {
 
-  // ===============================
-  // PREPARAR DATOS
-  // ===============================
+      const fecha = new Date(calibracion.fecha);
 
-  prepararDatosTemplate(calibracion) {
+      const formatear = (estado = {}) => ({
+        estado: estado.estado || 'NO APLICA',
+        observacion: estado.observacion || '',
+        nombre_archivo: estado.nombreArchivo || '',
 
-    const fecha = new Date(calibracion.fecha);
+        // SOLO PARA FILTROS (si no existen quedan vacíos)
+        color: estado.color || '',
+        numero: estado.numero ?? '',
+        presenciaORing: estado.presenciaORing || '',
 
-    const formatear = (estado = {}) => ({
-      estado: estado.estado || 'NO APLICA',
-      observacion: estado.observacion || '',
-      nombre_archivo: estado.nombreArchivo || '',
-
-      // SOLO PARA FILTROS (si no existen quedan vacíos)
-      color: estado.color || '',
-      numero: estado.numero ?? '',
-      presenciaORing: estado.presenciaORing || '',
-
-      recomendaciones: Array.isArray(estado.recomendaciones)
-      ? estado.recomendaciones.map(r => ({
-          id: r.id,
-          fecha: r.fecha,
-          texto: r.texto || ''
-        }))
-      : []
-    });
+        recomendaciones: Array.isArray(estado.recomendaciones)
+          ? estado.recomendaciones.map(r => ({
+            id: r.id,
+            fecha: r.fecha,
+            texto: r.texto || ''
+          }))
+          : []
+      });
 
 
-    return {
+      return {
 
-      // ================= GENERALES =================
+        // ================= GENERALES =================
 
-      id: calibracion.id,
-      fecha: fecha.toLocaleDateString('es-AR'),
-      responsable: calibracion.responsable || '',
-      estado_general: calibracion.estado || '',
+        id: calibracion.id,
+        fecha: fecha.toLocaleDateString('es-AR'),
+        responsable: calibracion.responsable || '',
+        estado_general: calibracion.estado || '',
 
-      observaciones_acronex: calibracion.observaciones_acronex || '',
-      observaciones_generales: calibracion.Observaciones || '',
+        observaciones_acronex: calibracion.observaciones_acronex || '',
+        observaciones_generales: calibracion.Observaciones || '',
 
-      secciones: calibracion.secciones
-        ? JSON.parse(calibracion.secciones)
-        : {},
+        secciones: calibracion.secciones
+          ? JSON.parse(calibracion.secciones)
+          : {},
 
-      // ================= PRESIONES =================
+        // ================= PRESIONES =================
 
-      presion_unimap: calibracion.presion_unimap ?? '',
-      presion_computadora: calibracion.presion_computadora ?? '',
-      presion_manometro: calibracion.presion_manometro ?? '',
+        presion_unimap: calibracion.presion_unimap ?? '',
+        presion_computadora: calibracion.presion_computadora ?? '',
+        presion_manometro: calibracion.presion_manometro ?? '',
 
-      // ================= COMPONENTES =================
+        // ================= COMPONENTES =================
 
-      estado_maquina: formatear(calibracion.estado_maquina),
-      estado_bomba: formatear(calibracion.estado_bomba),
-      estado_agitador: formatear(calibracion.estado_agitador),
-      estado_filtroPrimario: formatear(calibracion.estado_filtroPrimario),
-      estado_filtroSecundario: formatear(calibracion.estado_filtroSecundario),
-      estado_filtroLinea: formatear(calibracion.estado_filtroLinea),
-      estado_manguerayconexiones: formatear(calibracion.estado_manguerayconexiones),
-      estado_antigoteo: formatear(calibracion.estado_antigoteo),
-      estado_limpiezaTanque: formatear(calibracion.estado_limpiezaTanque),
-      estado_pastillas: formatear(calibracion.estado_pastillas),
-      estabilidadVerticalBotalon: formatear(calibracion.estabilidadVerticalBotalon),
-      mixer: formatear(calibracion.mixer),
+        estado_maquina: formatear(calibracion.estado_maquina),
+        estado_bomba: formatear(calibracion.estado_bomba),
+        estado_agitador: formatear(calibracion.estado_agitador),
+        estado_filtroPrimario: formatear(calibracion.estado_filtroPrimario),
+        estado_filtroSecundario: formatear(calibracion.estado_filtroSecundario),
+        estado_filtroLinea: formatear(calibracion.estado_filtroLinea),
+        estado_manguerayconexiones: formatear(calibracion.estado_manguerayconexiones),
+        estado_antigoteo: formatear(calibracion.estado_antigoteo),
+        estado_limpiezaTanque: formatear(calibracion.estado_limpiezaTanque),
+        estado_pastillas: formatear(calibracion.estado_pastillas),
+        estabilidadVerticalBotalon: formatear(calibracion.estabilidadVerticalBotalon),
+        mixer: formatear(calibracion.mixer),
 
-      // ================= MAQUINA =================
+        // ================= MAQUINA =================
 
-      maquina: calibracion.maquina
-        ? {
-          id: calibracion.maquina.id,
-          responsable: calibracion.maquina.responsable,
-          ancho_trabajo: calibracion.maquina.ancho_trabajo,
-          distancia_entrePicos: calibracion.maquina.distancia_entrePicos,
-          numero_picos: calibracion.maquina.numero_picos,
-          capacidad_tanque: calibracion.maquina.capacidad_tanque,
-          sistema_corte: calibracion.maquina.sistema_corte,
+        maquina: calibracion.maquina
+          ? {
+            id: calibracion.maquina.id,
+            responsable: calibracion.maquina.responsable,
+            ancho_trabajo: calibracion.maquina.ancho_trabajo,
+            distancia_entrePicos: calibracion.maquina.distancia_entrePicos,
+            numero_picos: calibracion.maquina.numero_picos,
+            capacidad_tanque: calibracion.maquina.capacidad_tanque,
+            sistema_corte: calibracion.maquina.sistema_corte,
 
-          tipo: calibracion.maquina.tipo
-            ? {
-              tipo: calibracion.maquina.tipo.tipo,
-              marca: calibracion.maquina.tipo.marca,
-              modelo: calibracion.maquina.tipo.modelo,
-              fecha_fabricacion:
-                calibracion.maquina.tipo.fecha_fabricacion
-                  ? new Date(
-                    calibracion.maquina.tipo.fecha_fabricacion
-                  ).toLocaleDateString('es-AR')
-                  : ''
-            }
-            : {},
+            tipo: calibracion.maquina.tipo
+              ? {
+                tipo: calibracion.maquina.tipo.tipo,
+                marca: calibracion.maquina.tipo.marca,
+                modelo: calibracion.maquina.tipo.modelo,
+                fecha_fabricacion:
+                  calibracion.maquina.tipo.fecha_fabricacion
+                    ? new Date(
+                      calibracion.maquina.tipo.fecha_fabricacion
+                    ).toLocaleDateString('es-AR')
+                    : ''
+              }
+              : {},
 
-          cliente: calibracion.maquina.cliente
-            ? {
-              razon_social: calibracion.maquina.cliente.razon_social,
-              direccion: calibracion.maquina.cliente.direccion,
-              ciudad: calibracion.maquina.cliente.ciudad,
-              provincia: calibracion.maquina.cliente.provincia,
-              pais: calibracion.maquina.cliente.pais,
-              telefono: calibracion.maquina.cliente.telefono,
-              email: calibracion.maquina.cliente.email,
-              cuil_cuit: calibracion.maquina.cliente.cuil_cuit
-            }
-            : {}
-        }
-        : {}
-    };
-  }
+            cliente: calibracion.maquina.cliente
+              ? {
+                razon_social: calibracion.maquina.cliente.razon_social,
+                direccion: calibracion.maquina.cliente.direccion,
+                ciudad: calibracion.maquina.cliente.ciudad,
+                provincia: calibracion.maquina.cliente.provincia,
+                pais: calibracion.maquina.cliente.pais,
+                telefono: calibracion.maquina.cliente.telefono,
+                email: calibracion.maquina.cliente.email,
+                cuil_cuit: calibracion.maquina.cliente.cuil_cuit
+              }
+              : {}
+          }
+          : {}
+      };
+    }
 
 
   async embedImage(pdfDoc, nombreArchivo) {
 
-    if (!nombreArchivo) return null;
+      if (!nombreArchivo) return null;
 
-    try {
-      const ruta = path.join(
-        process.cwd(),
-        'uploads',
-        'calibraciones',
-        nombreArchivo
-      );
+      try {
+        const ruta = path.join(
+          process.cwd(),
+          'uploads',
+          'calibraciones',
+          nombreArchivo
+        );
 
-      const imageBytes = await fs.readFile(ruta);
-      const extension = path.extname(nombreArchivo).toLowerCase();
+        const imageBytes = await fs.readFile(ruta);
+        const extension = path.extname(nombreArchivo).toLowerCase();
 
-      if (extension === '.png') {
-        return await pdfDoc.embedPng(imageBytes);
+        if (extension === '.png') {
+          return await pdfDoc.embedPng(imageBytes);
+        }
+
+        return await pdfDoc.embedJpg(imageBytes);
+
+      } catch (err) {
+        console.log('No se pudo cargar imagen:', nombreArchivo);
+        return null;
       }
-
-      return await pdfDoc.embedJpg(imageBytes);
-
-    } catch (err) {
-      console.log('No se pudo cargar imagen:', nombreArchivo);
-      return null;
     }
+
+    getSugerenciasPredeterminadas(titulo) {
+
+      const mapa = {
+
+        'Filtro Primario': [
+          'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
+          'Mantener orden correcto de filtros, Mesh de menos a más.'
+        ],
+
+        'Filtro Secundario': [
+          'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
+          'Mantener orden correcto de filtros, Mesh de menos a más.'
+        ],
+
+        'Filtro Línea': [
+          'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
+          'Mantener orden correcto de filtros, Mesh de menos a más.'
+        ],
+
+        'Antigoteo': [
+          'Mantener limpias las partes externas de la pulverizadora con MBM (Súper detergente industrial) para preservar las partes y la seguridad del operario.'
+        ],
+
+        'Limpieza Tanque': [
+          'Realizar una limpieza profunda con desincrustante SPRAYOFF para evitar problemas de fitotoxicidad en cultivos. Especialmente cuando se hagan aplicaciones de pre-emergentes, pre-siembra y post-emergentes de manera simultánea.'
+        ]
+
+      };
+
+      return mapa[titulo] || [];
+    }
+
+async generarGraficaSecciones(secciones) {
+
+  if (!Array.isArray(secciones) || secciones.length === 0) {
+    return null;
   }
 
+  const width = 800;
+  const height = 400;
 
-}
+  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+    width,
+    height,
+    backgroundColour: 'white'
+  });
+
+  const labels = secciones.map(s => s.numero);
+  const data = secciones.map(s => s.valor);
+
+  const configuration = {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Presión (bares)',
+        data,
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        tension: 0.2,
+        pointRadius: 4,
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          display: true
+        },
+        title: {
+          display: true,
+          text: 'Presión en las secciones',
+          font: {
+            size: 18
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'N° de sección'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Presión (bares)'
+          },
+          beginAtZero: false
+        }
+      }
+    }
+  };
+
+  return await chartJSNodeCanvas.renderToBuffer(configuration);
+}    
+
+  }
 
 export default new PDFServicePdfLib();
