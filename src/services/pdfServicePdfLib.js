@@ -35,7 +35,7 @@ class PDFServicePdfLib {
     if (!calibracion) {
       throw new Error('Calibración no encontrada');
     }
-
+    console.log('Calibración encontrada:', calibracion.toJSON());
     const datos = this.prepararDatosTemplate(calibracion);
     console.log('Datos preparados para PDF:', datos);
 
@@ -152,76 +152,78 @@ class PDFServicePdfLib {
 
       let lineaY = cursorY - 45;
 
-     const estado = comp.data;
+      const estado = comp.data;
 
-// ================= FILTROS (solo si aplica) =================
+      // ================= FILTROS (solo si aplica) =================
 
-if (comp.tipo === 'filtro') {
+      if (comp.tipo === 'filtro') {
 
-  if (estado.color) {
-    page.drawText(`Color: ${estado.color}`, {
-      x: margin + 15,
-      y: lineaY,
-      size: 9,
-      font
-    });
-    lineaY -= 14;
-  }
+        if (estado.color) {
+          page.drawText(`Color: ${estado.color}`, {
+            x: margin + 15,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 14;
+        }
 
-  if (estado.numero !== '' && estado.numero !== null) {
-    page.drawText(`Número: ${estado.numero}`, {
-      x: margin + 15,
-      y: lineaY,
-      size: 9,
-      font
-    });
-    lineaY -= 14;
-  }
+        if (estado.numero !== '' && estado.numero !== null) {
+          page.drawText(`Número: ${estado.numero}`, {
+            x: margin + 15,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 14;
+        }
 
-  if (estado.presenciaORing) {
-    page.drawText(`O-Ring: ${estado.presenciaORing}`, {
-      x: margin + 15,
-      y: lineaY,
-      size: 9,
-      font
-    });
-    lineaY -= 14;
-  }
+        if (estado.presenciaORing) {
+          page.drawText(`O-Ring: ${estado.presenciaORing}`, {
+            x: margin + 15,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 14;
+        }
 
-  lineaY -= 5;
-}
+        lineaY -= 5;
+      }
 
-// ================= OBSERVACIÓN =================
+      // ================= OBSERVACIÓN =================
 
-if (estado.observacion) {
+      if (estado.observacion) {
 
-  page.drawText('Observación:', {
-    x: margin + 15,
-    y: lineaY,
-    size: 9,
-    font: fontBold
-  });
+        page.drawText('Observación:', {
+          x: margin + 15,
+          y: lineaY,
+          size: 9,
+          font: fontBold
+        });
 
-  lineaY -= 14;
+        lineaY -= 14;
 
-const obsLines = this.wrapText(
-  estado.observacion,
-  font,
-  9,
-  width - margin * 2 - 40
-);
+        const obsLines = this.wrapText(
+          estado.observacion,
+          font,
+          9,
+          width - margin * 2 - 40
+        );
 
-obsLines.forEach(line => {
-  page.drawText(line, {
-    x: margin + 25,
-    y: lineaY,
-    size: 9,
-    font
-  });
-  lineaY -= 12;
-});
+        obsLines.forEach(line => {
+          page.drawText(line, {
+            x: margin + 25,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 12;
+        });
 
-}
+      }
+
+      // ================= RECOMENDACIONES =================
 
 // ================= RECOMENDACIONES =================
 
@@ -236,52 +238,52 @@ if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) 
 
   lineaY -= 14;
 
-estado.recomendaciones.forEach((rec, index) => {
+  estado.recomendaciones.forEach((rec, index) => {
 
-  const texto = `${index + 1}. ${rec.descripcion || rec}`;
+    const textoNumerado = `${index + 1}. ${rec.texto}`;
 
-  const recLines = this.wrapText(
-    texto,
-    font,
-    9,
-    width - margin * 2 - 40
-  );
+    const recLines = this.wrapText(
+      textoNumerado,
+      font,
+      9,
+      width - margin * 2 - 40
+    );
 
-  recLines.forEach(line => {
-    page.drawText(line, {
-      x: margin + 25,
-      y: lineaY,
-      size: 9,
-      font
+    recLines.forEach(line => {
+      page.drawText(line, {
+        x: margin + 25,
+        y: lineaY,
+        size: 9,
+        font
+      });
+      lineaY -= 12;
     });
-    lineaY -= 12;
+
+    lineaY -= 4;
   });
-
-  lineaY -= 5;
-});
-
 }
 
-// ================= IMAGEN =================
 
-if (estado.nombre_archivo) {
+      // ================= IMAGEN =================
 
-  const image = await this.embedImage(pdfDoc, estado.nombre_archivo);
+      if (estado.nombre_archivo) {
 
-  if (image) {
+        const image = await this.embedImage(pdfDoc, estado.nombre_archivo);
 
-    const img = image.scale(0.25);
+        if (image) {
 
-    page.drawImage(image, {
-      x: margin + 15,
-      y: lineaY - img.height,
-      width: img.width,
-      height: img.height
-    });
+          const img = image.scale(0.25);
 
-    lineaY -= img.height + 10;
-  }
-}
+          page.drawImage(image, {
+            x: margin + 15,
+            y: lineaY - img.height,
+            width: img.width,
+            height: img.height
+          });
+
+          lineaY -= img.height + 10;
+        }
+      }
 
 
       cursorY -= alturaCard + 20;
@@ -402,95 +404,90 @@ if (estado.nombre_archivo) {
     return rgb(0.6, 0.6, 0.6);
   }
 
-calcularAlturaCard(comp, font, width, margin) {
+  calcularAlturaCard(comp, font, width, margin) {
 
-  let altura = 50;
+    let altura = 50;
 
-  const estado = comp.data;
-  const maxWidth = width - margin * 2 - 40;
-  const fontSize = 9;
-  const lineHeight = 12;
+    const estado = comp.data;
+    const maxWidth = width - margin * 2 - 40;
+    const fontSize = 9;
+    const lineHeight = 12;
 
-  // ===== FILTROS =====
-  if (comp.tipo === 'filtro') {
-    if (estado.color) altura += 14;
-    if (estado.numero !== '' && estado.numero !== null) altura += 14;
-    if (estado.presenciaORing) altura += 14;
-  }
+    // ===== FILTROS =====
+    if (comp.tipo === 'filtro') {
+      if (estado.color) altura += 14;
+      if (estado.numero !== '' && estado.numero !== null) altura += 14;
+      if (estado.presenciaORing) altura += 14;
+    }
 
-  // ===== OBSERVACIÓN =====
-  if (estado.observacion) {
-    const lines = this.wrapText(
-      estado.observacion,
-      font,
-      fontSize,
-      maxWidth
-    );
-    altura += lines.length * lineHeight + 20;
-  }
-
-  // ===== RECOMENDACIONES =====
-  if (Array.isArray(estado.recomendaciones)) {
-
-    estado.recomendaciones.forEach((r) => {
-
-      const texto = r?.descripcion || r || '';
-
+    // ===== OBSERVACIÓN =====
+    if (estado.observacion) {
       const lines = this.wrapText(
-        texto,
+        estado.observacion,
         font,
         fontSize,
         maxWidth
       );
-
-      altura += lines.length * lineHeight + 5;
-    });
-
-    if (estado.recomendaciones.length > 0) {
-      altura += 15;
+      altura += lines.length * lineHeight + 20;
     }
-  }
 
-  // ===== IMAGEN =====
-  if (estado.nombre_archivo) {
-    altura += 120;
-  }
+    // ===== RECOMENDACIONES =====
+if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
 
-  return altura;
+  estado.recomendaciones.forEach((r) => {
+
+    const texto = r.texto || '';
+
+    const lines = this.wrapText(
+      texto,
+      font,
+      fontSize,
+      maxWidth
+    );
+
+    altura += lines.length * lineHeight + 5;
+  });
+
+  altura += 20; // espacio título sección
 }
 
 
-wrapText(text, font, fontSize, maxWidth) {
-
-  if (!text) return [];
-
-  const words = String(text).split(' ');
-  const lines = [];
-  let currentLine = '';
-
-  for (const word of words) {
-
-    const testLine = currentLine
-      ? currentLine + ' ' + word
-      : word;
-
-    const width = font.widthOfTextAtSize(testLine, fontSize);
-
-    if (width <= maxWidth) {
-      currentLine = testLine;
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
+    // ===== IMAGEN =====
+    if (estado.nombre_archivo) {
+      altura += 120;
     }
+
+    return altura;
   }
 
-  if (currentLine) lines.push(currentLine);
+  wrapText(text, font, fontSize, maxWidth) {
 
-  return lines;
-}
+    if (!text) return [];
 
+    const words = String(text).split(' ');
+    const lines = [];
+    let currentLine = '';
 
+    for (const word of words) {
 
+      const testLine = currentLine
+        ? currentLine + ' ' + word
+        : word;
+
+      const width = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (width <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine) lines.push(currentLine);
+
+    return lines;
+  }
 
   // ===============================
   // PREPARAR DATOS
@@ -503,15 +500,20 @@ wrapText(text, font, fontSize, maxWidth) {
     const formatear = (estado = {}) => ({
       estado: estado.estado || 'NO APLICA',
       observacion: estado.observacion || '',
-      recomendaciones: Array.isArray(estado.recomendaciones)
-        ? estado.recomendaciones
-        : [],
       nombre_archivo: estado.nombreArchivo || '',
 
       // SOLO PARA FILTROS (si no existen quedan vacíos)
       color: estado.color || '',
       numero: estado.numero ?? '',
-      presenciaORing: estado.presenciaORing || ''
+      presenciaORing: estado.presenciaORing || '',
+
+      recomendaciones: Array.isArray(estado.recomendaciones)
+      ? estado.recomendaciones.map(r => ({
+          id: r.id,
+          fecha: r.fecha,
+          texto: r.texto || ''
+        }))
+      : []
     });
 
 
