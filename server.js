@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import { db } from './src/models/index.js';
 
 import { router } from './src/routes/index.js';
-import { pdfRouter } from './src/routes/pdf.routes.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';

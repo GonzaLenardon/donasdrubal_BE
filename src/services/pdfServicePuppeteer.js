@@ -516,4 +516,4 @@ console.log('HTML generado en:', htmlPath);
   }
 }
 
-export default new PDFService();
+export default new PDFServicePuppeteer();
