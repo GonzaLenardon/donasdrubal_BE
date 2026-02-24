@@ -1,5 +1,5 @@
 import { ROLES } from '../config/constants/roles.js';
-import Cliente from '../models/clientes.js';
+
 import Roles from '../models/roles.js';
 import UserRoles from '../models/user_roles.js';
 import { createUser } from '../services/userService.js';
@@ -7,6 +7,7 @@ import db from '../config/database.js';
 import TipoClientes from '../models/tipoClientes.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
+import Clientes from '../models/clientes.js';
 
 // const bcrypt = require('bcrypt');
 
@@ -35,7 +36,7 @@ const addClient = async (req, res) => {
     }
 
     // Crear cliente
-    const nuevoCliente = await Cliente.create(clienteData);
+    const nuevoCliente = await Clientes.create(clienteData);
 
     // Crear relaciones con ingenieros
     const relacionesIngenieros = ingenieros.map((ing) => ({
@@ -47,7 +48,7 @@ const addClient = async (req, res) => {
     await ClienteIngenieros.bulkCreate(relacionesIngenieros);
 
     // Cargar cliente con ingenieros
-    const clienteCompleto = await Cliente.findByPk(nuevoCliente.id, {
+    const clienteCompleto = await Clientes.findByPk(nuevoCliente.id, {
       include: [
         {
           model: Users,
@@ -83,7 +84,7 @@ const addClient = async (req, res) => {
 // Listar clientes con usuario
 const allClientes = async (req, res) => {
   try {
-    const clientes = await Cliente.findAll({
+    const clientes = await Clientes.findAll({
       include: [
         {
           model: Users,
@@ -194,7 +195,7 @@ const upCliente = async (req, res) => {
     }
 
     // Buscar cliente
-    const cliente = await Cliente.findByPk(cliente_id);
+    const cliente = await Clientes.findByPk(cliente_id);
 
     if (!cliente) {
       return res.status(404).json({
@@ -244,7 +245,7 @@ const upCliente = async (req, res) => {
     }
 
     // Cargar cliente actualizado con ingenieros
-    const clienteActualizado = await Cliente.findByPk(cliente_id, {
+    const clienteActualizado = await Clientes.findByPk(cliente_id, {
       include: [
         {
           model: Users,
@@ -280,12 +281,12 @@ const upCliente = async (req, res) => {
 //  Eliminar cliente + usuario
 const deleteClient = async (req, res) => {
   try {
-    const client = await Cliente.findByPk(req.params.id);
+    const client = await Clientes.findByPk(req.params.id);
     if (!client)
       return res.status(404).json({ message: 'Cliente no encontrado' });
 
     await User.destroy({ where: { id: client.user_id } });
-    await Cliente.destroy({ where: { id: client.id } });
+    await Clientes.destroy({ where: { id: client.id } });
 
     res.json({ message: 'Cliente y usuario eliminados' });
   } catch (error) {
@@ -298,7 +299,7 @@ const getCliente = async (req, res) => {
   const id = req.params.cliente_id;
 
   try {
-    const resp = await Cliente.findOne();
+    const resp = await Clientes.findOne({ where: { id } });
 
     if (!resp) {
       return res.status(404).json({ error: 'Cliente no encontrado' });

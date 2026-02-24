@@ -129,7 +129,7 @@ router.get('/user/:user_id/roles', getUserRoles);
 router.post('/cliente', verifyRole([ROLES.ADMIN]), addClient);
 router.get('/cliente', allClientes);
 router.put('/cliente/:cliente_id', upCliente);
-router.get('/cliente/:cliene_id', getCliente);
+router.get('/cliente/:cliente_id', getCliente);
 
 // ========================================
 // RUTAS PROTEGIDAS - MÁQUINAS
