@@ -46,7 +46,8 @@ class PDFServicePdfLib {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let page = pdfDoc.addPage();
+    let page = this.dibujarDashboardResumen(pdfDoc, datos, font, fontBold);
+    page = pdfDoc.addPage(); // segunda página comienza informe detallado
     const { width, height } = page.getSize();
 
     let cursorY = height - 60;
@@ -462,6 +463,299 @@ class PDFServicePdfLib {
       filename
     };
   }
+  // ===============================
+  // RESUMEN GENERAL PAGIN INICIAL
+  // ===============================
+dibujarDashboardResumen(pdfDoc, datos, font, fontBold) {
+
+  const page = pdfDoc.addPage();
+  const { width, height } = page.getSize();
+
+  const margin = 50;
+  let cursorY = height - 60;
+
+// ================= HEADER DASHBOARD =================
+
+const headerHeight = 90;
+
+page.drawRectangle({
+  x: 0,
+  y: height - headerHeight,
+  width,
+  height: headerHeight,
+  color: rgb(0.08, 0.35, 0.18)
+});
+
+page.drawText('RESUMEN GENERAL DE CALIBRACIÓN', {
+  x: margin,
+  y: height - 30,
+  size: 16,
+  font: fontBold,
+  color: rgb(1, 1, 1)
+});
+
+// Cliente
+page.drawText(`Cliente: ${datos.maquina.cliente?.razon_social || '-'}`, {
+  x: margin,
+  y: height - 50,
+  size: 10,
+  font,
+  color: rgb(1, 1, 1)
+});
+
+page.drawText(`Dirección: ${datos.maquina.cliente?.direccion || '-'}`, {
+  x: margin,
+  y: height - 65,
+  size: 10,
+  font,
+  color: rgb(1, 1, 1)
+});
+
+// Máquina (lado derecho)
+page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}`, {
+  x: width / 2,
+  y: height - 50,
+  size: 10,
+  font,
+  color: rgb(1, 1, 1)
+});
+
+page.drawText(`Modelo: ${datos.maquina?.tipo.modelo || '-'}`, {
+  x: width / 2,
+  y: height - 65,
+  size: 10,
+  font,
+  color: rgb(1, 1, 1)
+});
+
+page.drawText(`Tipo: ${datos.maquina?.tipo.tipo || '-'}`, {
+  x: width / 2,
+  y: height - 80,
+  size: 10,
+  font,
+  color: rgb(1, 1, 1)
+});
+
+cursorY = height - headerHeight - 30;
+
+  //cursorY -= 80;
+
+  // ================= COMPONENTES DETALLADOS =================
+
+cursorY -= 40;
+
+page.drawText('Estado de Componentes', {
+  x: margin,
+  y: cursorY,
+  size: 14,
+  font: fontBold
+});
+
+cursorY -= 25;
+
+const componentes = [
+  { nombre: 'Máquina', data: datos.estado_maquina },
+  { nombre: 'Bomba', data: datos.estado_bomba },
+  { nombre: 'Agitador', data: datos.estado_agitador },
+  { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
+  { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
+  { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
+  { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
+  { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
+  { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
+  { nombre: 'Pastillas', data: datos.estado_pastillas },
+  { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
+  { nombre: 'Mixer', data: datos.mixer }
+];
+
+const rowHeight = 24;
+
+componentes.forEach(comp => {
+
+  const estado = comp.data?.estado || 'No Aplica';
+  const colorEstado = this.getColorEstado(estado);
+
+  if (cursorY < 100) {
+    page = pdfDoc.addPage();
+    cursorY = page.getHeight() - margin;
+  }
+
+  // Nombre del componente
+  page.drawText(comp.nombre, {
+    x: margin,
+    y: cursorY,
+    size: 11,
+    font
+  });
+
+  // Badge de estado (rectángulo color)
+  page.drawRectangle({
+    x: width - margin - 140,
+    y: cursorY - 6,
+    width: 120,
+    height: 18,
+    color: colorEstado,
+    borderRadius: 4
+  });
+
+  // Texto estado
+  page.drawText(estado.toUpperCase(), {
+    x: width - margin - 130,
+    y: cursorY,
+    size: 9,
+    font: fontBold,
+    color: rgb(1, 1, 1)
+  });
+
+  cursorY -= rowHeight;
+});
+
+  // ================= PRESIONES =================
+
+  const presiones = [
+    Number(datos.presion_unimap),
+    Number(datos.presion_computadora),
+    Number(datos.presion_manometro)
+  ].filter(v => !isNaN(v));
+
+  const promedio =
+    presiones.reduce((a, b) => a + b, 0) / presiones.length;
+
+  const desvio = Math.sqrt(
+    presiones.reduce((a, v) => a + Math.pow(v - promedio, 2), 0) /
+    presiones.length
+  );
+
+  page.drawText('Resumen de Presiones', {
+    x: margin,
+    y: cursorY,
+    size: 14,
+    font: fontBold
+  });
+
+  cursorY -= 25;
+
+  page.drawText(`Promedio: ${promedio.toFixed(2)} bar`, {
+    x: margin,
+    y: cursorY,
+    size: 11,
+    font
+  });
+
+  page.drawText(`Desvío estándar: ${desvio.toFixed(2)} bar`, {
+    x: margin + 250,
+    y: cursorY,
+    size: 11,
+    font
+  });
+
+  cursorY -= 50;
+
+  // ================= COMPONENTES =================
+
+  const estados = [
+    datos.estado_maquina.estado,
+    datos.estado_bomba.estado,
+    datos.estado_agitador.estado,
+    datos.estado_filtroPrimario.estado,
+    datos.estado_filtroSecundario.estado,
+    datos.estado_filtroLinea.estado,
+    datos.estado_manguerayconexiones.estado,
+    datos.estado_antigoteo.estado,
+    datos.estado_limpiezaTanque.estado,
+    datos.estado_pastillas.estado,
+    datos.estabilidadVerticalBotalon.estado,
+    datos.mixer.estado
+  ];
+
+  const resumen = {
+    'muy bueno': 0,
+    'bueno': 0,
+    'regular': 0,
+    'malo': 0,
+    'no aplica': 0
+  };
+
+  estados.forEach(e => {
+    const key = e?.toLowerCase() || 'no aplica';
+    if (resumen[key] !== undefined) resumen[key]++;
+  });
+
+  page.drawText('Estado de Componentes', {
+    x: margin,
+    y: cursorY,
+    size: 14,
+    font: fontBold
+  });
+
+  cursorY -= 25;
+
+  Object.entries(resumen).forEach(([estado, cantidad]) => {
+
+    const color = this.getColorEstado(estado);
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY - 5,
+      width: 15,
+      height: 15,
+      color
+    });
+
+    page.drawText(
+      `${estado.toUpperCase()}: ${cantidad}`,
+      {
+        x: margin + 25,
+        y: cursorY,
+        size: 11,
+        font
+      }
+    );
+
+    cursorY -= 22;
+  });
+
+  // ================= ESTADO GLOBAL =================
+
+  cursorY -= 20;
+
+  let estadoGlobal = 'ÓPTIMO';
+
+  if (resumen['malo'] > 0) estadoGlobal = 'CRÍTICO';
+  else if (resumen['regular'] > 2) estadoGlobal = 'VARIABLE';
+
+  let colorGlobal = rgb(0, 0.6, 0);
+  if (estadoGlobal === 'CRÍTICO') colorGlobal = rgb(0.8, 0, 0);
+  if (estadoGlobal === 'VARIABLE') colorGlobal = rgb(1, 0.7, 0);
+
+  page.drawText('Estado General del Equipo', {
+    x: margin,
+    y: cursorY,
+    size: 14,
+    font: fontBold
+  });
+
+  cursorY -= 30;
+
+  page.drawRectangle({
+    x: margin,
+    y: cursorY - 10,
+    width: 200,
+    height: 30,
+    color: colorGlobal
+  });
+
+  page.drawText(estadoGlobal, {
+    x: margin + 15,
+    y: cursorY,
+    size: 14,
+    font: fontBold,
+    color: rgb(1, 1, 1)
+  });
+
+  return page;
+}
+
 
   // ===============================
   // COLOR SEGÚN ESTADO
