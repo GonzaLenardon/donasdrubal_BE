@@ -610,48 +610,137 @@ componentes.forEach(comp => {
   cursorY -= rowHeight;
 });
 
-  // ================= PRESIONES =================
+ // ================= PRESIONES =================
 
-  const presiones = [
-    Number(datos.presion_unimap),
-    Number(datos.presion_computadora),
-    Number(datos.presion_manometro)
-  ].filter(v => !isNaN(v));
+const presiones = [
+  Number(datos.presion_unimap),
+  Number(datos.presion_computadora),
+  Number(datos.presion_manometro)
+].filter(v => !isNaN(v));
 
-  const promedio =
-    presiones.reduce((a, b) => a + b, 0) / presiones.length;
+const promedio =
+  presiones.reduce((a, b) => a + b, 0) / presiones.length;
 
-  const desvio = Math.sqrt(
-    presiones.reduce((a, v) => a + Math.pow(v - promedio, 2), 0) /
-    presiones.length
-  );
+const desvio = Math.sqrt(
+  presiones.reduce((a, v) => a + Math.pow(v - promedio, 2), 0) /
+  presiones.length
+);
 
-  page.drawText('Resumen de Presiones', {
-    x: margin,
-    y: cursorY,
-    size: 14,
-    font: fontBold
-  });
+page.drawText('Resumen de Presiones', {
+  x: margin,
+  y: cursorY,
+  size: 14,
+  font: fontBold
+});
 
-  cursorY -= 25;
+cursorY -= 25;
 
-  page.drawText(`Promedio: ${promedio.toFixed(2)} bar`, {
-    x: margin,
-    y: cursorY,
-    size: 11,
-    font
-  });
+page.drawText(`Unimap: ${datos.presion_unimap || '-'} bar`, {
+  x: margin,
+  y: cursorY,
+  size: 11,
+  font
+});
 
-  page.drawText(`Desvío estándar: ${desvio.toFixed(2)} bar`, {
-    x: margin + 250,
-    y: cursorY,
-    size: 11,
-    font
-  });
+page.drawText(`Computadora: ${datos.presion_computadora || '-'} bar`, {
+  x: margin + 180,
+  y: cursorY,
+  size: 11,
+  font
+});
 
-  cursorY -= 50;
+page.drawText(`Manómetro: ${datos.presion_manometro || '-'} bar`, {
+  x: margin + 360,
+  y: cursorY,
+  size: 11,
+  font
+});
 
-  // ================= COMPONENTES =================
+cursorY -= 20;
+
+page.drawText(`Promedio: ${promedio.toFixed(2)} bar`, {
+  x: margin,
+  y: cursorY,
+  size: 11,
+  font
+});
+
+page.drawText(`Desvío estándar: ${desvio.toFixed(2)} bar`, {
+  x: margin + 200,
+  y: cursorY,
+  size: 11,
+  font
+});
+
+cursorY -= 40;
+
+//  // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
+
+// page.drawText('Estado de Componentes', {
+//   x: margin,
+//   y: cursorY,
+//   size: 14,
+//   font: fontBold
+// });
+
+// cursorY -= 25;
+
+// // const componentes = [
+// //   { nombre: 'Máquina', data: datos.estado_maquina },
+// //   { nombre: 'Bomba', data: datos.estado_bomba },
+// //   { nombre: 'Agitador', data: datos.estado_agitador },
+// //   { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
+// //   { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
+// //   { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
+// //   { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
+// //   { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
+// //   { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
+// //   { nombre: 'Pastillas', data: datos.estado_pastillas },
+// //   { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
+// //   { nombre: 'Mixer', data: datos.mixer }
+// // ];
+
+ 
+// const colWidth = (width - margin * 2) / 2;
+// const rowHeights = 28;
+
+// componentes.forEach((comp, index) => {
+
+//   const col = index % 2;
+//   const row = Math.floor(index / 2);
+
+//   const x = margin + col * colWidth;
+//   const y = cursorY - row * rowHeights;
+
+//   const estado = comp.data?.estado || 'No Aplica';
+//   const colorEstado = this.getColorEstado(estado);
+
+//   page.drawText(comp.nombre, {
+//     x,
+//     y,
+//     size: 10,
+//     font
+//   });
+
+//   page.drawRectangle({
+//     x: x + colWidth - 110,
+//     y: y - 6,
+//     width: 100,
+//     height: 18,
+//     color: colorEstado
+//   });
+
+//   page.drawText(estado.toUpperCase(), {
+//     x: x + colWidth - 100,
+//     y,
+//     size: 9,
+//     font: fontBold,
+//     color: rgb(1, 1, 1)
+//   });
+// });
+
+
+// ================= COMPONENTES AGRUPADOS =================
 
   const estados = [
     datos.estado_maquina.estado,
@@ -714,6 +803,7 @@ componentes.forEach(comp => {
 
     cursorY -= 22;
   });
+
 
   // ================= ESTADO GLOBAL =================
 
