@@ -46,7 +46,8 @@ class PDFServicePdfLib {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let page = pdfDoc.addPage();
+    let page = this.dibujarDashboardResumen(pdfDoc, datos, font, fontBold);
+    page = pdfDoc.addPage(); // segunda página comienza informe detallado
     const { width, height } = page.getSize();
 
     let cursorY = height - 60;
@@ -238,9 +239,7 @@ class PDFServicePdfLib {
         lineaY -= 14;
 
         estado.recomendaciones.forEach((rec, index) => {
-
           const textoNumerado = `${index + 1}. ${rec.texto}`;
-
           const recLines = this.wrapText(
             textoNumerado,
             font,
@@ -262,24 +261,18 @@ class PDFServicePdfLib {
         });
       }
 
-
       // ================= IMAGEN =================
 
       if (estado.nombre_archivo) {
-
         const image = await this.embedImage(pdfDoc, estado.nombre_archivo);
-
         if (image) {
-
           const img = image.scale(0.25);
-
           page.drawImage(image, {
             x: margin + 15,
             y: lineaY - img.height,
             width: img.width,
             height: img.height
           });
-
           lineaY -= img.height + 10;
         }
       }
@@ -287,24 +280,17 @@ class PDFServicePdfLib {
       // ================= SUGERENCIAS PREVENTIVAS =================
 
       const sugerenciasFijas = this.getSugerenciasPredeterminadas(comp.titulo);
-
       if (sugerenciasFijas.length > 0) {
-
         lineaY -= 5;
-
         page.drawText('Sugerencias preventivas:', {
           x: margin + 15,
           y: lineaY,
           size: 9,
           font: fontBold
         });
-
         lineaY -= 14;
-
         sugerenciasFijas.forEach((texto, index) => {
-
           const textoNumerado = `${index + 1}. ${texto}`;
-
           const recLines = this.wrapText(
             textoNumerado,
             font,
@@ -327,8 +313,6 @@ class PDFServicePdfLib {
       }
       cursorY -= alturaCard + 20;
     }
-
-
 
     // ================= TABLA PRESIONES =================
 
@@ -355,7 +339,6 @@ class PDFServicePdfLib {
     ];
 
     for (const [label, valor] of columnas) {
-
       page.drawRectangle({
         x: margin,
         y: cursorY - 20,
@@ -389,34 +372,30 @@ class PDFServicePdfLib {
     if (cursorY - 240 < 50) {
       page = pdfDoc.addPage();
       cursorY = page.getHeight() - 50;
-
-      if (seccionesArray.length > 0) {
-
-        const graficaBuffer = await this.generarGraficaSecciones(seccionesArray.map(([numero, valor]) => ({
-          numero: Number(numero),
-          valor: Number(valor)
-        })));
-
-        if (graficaBuffer) {
-
-          const image = await pdfDoc.embedPng(graficaBuffer);
-
-          const imgWidth = 450;
-          const imgHeight = 220;
-
-          page.drawImage(image, {
-            x: margin,
-            y: cursorY - imgHeight,
-            width: imgWidth,
-            height: imgHeight
-          });
-
-          cursorY -= imgHeight + 20;
-        }
-
-      }
     }
 
+    if (seccionesArray.length > 0) {
+      const graficaBuffer = await this.generarGraficaSecciones(seccionesArray.map(([numero, valor]) => ({
+        numero: Number(numero),
+        valor: Number(valor)
+      })));
+
+      if (graficaBuffer) {
+        const image = await pdfDoc.embedPng(graficaBuffer);
+        const imgWidth = 450;
+        const imgHeight = 220;
+
+        page.drawImage(image, {
+          x: margin,
+          y: cursorY - imgHeight,
+          width: imgWidth,
+          height: imgHeight
+        });
+
+        cursorY -= imgHeight + 20;
+      }
+
+    }
     // ========FIN GRAFICA SECCIONES
 
     // ================= FOOTER =================
@@ -425,7 +404,6 @@ class PDFServicePdfLib {
     const totalPages = pages.length;
 
     pages.forEach((p, index) => {
-
       p.drawLine({
         start: { x: 40, y: 50 },
         end: { x: p.getWidth() - 40, y: 50 },
@@ -444,13 +422,11 @@ class PDFServicePdfLib {
       );
     });
 
-
     // ===============================
     // GUARDAR PDF
     // ===============================
 
     const pdfBytes = await pdfDoc.save();
-
     const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
     const outputPath = path.join(this.outputDir, filename);
 
@@ -462,6 +438,445 @@ class PDFServicePdfLib {
       filename
     };
   }
+
+  // ===============================
+  // RESUMEN GENERAL PAGIN INICIAL
+  // ===============================
+  dibujarDashboardResumen(pdfDoc, datos, font, fontBold) {
+
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+
+    const margin = 50;
+    let cursorY = height - 60;
+
+    // ================= HEADER DASHBOARD =================
+
+    const headerHeight = 90;
+
+    page.drawRectangle({
+      x: 0,
+      y: height - headerHeight,
+      width,
+      height: headerHeight,
+      color: rgb(0.08, 0.35, 0.18)
+    });
+
+    page.drawText('RESUMEN GENERAL DE CALIBRACIÓN', {
+      x: margin,
+      y: height - 30,
+      size: 16,
+      font: fontBold,
+      color: rgb(1, 1, 1)
+    });
+
+    // Cliente
+    page.drawText(`Cliente: ${datos.maquina.cliente?.razon_social || '-'}`, {
+      x: margin,
+      y: height - 50,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1)
+    });
+
+    page.drawText(`Dirección: ${datos.maquina.cliente?.direccion || '-'}`, {
+      x: margin,
+      y: height - 65,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1)
+    });
+
+    // Máquina (lado derecho)
+    page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}`, {
+      x: width / 2,
+      y: height - 50,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1)
+    });
+
+    page.drawText(`Modelo: ${datos.maquina?.tipo.modelo || '-'}`, {
+      x: width / 2,
+      y: height - 65,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1)
+    });
+
+    page.drawText(`Tipo: ${datos.maquina?.tipo.tipo || '-'}`, {
+      x: width / 2,
+      y: height - 80,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1)
+    });
+
+    cursorY = height - headerHeight - 30;
+
+    // ================= SEPARADOR =================
+
+    cursorY -= 5;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY,
+      width: width - margin * 2,
+      height: 1,
+      color: rgb(0.85, 0.85, 0.85)
+    });
+
+    cursorY -= 15;
+    //-----------------------------------------------
+
+    // ================= COMPONENTES DETALLADOS =================
+    // cursorY -= 10;
+
+    page.drawText('Estado de Componentes', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 25;
+
+    const componentes = [
+      { nombre: 'Máquina', data: datos.estado_maquina },
+      { nombre: 'Bomba', data: datos.estado_bomba },
+      { nombre: 'Agitador', data: datos.estado_agitador },
+      { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
+      { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
+      { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
+      { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
+      { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
+      { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
+      { nombre: 'Pastillas', data: datos.estado_pastillas },
+      { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
+      { nombre: 'Mixer', data: datos.mixer }
+    ];
+
+    const rowHeight = 24;
+    //---------- Fondo gris ----------------
+    const totalFilas = Math.ceil(componentes.length);
+    const sectionHeight = totalFilas * rowHeight + 30;
+
+    // Fondo gris claro
+    page.drawRectangle({
+      x: margin - 10,
+      y: cursorY - sectionHeight + 10,
+      width: width - (margin - 10) * 2,
+      height: sectionHeight,
+      color: rgb(0.96, 0.96, 0.96)
+    });   
+    //---------------------------------    
+
+    componentes.forEach(comp => {
+
+      const estado = comp.data?.estado || 'No Aplica';
+      const colorEstado = this.getColorEstado(estado);
+
+      if (cursorY < 100) {
+        page = pdfDoc.addPage();
+        cursorY = page.getHeight() - margin;
+      }
+
+      // Nombre del componente
+      page.drawText(comp.nombre, {
+        x: margin,
+        y: cursorY,
+        size: 11,
+        font
+      });
+
+      // Badge de estado (rectángulo color)
+      page.drawRectangle({
+        x: width - margin - 140,
+        y: cursorY - 6,
+        width: 120,
+        height: 18,
+        color: colorEstado,
+        borderRadius: 4
+      });
+
+      // Texto estado
+      page.drawText(estado.toUpperCase(), {
+        x: width - margin - 130,
+        y: cursorY,
+        size: 9,
+        font: fontBold,
+        color: rgb(1, 1, 1)
+      });
+
+      cursorY -= rowHeight;
+    });
+
+
+    // ================= SEPARADOR =================
+
+    cursorY -= 10;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY,
+      width: width - margin * 2,
+      height: 1,
+      color: rgb(0.85, 0.85, 0.85)
+    });
+
+    cursorY -= 20;
+    //-----------------------------------------------
+    // ================= PRESIONES =================
+
+    const presiones = [
+      Number(datos.presion_unimap),
+      Number(datos.presion_computadora),
+      Number(datos.presion_manometro)
+    ].filter(v => !isNaN(v));
+
+    const promedio =
+      presiones.reduce((a, b) => a + b, 0) / presiones.length;
+
+    const desvio = Math.sqrt(
+      presiones.reduce((a, v) => a + Math.pow(v - promedio, 2), 0) /
+      presiones.length
+    );
+
+    page.drawText('Resumen de Presiones', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 25;
+
+    page.drawText(`Unimap: ${datos.presion_unimap || '-'} bar`, {
+      x: margin,
+      y: cursorY,
+      size: 11,
+      font
+    });
+
+    page.drawText(`Computadora: ${datos.presion_computadora || '-'} bar`, {
+      x: margin + 180,
+      y: cursorY,
+      size: 11,
+      font
+    });
+
+    page.drawText(`Manómetro: ${datos.presion_manometro || '-'} bar`, {
+      x: margin + 360,
+      y: cursorY,
+      size: 11,
+      font
+    });
+
+    cursorY -= 20;
+
+    page.drawText(`Promedio: ${promedio.toFixed(2)} bar`, {
+      x: margin,
+      y: cursorY,
+      size: 11,
+      font
+    });
+
+    page.drawText(`Desvío estándar: ${desvio.toFixed(2)} bar`, {
+      x: margin + 200,
+      y: cursorY,
+      size: 11,
+      font
+    });
+
+    cursorY -= 30;
+
+    //  // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
+
+    // page.drawText('Estado de Componentes', {
+    //   x: margin,
+    //   y: cursorY,
+    //   size: 14,
+    //   font: fontBold
+    // });
+
+    // cursorY -= 25;
+
+    // // const componentes = [
+    // //   { nombre: 'Máquina', data: datos.estado_maquina },
+    // //   { nombre: 'Bomba', data: datos.estado_bomba },
+    // //   { nombre: 'Agitador', data: datos.estado_agitador },
+    // //   { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
+    // //   { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
+    // //   { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
+    // //   { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
+    // //   { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
+    // //   { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
+    // //   { nombre: 'Pastillas', data: datos.estado_pastillas },
+    // //   { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
+    // //   { nombre: 'Mixer', data: datos.mixer }
+    // // ];
+
+
+    // const colWidth = (width - margin * 2) / 2;
+    // const rowHeights = 28;
+
+    // componentes.forEach((comp, index) => {
+
+    //   const col = index % 2;
+    //   const row = Math.floor(index / 2);
+
+    //   const x = margin + col * colWidth;
+    //   const y = cursorY - row * rowHeights;
+
+    //   const estado = comp.data?.estado || 'No Aplica';
+    //   const colorEstado = this.getColorEstado(estado);
+
+    //   page.drawText(comp.nombre, {
+    //     x,
+    //     y,
+    //     size: 10,
+    //     font
+    //   });
+
+    //   page.drawRectangle({
+    //     x: x + colWidth - 110,
+    //     y: y - 6,
+    //     width: 100,
+    //     height: 18,
+    //     color: colorEstado
+    //   });
+
+    //   page.drawText(estado.toUpperCase(), {
+    //     x: x + colWidth - 100,
+    //     y,
+    //     size: 9,
+    //     font: fontBold,
+    //     color: rgb(1, 1, 1)
+    //   });
+    // });
+
+
+    // ================= SEPARADOR =================
+
+    cursorY -= 10;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY,
+      width: width - margin * 2,
+      height: 1,
+      color: rgb(0.85, 0.85, 0.85)
+    });
+
+    cursorY -= 20;
+    //-----------------------------------------------
+
+    // ================= COMPONENTES AGRUPADOS =================
+
+    const estados = [
+      datos.estado_maquina.estado,
+      datos.estado_bomba.estado,
+      datos.estado_agitador.estado,
+      datos.estado_filtroPrimario.estado,
+      datos.estado_filtroSecundario.estado,
+      datos.estado_filtroLinea.estado,
+      datos.estado_manguerayconexiones.estado,
+      datos.estado_antigoteo.estado,
+      datos.estado_limpiezaTanque.estado,
+      datos.estado_pastillas.estado,
+      datos.estabilidadVerticalBotalon.estado,
+      datos.mixer.estado
+    ];
+
+    const resumen = {
+      'muy bueno': 0,
+      'bueno': 0,
+      'regular': 0,
+      'malo': 0,
+      'no aplica': 0
+    };
+
+    estados.forEach(e => {
+      const key = e?.toLowerCase() || 'no aplica';
+      if (resumen[key] !== undefined) resumen[key]++;
+    });
+
+    page.drawText('Estado de Componentes', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 25;
+
+    Object.entries(resumen).forEach(([estado, cantidad]) => {
+
+      const color = this.getColorEstado(estado);
+
+      page.drawRectangle({
+        x: margin,
+        y: cursorY - 5,
+        width: 15,
+        height: 15,
+        color
+      });
+
+      page.drawText(
+        `${estado.toUpperCase()}: ${cantidad}`,
+        {
+          x: margin + 25,
+          y: cursorY,
+          size: 11,
+          font
+        }
+      );
+
+      cursorY -= 22;
+    });
+
+
+    // ================= ESTADO GLOBAL =================
+
+    cursorY -= 20;
+
+    let estadoGlobal = 'ÓPTIMO';
+
+    if (resumen['malo'] > 0) estadoGlobal = 'CRÍTICO';
+    else if (resumen['regular'] > 2) estadoGlobal = 'VARIABLE';
+
+    let colorGlobal = rgb(0, 0.6, 0);
+    if (estadoGlobal === 'CRÍTICO') colorGlobal = rgb(0.8, 0, 0);
+    if (estadoGlobal === 'VARIABLE') colorGlobal = rgb(1, 0.7, 0);
+
+    page.drawText('Estado General del Equipo', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 30;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY - 10,
+      width: 200,
+      height: 30,
+      color: colorGlobal
+    });
+
+    page.drawText(estadoGlobal, {
+      x: margin + 15,
+      y: cursorY,
+      size: 14,
+      font: fontBold,
+      color: rgb(1, 1, 1)
+    });
+
+    return page;
+  }
+
 
   // ===============================
   // COLOR SEGÚN ESTADO
@@ -480,6 +895,11 @@ class PDFServicePdfLib {
     return rgb(0.6, 0.6, 0.6);
   }
 
+  // ===============================================
+  // CALCULA EL ALTO DE CADA CUADRO EN FUNCION DE 
+  // LINEAS DE TEXTO, IMAGEN, RECOMENDACIONES, ETC
+  // ===============================================
+ 
   calcularAlturaCard(comp, font, width, margin) {
 
     let altura = 50;
@@ -557,10 +977,12 @@ class PDFServicePdfLib {
 
     return altura;
   }
+
   // ===================================
   // DEVUELVE ARRAY CON LÍNEAS DE TEXTO 
   // AJUSTADAS AL ANCHO MÁXIMO 
   // ===================================
+  
   wrapText(text, font, fontSize, maxWidth) {
 
     if (!text) return [];
@@ -825,18 +1247,6 @@ class PDFServicePdfLib {
     return await chartJSNodeCanvas.renderToBuffer(configuration);
   }
 
-
-  // calcularPromedio(valores) {
-  //   return valores.reduce((acc, v) => acc + v, 0) / valores.length;
-  // }
-
-  // calcularDesvioEstandar(valores, promedio) {
-  //   const varianza =
-  //     valores.reduce((acc, v) => acc + Math.pow(v - promedio, 2), 0) /
-  //     valores.length;
-
-  //   return Math.sqrt(varianza);
-  // }
 }
 
 export default new PDFServicePdfLib();
