@@ -7,7 +7,7 @@ class AlertasServicios extends Model {}
 
 AlertasServicios.init(
   {
-    id_alerta: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,

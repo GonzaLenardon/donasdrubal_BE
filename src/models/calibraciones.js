@@ -148,7 +148,7 @@ Calibraciones.init(
       allowNull: true,
       references: {
         model: 'alertas_servicios',
-        key: 'id_alerta',
+        key: 'id',
       },
     },
     estado: {
