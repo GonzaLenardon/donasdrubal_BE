@@ -4,7 +4,7 @@ import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import { extractModelFields } from '../utils/payload.js';
 // import PDFService from '../services/pdfServicePuppeteer.js';
-import PDFService   from '../services/pdfServicePdfLib.js';
+import PDFService from '../services/pdfServicePdfLib.js';
 import path from 'path';
 
 // Lista de campos que son JSON
@@ -23,6 +23,12 @@ const CAMPOS_ESTADO_JSON = [
   'mixer',
 ];
 
+const CAMPOS_PRESION_JSON = [
+  'presion_unimap',
+  'presion_computadora',
+  'presion_manometro',
+];
+
 // Estructura por defecto de un estado
 const ESTADO_DEFAULT = {
   estado: '',
@@ -35,6 +41,11 @@ const ESTADO_DEFAULT = {
   presenciaORing: '',
   path: '',
   recomendaciones: [],
+};
+
+const PRESION_DEFAULT = {
+  valor: '',
+  nombreArchivo: '',
 };
 
 /**
@@ -90,6 +101,32 @@ const parseEstadoField = (field) => {
 
   // Valor no válido
   return getDefaultEstado();
+};
+
+const parsePresionField = (field) => {
+  if (typeof field === 'object' && field !== null) {
+    return {
+      valor: field.valor ?? '',
+      nombreArchivo: field.nombreArchivo ?? '',
+    };
+  }
+  if (typeof field === 'string') {
+    try {
+      const parsed = JSON.parse(field);
+      // Retrocompatibilidad: si era un FLOAT serializado como string ("3.5")
+      if (typeof parsed === 'number')
+        return { valor: parsed, nombreArchivo: '' };
+      return {
+        valor: parsed.valor ?? '',
+        nombreArchivo: parsed.nombreArchivo ?? '',
+      };
+    } catch {
+      // Era un número como string sin quotes ("3.5" sin parsear)
+      const numValor = parseFloat(field);
+      return { valor: isNaN(numValor) ? '' : numValor, nombreArchivo: '' };
+    }
+  }
+  return { ...PRESION_DEFAULT };
 };
 
 /**
@@ -435,35 +472,30 @@ export const enviarPDFPorEmail = async (req, res) => {
  */
 export const previsualizarPDF = async (req, res) => {
   try {
-      const { id } = req.params;
+    const { id } = req.params;
 
-      const resultado = await PDFService.generarInformeCalibracion(id);
+    const resultado = await PDFService.generarInformeCalibracion(id);
 
-      if (!resultado.success || !resultado.path) {
-        throw new Error('No se pudo generar el PDF');
-      }
-
-      // Redirige directamente al PDF generado por PHP
-      // return res.redirect(resultado.path);
-      return res.sendFile(
-            path.resolve(resultado.path),
-            {
-              headers: {
-                'Content-Type': 'application/pdf'
-              }
-            }
-          );      
-
-    } catch (error) {
-      console.error('Error en previsualizarPDF:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error al previsualizar el PDF',
-        error: error.message,
-      });
+    if (!resultado.success || !resultado.path) {
+      throw new Error('No se pudo generar el PDF');
     }
-  };
 
+    // Redirige directamente al PDF generado por PHP
+    // return res.redirect(resultado.path);
+    return res.sendFile(path.resolve(resultado.path), {
+      headers: {
+        'Content-Type': 'application/pdf',
+      },
+    });
+  } catch (error) {
+    console.error('Error en previsualizarPDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al previsualizar el PDF',
+      error: error.message,
+    });
+  }
+};
 
 /**
  * DELETE /api/calibraciones/pdfs/cleanup

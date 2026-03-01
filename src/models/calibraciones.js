@@ -20,6 +20,12 @@ const estadoJSONBomba = () => ({
   path: '',
 });
 
+// 👇 NUEVO: default para campos de presión
+const presionJSON = () => ({
+  valor: '',
+  nombreArchivo: '',
+});
+
 Calibraciones.init(
   {
     id: {
@@ -39,66 +45,64 @@ Calibraciones.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+
+    // 👇 NUEVO: imagen del informe
+    imagen: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+
     estado_maquina: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_bomba: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSONBomba,
     },
-
     estado_agitador: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_filtroPrimario: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_filtroSecundario: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_filtroLinea: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_manguerayconexiones: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_antigoteo: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_limpiezaTanque: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estado_pastillas: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: estadoJSON,
     },
-
     estabilidadVerticalBotalon: {
       type: DataTypes.JSON,
       allowNull: true,
@@ -110,34 +114,31 @@ Calibraciones.init(
       defaultValue: estadoJSON,
     },
 
+    // 👇 CAMBIO: de FLOAT a JSON para soportar { valor, nombreArchivo }
     presion_unimap: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.JSON,
       allowNull: true,
-      defaultValue: 0,
+      defaultValue: presionJSON,
     },
-
     presion_computadora: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.JSON,
       allowNull: true,
-      defaultValue: 0,
+      defaultValue: presionJSON,
     },
-
     presion_manometro: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.JSON,
       allowNull: true,
-      defaultValue: 0,
+      defaultValue: presionJSON,
     },
 
     secciones: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
     observaciones_acronex: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
     Observaciones: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -164,7 +165,7 @@ Calibraciones.init(
     modelName: 'Calibraciones',
     tableName: 'calibraciones',
     timestamps: true,
-    paranoid: true, // Activa soft delete
+    paranoid: true,
   },
 );
 
