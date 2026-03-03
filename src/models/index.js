@@ -14,7 +14,7 @@ import Pozo from './pozo.js';
 import MuestraAgua from './muestra_agua.js';
 import Jornada from './jornada.js';
 import TipoClientes from './tipoClientes.js';
-import AlertasServicios from './alertasServicios.js';
+import Alertas from './alertas.js';
 import TipoServicios from './tiposServicios.js';
 
 // ============================================================================
@@ -192,23 +192,23 @@ MuestraAgua.belongsTo(Pozo, {
 // ============================================================================
 
 // Cliente -> Alertas
-Clientes.hasMany(AlertasServicios, {
+Clientes.hasMany(Alertas, {
   foreignKey: 'cliente_id',
   as: 'alertas',
 });
 
-AlertasServicios.belongsTo(Clientes, {
+Alertas.belongsTo(Clientes, {
   foreignKey: 'cliente_id',
   as: 'cliente',
 });
 
 // TipoServicio -> Alertas
-TipoServicios.hasMany(AlertasServicios, {
+TipoServicios.hasMany(Alertas, {
   foreignKey: 'tipo_servicio_id',
   as: 'alertas',
 });
 
-AlertasServicios.belongsTo(TipoServicios, {
+Alertas.belongsTo(TipoServicios, {
   foreignKey: 'tipo_servicio_id',
   as: 'tipoServicio',
 });
@@ -218,13 +218,13 @@ AlertasServicios.belongsTo(TipoServicios, {
 // ===============================================
 
 // 🔹 UNA alerta puede generar MUCHAS muestras
-AlertasServicios.hasMany(MuestraAgua, {
+Alertas.hasMany(MuestraAgua, {
   foreignKey: 'id_alerta_origen',
   as: 'alertaMuestras',
 });
 
 // 🔹 UNA muestra pertenece a UNA alerta (opcional)
-MuestraAgua.belongsTo(AlertasServicios, {
+MuestraAgua.belongsTo(Alertas, {
   foreignKey: 'id_alerta_origen',
   as: 'muestrasAlerta',
 });
@@ -234,13 +234,13 @@ MuestraAgua.belongsTo(AlertasServicios, {
 // ===============================================
 
 // 🔹 UNA alerta puede generar MUCHAS muestras
-AlertasServicios.hasMany(Calibraciones, {
+Alertas.hasMany(Calibraciones, {
   foreignKey: 'id_alerta_origen',
   as: 'calibracionesAlerta',
 });
 
 // 🔹 UNA muestra pertenece a UNA alerta (opcional)
-Calibraciones.belongsTo(AlertasServicios, {
+Calibraciones.belongsTo(Alertas, {
   foreignKey: 'id_alerta_origen',
   as: 'alertaCalibraciones',
 });
@@ -250,13 +250,13 @@ Calibraciones.belongsTo(AlertasServicios, {
 // ===============================================
 
 // 🔹 UNA alerta puede generar MUCHAS muestras
-AlertasServicios.hasMany(Jornada, {
+Alertas.hasMany(Jornada, {
   foreignKey: 'id_alerta_origen',
   as: 'jornadaAlerta',
 });
 
 // 🔹 UNA muestra pertenece a UNA alerta (opcional)
-Jornada.belongsTo(AlertasServicios, {
+Jornada.belongsTo(Alertas, {
   foreignKey: 'id_alerta_origen',
   as: 'alertaJornada',
 });
@@ -281,5 +281,5 @@ export {
   Jornada,
   TipoClientes,
   TipoServicios,
-  AlertasServicios,
+  Alertas,
 };

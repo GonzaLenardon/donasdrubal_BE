@@ -50,7 +50,7 @@ MuestraAgua.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'alertas_servicios',
+        model: 'alertas',
         key: 'id',
       },
     },
