@@ -58,8 +58,17 @@ Alertas.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    // a quein se asocia el alerta pude ser cliente ou otro usaurio del sistema, por eso se llama usuario_id y no cliente_id
-    usuario_id: {
+    // quien genera la alerta (ej: sistema, cliente, admin, etc)
+    usuario_from_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0, // 0 para sistema
+      comment: 'ID del usuario que generó la alerta (0 para sistema)',
+
+    },
+
+    // a quien se asocia el alerta pude ser cliente ou otro usaurio del sistema, por eso se llama usuario_id y no cliente_id
+    usuario_to_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -294,8 +303,8 @@ Alertas.init(
     tableName: 'alertas',
     timestamps: true,
     indexes: [
-      { name: 'idx_usuario_estado', fields: ['usuario_id', 'estado'] },
-      { name: 'idx_usuario_tipo', fields: ['usuario_id', 'tipo_alerta'] },
+      { name: 'idx_usuario_to_estado', fields: ['usuario_to_id', 'estado'] },
+      { name: 'idx_usuario_tipo', fields: ['usuario_to_id', 'tipo_alerta'] },
       { name: 'idx_fecha_vencimiento', fields: ['fecha_vencimiento'] },
       { name: 'idx_fecha_alerta', fields: ['fecha_alerta'] },
       { name: 'idx_entidad', fields: ['entidad_tipo', 'entidad_id'] },
@@ -307,3 +316,29 @@ Alertas.init(
 
 
 export default Alertas;
+
+/* ------------------- EJEMPLO DE USO ------------------- */
+  // // En un controlador o servicio
+  // import Alertas, { ENTIDAD_TIPOS, ENTIDAD_TO_MODEL } from '../models/alertas.js';
+
+  // // Crear una alerta usando constantes
+  // const nuevaAlerta = await Alertas.create({
+  //   usuario_id: 123,
+  //   entidad_tipo: ENTIDAD_TIPOS.CALIBRACION,  // 'calibracion'
+  //   entidad_id: 456,
+  //   tipo_alerta: 'calibracion_vencida',
+  //   titulo: 'Calibración vencida',
+  //   mensaje: 'El equipo necesita calibración'
+  // });
+
+  // // Obtener el modelo relacionado dinámicamente
+  // function getModeloPorEntidad(entidad_tipo) {
+  //   const nombreModelo = ENTIDAD_TO_MODEL[entidad_tipo];
+  //   return db.models[nombreModelo];
+  // }
+
+  // // Usarlo en una función
+  // async function getEntidadRelacionada(alerta) {
+  //   const Modelo = getModeloPorEntidad(alerta.entidad_tipo);
+  //   return await Modelo.findByPk(alerta.entidad_id);
+  // }

@@ -54,7 +54,8 @@ const controllersAlertas = {
       const alertasGeneradas = [];
 
       for (const cliente of clientes) {
-        /* =====================================================
+
+      /* =====================================================
          🔧 CALIBRACIONES (por máquina)
       ====================================================== */
         const maquinas = await Maquinas.findAll({
@@ -64,14 +65,18 @@ const controllersAlertas = {
         for (const maquina of maquinas) {
           const calibracion = await Calibraciones.create({
             maquina_id: maquina.id,
+            alerta: true,
             fecha: null,
             responsable: null,
           });
 
           alertasGeneradas.push({
-            usuario_id: cliente.usuario_id,
+            usuario_from_id: req.user.id, // Sistema
+            usuario_to_id: cliente.user_id,
             // tipo_servicio_id: tipoServicioCalibracion.id,
             // id_servicio_realizado: calibracion.id,
+            entidad_id: calibracion.id,           // ← AGREGADO
+            entidad_tipo: 'calibracion',              // ← AGREGADO
             tipo_alerta: 'calibracion_proxima',    // ← AGREGADO
             categoria: 'servicio',                 // ← AGREGADO
             titulo: `Calibración programada - ${maquina.nombre || 'Máquina'}`,  // ← AGREGADO
@@ -86,8 +91,6 @@ const controllersAlertas = {
             requiere_accion: true,                 // ← AGREGADO
             url_accion: `/clientes/${cliente.id}/calibraciones/${calibracion.id}`,  // ← AGREGADO
             accion_texto: 'Ver Calibración',       // ← AGREGADO
-            id_servicio_realizado: calibracion.id,           // ← CAMBIADO: null hasta que se complete
-            tipo_servicio_realizado: 'calibracion',
             metadata: {                            
               cliente_id: cliente.id,
               cliente_nombre: cliente.razon_social,
@@ -109,14 +112,18 @@ const controllersAlertas = {
         for (const pozo of pozos) {
           const muestra = await MuestraAgua.create({
             pozo_id: pozo.id,
+            alerta: true,
             fecha_muestra: null,
             fecha_analisis: null,
           });
 
           alertasGeneradas.push({
-            usuario_id: cliente.usuario_id,
+            usuario_from_id: req.user.id, // Sistema
+            usuario_to_id: cliente.user_id,
             // tipo_servicio_id: tipoServicioMuestra.id,
             // entidad_id: muestra.id,                // ← AGREGADO
+            entidad_id: muestra.id,              // ← AGREGADO
+            entidad_tipo: 'muestra_agua',        // ← AGREGADO
             tipo_alerta: 'muestra_pendiente',      // ← AGREGADO
             categoria: 'muestra',                  // ← AGREGADO
             titulo: `Muestra de agua pendiente - ${pozo.nombre || 'Pozo'}`,  // ← AGREGADO
@@ -129,8 +136,6 @@ const controllersAlertas = {
             requiere_accion: true,
             url_accion: `/clientes/${cliente.id}/muestras/${muestra.id}`,
             accion_texto: 'Ver Muestra',
-            id_servicio_realizado: muestra.id,           // ← CAMBIADO: null hasta que se complete
-            tipo_servicio_realizado: 'muestra_agua',
             metadata: {
               cliente_id: cliente.id,
               cliente_nombre: cliente.razon_social,
@@ -144,12 +149,16 @@ const controllersAlertas = {
         for (let index = 0; index < 2; index++) {
           const newJornada = await Jornada.create({
             cliente_id: cliente.id,
+            alerta: true,
           });
 
           alertasGeneradas.push({
-            usuario_id: cliente.usuario_id,
+            usuario_from_id: req.user.id, // Sistema
+            usuario_to_id: cliente.user_id,
             // tipo_servicio_id: tipoServicioJornada.id,
             // entidad_id: newJornada.id,             // ← AGREGADO
+            entidad_id: newJornada.id,              // ← AGREGADO
+            entidad_tipo: 'jornada',              // ← AGREGADO
             tipo_alerta: 'jornada_programada',     // ← AGREGADO
             categoria: 'jornada',                  // ← AGREGADO
             titulo: `Jornada de capacitación programada`,  // ← AGREGADO
@@ -162,8 +171,6 @@ const controllersAlertas = {
             requiere_accion: true,
             url_accion: `/clientes/${cliente.id}/jornadas/${newJornada.id}`,
             accion_texto: 'Ver Jornada',
-            id_servicio_realizado: newJornada.id,           // ← CAMBIADO: null hasta que se complete
-            tipo_servicio_realizado: 'jornada',
             metadata: {
               cliente_id: cliente.id,
               cliente_nombre: cliente.razon_social,

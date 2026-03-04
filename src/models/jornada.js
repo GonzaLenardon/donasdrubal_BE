@@ -27,13 +27,10 @@ Jornada.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    id_alerta_origen: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'alertas',
-        key: 'id',
-      },
+    alerta: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     estado: {
       type: DataTypes.STRING(50),
