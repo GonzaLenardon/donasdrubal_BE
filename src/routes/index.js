@@ -63,6 +63,7 @@ import {
 import { allTipoClientes } from '../controllers/tipoClientes.js';
 
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
+import { uploadMuestrasAgua } from '../middlewares/uploadMuestras.js';
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
@@ -151,13 +152,23 @@ router.get(
   calibracionesMaquinas,
 );
 router.put('/calibraciones/:calibracion_id', updateCalibraciones);
-router.post(
-  '/calibraciones/upload',
-  (req, res, next) => {
+/* router.post(  '/calibraciones/upload',  (req, res, next) => {
     console.log('Request de upload recibida');
     next();
   },
   uploadCalibraciones.single('file'),
+  uploadArchivoCalibracion,
+); */
+
+router.post(
+  '/calibraciones/upload',
+  uploadCalibraciones.single('file'),
+  uploadArchivoCalibracion,
+);
+
+router.post(
+  '/muestrasAgua/upload',
+  uploadMuestrasAgua.single('file'),
   uploadArchivoCalibracion,
 );
 
@@ -378,24 +389,21 @@ router.delete(
   RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
 
-router.get(
-  '/cliente/:cliente_id/stats', 
-  dashboardController.getClienteStats
-);
+router.get('/cliente/:cliente_id/stats', dashboardController.getClienteStats);
 
 router.get(
-  '/cliente/:cliente_id/services-chart', 
-  dashboardController.getClienteServicesChart
+  '/cliente/:cliente_id/services-chart',
+  dashboardController.getClienteServicesChart,
 );
 
 router.get(
   '/cliente/:cliente_id/machines-chart',
-  dashboardController.getClienteMachinesChart
+  dashboardController.getClienteMachinesChart,
 );
 
 router.get(
   '/cliente/:cliente_id/upcoming-services',
-  dashboardController.getClienteUpcomingServices
+  dashboardController.getClienteUpcomingServices,
 );
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
