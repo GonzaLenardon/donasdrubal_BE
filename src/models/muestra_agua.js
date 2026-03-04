@@ -46,13 +46,10 @@ MuestraAgua.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    id_alerta_origen: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'alertas_servicios',
-        key: 'id',
-      },
+    alerta: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     estado: {
       type: DataTypes.STRING(50),

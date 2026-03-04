@@ -70,7 +70,7 @@ import * as pozoController from '../controllers/pozos.js';
 import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
-import controllersAlertaServicios from '../controllers/alertasServicios.js';
+import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
 
 const router = express.Router();
@@ -328,9 +328,9 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 // RUTAS PROTEGIDAS - ALERTAS SERVICIOS
 // ========================================
 
-router.post('/alertaservicios', controllersAlertaServicios.add);
+router.post('/alertaservicios', controllersAlertas.add);
 
-router.post('/alertas', controllersAlertaServicios.addAllService);
+router.post('/alertas', controllersAlertas.addAllService);
 
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF CALIBRACIONES

@@ -333,9 +333,9 @@ class PDFServicePdfLib {
     cursorY -= 25;
 
     const columnas = [
-      ['Unimap', datos.presion_unimap],
-      ['Computadora', datos.presion_computadora],
-      ['Manómetro', datos.presion_manometro]
+      ['Unimap', datos.presion_unimap.valor],
+      ['Computadora', datos.presion_computadora.valor],
+      ['Manómetro', datos.presion_manometro.valor]
     ];
 
     for (const [label, valor] of columnas) {
@@ -364,6 +364,60 @@ class PDFServicePdfLib {
 
       cursorY -= 20;
     }
+
+    // =========== IMAGENES PRESIONES =====================
+      // ================= IMAGEN =================
+      let margen_x_img = margin;
+      let presure_img_height = 0;
+      if (datos.presion_manometro.nombreArchivo) {
+        const image = await this.embedImage(pdfDoc, datos.presion_manometro.nombreArchivo);
+        if (image) {
+          const img = image.scale(0.25);
+          presure_img_height = img.height;
+          page.drawImage(image, {
+            x: margen_x_img,
+            y: cursorY - 120,
+            width: 160,
+            height: 120
+          });
+          // lineaY -= img.height + 10;
+          margen_x_img += 160 + 20;
+        }
+      }    
+
+      if (datos.presion_computadora.nombreArchivo) {
+        const image = await this.embedImage(pdfDoc, datos.presion_computadora.nombreArchivo);
+        if (image) {
+          const img = image.scale(0.25);
+          presure_img_height = img.height;
+          page.drawImage(image, {
+            x: margen_x_img,
+            y: cursorY - 120,
+            width: 160,
+            height: 120
+          });
+          // lineaY -= img.height + 10;
+          margen_x_img += 160 + 20;
+        }
+      }  
+      if (datos.presion_unimap.nombreArchivo) {
+        const image = await this.embedImage(pdfDoc, datos.presion_unimap.nombreArchivo);
+        if (image) {
+          const img = image.scale(0.25);
+          presure_img_height = img.height;
+          page.drawImage(image, {
+            x: margen_x_img,
+            y: cursorY - 120,
+            width: 160,
+            height: 120
+          });
+          
+
+          // margen_x_img += img.width + 20;
+        }
+      }    
+      cursorY -= 120 + 10;    
+
 
     // ================= GRAFICA SECCIONES =================
     const seccionesArray = Object.entries(datos.secciones || {})
@@ -626,12 +680,22 @@ class PDFServicePdfLib {
 
     cursorY -= 20;
     //-----------------------------------------------
-    // ================= PRESIONES =================
+    console.log('Datos para presiones:', datos.presion_unimap || '-', datos.presion_computadora || '-', datos.presion_manometro || '-');   
+    // // ================= PRESIONES =================
+    //     const presion_unimap = datos.presion_unimap
+    //     ? JSON.parse(datos.presion_unimap)
+    //     : {};
+    //     const presion_computadora = datos.presion_computadora
+    //     ? JSON.parse(datos.presion_computadora)
+    //     : {};
+    //     const presion_manometro = datos.presion_manometro
+    //     ? JSON.parse(datos.presion_manometro)
+    //     : {};
 
     const presiones = [
-      Number(datos.presion_unimap),
-      Number(datos.presion_computadora),
-      Number(datos.presion_manometro)
+      Number(datos.presion_unimap.valor),
+      Number(datos.presion_computadora.valor),
+      Number(datos.presion_manometro.valor)
     ].filter(v => !isNaN(v));
 
     const promedio =
@@ -651,21 +715,21 @@ class PDFServicePdfLib {
 
     cursorY -= 25;
 
-    page.drawText(`Unimap: ${datos.presion_unimap || '-'} bar`, {
+    page.drawText(`Unimap: ${datos.presion_unimap.valor || '-'} bar`, {
       x: margin,
       y: cursorY,
       size: 11,
       font
     });
 
-    page.drawText(`Computadora: ${datos.presion_computadora || '-'} bar`, {
+    page.drawText(`Computadora: ${datos.presion_computadora.valor || '-'} bar`, {
       x: margin + 180,
       y: cursorY,
       size: 11,
       font
     });
 
-    page.drawText(`Manómetro: ${datos.presion_manometro || '-'} bar`, {
+    page.drawText(`Manómetro: ${datos.presion_manometro.valor || '-'} bar`, {
       x: margin + 360,
       y: cursorY,
       size: 11,
@@ -877,7 +941,6 @@ class PDFServicePdfLib {
     return page;
   }
 
-
   // ===============================
   // COLOR SEGÚN ESTADO
   // ===============================
@@ -1057,10 +1120,22 @@ class PDFServicePdfLib {
         : {},
 
       // ================= PRESIONES =================
+        presion_unimap: calibracion.presion_unimap
+        ? JSON.parse(calibracion.presion_unimap)
+        : {},
+        presion_computadora: calibracion.presion_computadora
+        ? JSON.parse(calibracion.presion_computadora)
+        : {},
+        presion_manometro: calibracion.presion_manometro
+        ? JSON.parse(calibracion.presion_manometro)
+        : {},
 
-      presion_unimap: calibracion.presion_unimap ?? '',
-      presion_computadora: calibracion.presion_computadora ?? '',
-      presion_manometro: calibracion.presion_manometro ?? '',
+      // presion_unimap: calibracion.presion_unimap?.valor || '',
+      // presion_computadora: calibracion.presion_computadora.valor || '',
+      // presion_manometro: calibracion.presion_manometro.valor || '',
+      // presion_unimap: calibracion.presion_unimap?.valor || '',
+      // presion_computadora: calibracion.presion_computadora.valor || '',
+      // presion_manometro: calibracion.presion_manometro.valor || '',
 
       // ================= COMPONENTES =================
 
