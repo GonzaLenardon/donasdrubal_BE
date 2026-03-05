@@ -405,6 +405,9 @@ router.get(
   '/cliente/:cliente_id/upcoming-services',
   dashboardController.getClienteUpcomingServices,
 );
+
+router.post('/informes/pozos', pozoController.multiInformesPozos);
+
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
