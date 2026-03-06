@@ -324,3 +324,5 @@ export const getClienteMachinesChartOptimized = async (req, res) => {
   }
 };
 
+//Nada
+
