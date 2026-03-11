@@ -92,6 +92,11 @@ Clientes.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+
+    litros_estimados: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
   },
   {
     sequelize: db,

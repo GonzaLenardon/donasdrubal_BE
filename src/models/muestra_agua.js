@@ -59,6 +59,11 @@ MuestraAgua.init(
         isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
       },
     },
+    informe: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
 
     deletedAt: {
       allowNull: true,

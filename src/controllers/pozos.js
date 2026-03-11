@@ -109,3 +109,8 @@ export const pozosCliente = async (req, res) => {
     });
   }
 };
+
+export const multiInformesPozos = async (req, res) => {
+  console.log('que llega a multiInformes', req.body);
+  res.status(200).json({ mensaje: 'OKiiii ' });
+};
