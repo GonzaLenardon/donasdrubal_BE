@@ -154,7 +154,7 @@ router.get(
   calibracionController.calibracionesMaquinas,
 );
 router.put('/calibraciones/:calibracion_id', calibracionController.updateCalibraciones);
-router.post(
+/*router.post(
   '/calibraciones/upload',
   (req, res, next) => {
     console.log('Request de upload recibida');
