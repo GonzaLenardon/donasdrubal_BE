@@ -74,6 +74,7 @@ import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
 import pdfMuetraAguaService from '../services/pdfMuestraAguaService.js';
+import { uploadArchivo } from '../utils/uploadFiles.js';
 
 const router = express.Router();
 
@@ -154,7 +155,7 @@ router.get(
   calibracionController.calibracionesMaquinas,
 );
 router.put('/calibraciones/:calibracion_id', calibracionController.updateCalibraciones);
-router.post(
+/*router.post(
   '/calibraciones/upload',
   (req, res, next) => {
     console.log('Request de upload recibida');
@@ -167,13 +168,13 @@ router.post(
 router.post(
   '/calibraciones/upload',
   uploadCalibraciones.single('file'),
-  uploadArchivoCalibracion,
+  uploadArchivo,
 );
 
 router.post(
   '/muestrasAgua/upload',
   uploadMuestrasAgua.single('file'),
-  uploadArchivoCalibracion,
+  uploadArchivo,
 );
 
 // ========================================
