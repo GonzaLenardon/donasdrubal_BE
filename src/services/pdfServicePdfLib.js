@@ -8,6 +8,7 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import * as pdfUtils from '../utils/pdfText.js';
 
 class PDFServicePdfLib {
 
@@ -206,7 +207,7 @@ class PDFServicePdfLib {
 
         lineaY -= 14;
 
-        const obsLines = this.wrapText(
+        const obsLines = pdfUtils.wrapText(
           estado.observacion,
           font,
           9,
@@ -240,7 +241,7 @@ class PDFServicePdfLib {
 
         estado.recomendaciones.forEach((rec, index) => {
           const textoNumerado = `${index + 1}. ${rec.texto}`;
-          const recLines = this.wrapText(
+          const recLines = pdfUtils.wrapText(
             textoNumerado,
             font,
             9,
@@ -291,7 +292,7 @@ class PDFServicePdfLib {
         lineaY -= 14;
         sugerenciasFijas.forEach((texto, index) => {
           const textoNumerado = `${index + 1}. ${texto}`;
-          const recLines = this.wrapText(
+          const recLines = pdfUtils.wrapText(
             textoNumerado,
             font,
             9,
@@ -981,7 +982,7 @@ class PDFServicePdfLib {
 
     // ===== OBSERVACIÓN =====
     if (estado.observacion) {
-      const lines = this.wrapText(
+      const lines = pdfUtils.wrapText(
         estado.observacion,
         font,
         fontSize,
@@ -997,7 +998,7 @@ class PDFServicePdfLib {
 
         const texto = r.texto || '';
 
-        const lines = this.wrapText(
+        const lines = pdfUtils.wrapText(
           texto,
           font,
           fontSize,
@@ -1020,7 +1021,7 @@ class PDFServicePdfLib {
 
       sugerenciasFijas.forEach(texto => {
 
-        const lines = this.wrapText(
+        const lines = pdfUtils.wrapText(
           texto,
           font,
           fontSize,
@@ -1041,39 +1042,7 @@ class PDFServicePdfLib {
     return altura;
   }
 
-  // ===================================
-  // DEVUELVE ARRAY CON LÍNEAS DE TEXTO 
-  // AJUSTADAS AL ANCHO MÁXIMO 
-  // ===================================
   
-  wrapText(text, font, fontSize, maxWidth) {
-
-    if (!text) return [];
-
-    const words = String(text).split(' ');
-    const lines = [];
-    let currentLine = '';
-
-    for (const word of words) {
-
-      const testLine = currentLine
-        ? currentLine + ' ' + word
-        : word;
-
-      const width = font.widthOfTextAtSize(testLine, fontSize);
-
-      if (width <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-
-    if (currentLine) lines.push(currentLine);
-
-    return lines;
-  }
 
   // ===============================
   // PREPARAR DATOS

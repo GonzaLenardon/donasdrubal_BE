@@ -413,7 +413,7 @@ export const generarPDF = async (req, res) => {
         data: {
           filename: resultado.filename,
           path: `/reports/${resultado.filename}`,
-          downloadUrl: `/api/calibraciones/${id}/pdf?download=true`,
+          downloadUrl: `/calibraciones/${id}/pdf?download=true`,
         },
       });
     }

@@ -50,16 +50,17 @@ import {
   updateMaquina,
   maquinasCliente,
 } from '../controllers/maquinas.js';
-import {
-  addCalibraciones,
-  calibracionesMaquinas,
-  updateCalibraciones,
-  uploadArchivoCalibracion,
-  generarPDF,
-  previsualizarPDF,
-  enviarPDFPorEmail,
-  limpiarPDFsAntiguos,
-} from '../controllers/calibraciones.js';
+// import {
+//   addCalibraciones,
+//   calibracionesMaquinas,
+//   updateCalibraciones,
+//   uploadArchivoCalibracion,
+//   generarPDF,
+//   previsualizarPDF,
+//   enviarPDFPorEmail,
+//   limpiarPDFsAntiguos,
+// } from '../controllers/calibraciones.js';
+import * as calibracionController from '../controllers/calibraciones.js';
 import { allTipoClientes } from '../controllers/tipoClientes.js';
 
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
@@ -72,6 +73,7 @@ import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
+import pdfMuetraAguaService from '../services/pdfMuestraAguaService.js';
 
 const router = express.Router();
 
@@ -98,7 +100,7 @@ router.post('/user', addUser);
 router.get(
   '/calibraciones/:id/preview-pdf',
   // authMiddleware,
-  previsualizarPDF,
+  calibracionController.previsualizarPDF,
 );
 
 // ========================================
@@ -146,13 +148,15 @@ router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
 // RUTAS PROTEGIDAS - CALIBRACIONES
 // ========================================
 
-router.post('/calibraciones', addCalibraciones);
+router.post('/calibraciones', calibracionController.addCalibraciones);
 router.get(
   '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
-  calibracionesMaquinas,
+  calibracionController.calibracionesMaquinas,
 );
-router.put('/calibraciones/:calibracion_id', updateCalibraciones);
-/* router.post(  '/calibraciones/upload',  (req, res, next) => {
+router.put('/calibraciones/:calibracion_id', calibracionController.updateCalibraciones);
+router.post(
+  '/calibraciones/upload',
+  (req, res, next) => {
     console.log('Request de upload recibida');
     next();
   },
@@ -299,6 +303,8 @@ router.get(
   muestrasAguaController.getMuestraAguaPozoCliente,
 );
 
+
+
 // ========================================
 // RUTAS PROTEGIDAS - JORNADAS
 // ========================================
@@ -331,6 +337,65 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 router.post('/alertaservicios', controllersAlertas.add);
 
 router.post('/alertas', controllersAlertas.addAllService);
+// =============================================================
+// RUTAS PROTEGIDAS - GENERACION INFORMES PDF MUESTRAS DE AGUA
+// =============================================================
+/**
+ * @route   POST /informes/pozos
+ * @desc    Genera y descarga el PDF de una calibración
+ * @access  Private
+ * @query   download=true (opcional) - fuerza descarga vs retornar info
+ */
+router.post(
+  '/informes/pozos_ok',
+  // authMiddleware, // Descomentar si usas autenticación
+  muestrasAguaController.previssualizarPdf,
+);
+
+router.post('/informes/pozos', async (req, res) => {
+
+  try {
+    console.log('Request recibido para generar informe de pozos', req.body);
+    const { cliente_id, pozos_ids } = req.body;
+
+    if (!cliente_id) {
+      return res.status(400).json({
+        error: 'cliente_id requerido'
+      });
+    }
+
+    if (!Array.isArray(pozos_ids) || pozos_ids.length === 0) {
+      return res.status(400).json({
+        error: 'Debe enviar un array de pozos_ids'
+      });
+    }
+
+    const { pdfBytes, filename } =
+      await pdfMuetraAguaService.generarInformeCalidadAgua(
+        cliente_id,
+        pozos_ids
+      );
+
+    res.setHeader('Content-Type', 'application/pdf');
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`
+    );
+
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error generando el PDF'
+    });
+
+  }
+
+});
 
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF CALIBRACIONES
@@ -345,7 +410,7 @@ router.post('/alertas', controllersAlertas.addAllService);
 router.get(
   '/calibraciones/:id/pdf',
   // authMiddleware, // Descomentar si usas autenticación
-  generarPDF,
+  calibracionController.generarPDF,
 );
 
 /**
@@ -369,7 +434,7 @@ router.get(
 router.post(
   '/calibraciones/:id/email-pdf',
   // authMiddleware,
-  enviarPDFPorEmail,
+  calibracionController.enviarPDFPorEmail,
 );
 
 /**
@@ -382,7 +447,7 @@ router.delete(
   '/calibraciones/pdfs/cleanup',
   // authMiddleware,
   // adminMiddleware, // Solo administradores
-  limpiarPDFsAntiguos,
+  calibracionController.limpiarPDFsAntiguos,
 );
 
 /*=========================================

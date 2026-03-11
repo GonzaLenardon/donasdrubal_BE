@@ -2,6 +2,8 @@ import { extractModelFields } from '../utils/payload.js';
 import Clientes from '../models/clientes.js';
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
+import pdfAguaService from '../services/pdfMuestraAguaService.js';
+import path from 'path';
 
 export const allMuestrasAgua = async (req, res) => {
   console.log('allMuestrasAgua controller');
@@ -227,6 +229,37 @@ export const getMuestraAguaPozoCliente = async (req, res) => {
     });
   }
 };
+
+export const previssualizarPdf = async (req, res) => {
+try {
+    const {cliente_id, pozos_ids } = req.body;
+
+    const resultado = await pdfAguaService.generarInformeCalidadAgua(
+      cliente_id,
+      pozos_ids
+    );
+
+    if (!resultado.success || !resultado.path) {
+      throw new Error('No se pudo generar el PDF');
+    }
+
+    // Redirige directamente al PDF generado por PHP
+    // return res.redirect(resultado.path);
+    return res.sendFile(path.resolve(resultado.path), {
+      headers: {
+        'Content-Type': 'application/pdf',
+      },
+    });
+  } catch (error) {
+    console.error('Error en previsualizarPDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al previsualizar el PDF',
+      error: error.message,
+    });
+  }
+}
+
 
 const calcularDosis = (dureza) => {
   const cantAguaLitros = parseFloat(process.env.CANT_AGUA_MUESTRA_LITROS);
