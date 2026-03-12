@@ -82,7 +82,11 @@ const addClient = async (req, res) => {
 };
 
 // Listar clientes con usuario
-const allClientes = async (req, res) => {
+/* const allClientes = async (req, res) => {
+  console.log('Usuario', req.user);
+
+  const { id } = req.user;
+
   try {
     const clientes = await Clientes.findAll({
       include: [
@@ -125,6 +129,62 @@ const allClientes = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error al obtener clientes:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+}; */
+
+const allClientes = async (req, res) => {
+  try {
+    const { id, rol } = req.user;
+
+    console.log('Rollllllllllllllllllllllllllllllllllllllllllllllllllll ', rol);
+    if (rol === 'Administrador') console.log('jajajjjjdjajajajajajajaajaj');
+
+    const clientes = await Clientes.findAll({
+      include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          attributes: ['id', 'nombre', 'email'],
+
+          where: rol === 'Ingeniero' ? { id } : undefined,
+          through: {
+            attributes: ['es_principal'],
+          },
+        },
+        {
+          model: TipoClientes,
+          as: 'tipoCliente',
+          attributes: ['id', 'tipoClientes'],
+        },
+      ],
+      order: [['razon_social', 'ASC']],
+    });
+
+    const clientesFormateados = clientes.map((cliente) => {
+      const clienteJSON = cliente.toJSON();
+
+      clienteJSON.ingenieros =
+        clienteJSON.ingenieros?.map((ing) => ({
+          user_id: ing.id,
+          nombre: ing.nombre,
+          email: ing.email,
+          es_principal: ing.ClienteIngenieros?.es_principal ?? false,
+        })) || [];
+
+      return clienteJSON;
+    });
+
+    return res.json({
+      ok: true,
+      data: clientesFormateados,
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener clientes:', error);
+
     return res.status(500).json({
       ok: false,
       error: error.message,
