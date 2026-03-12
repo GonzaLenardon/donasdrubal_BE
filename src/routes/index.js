@@ -472,7 +472,7 @@ router.get(
   dashboardController.getClienteUpcomingServices,
 );
 
-router.post('/informes/pozos', pozoController.multiInformesPozos);
+// router.post('/informes/pozos', pozoController.multiInformesPozos);
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
