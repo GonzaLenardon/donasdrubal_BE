@@ -47,6 +47,7 @@ class PDFServicePdfLib {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+
     let page = this.dibujarDashboardResumen(pdfDoc, datos, font, fontBold);
     page = pdfDoc.addPage(); // segunda página comienza informe detallado
     const { width, height } = page.getSize();
@@ -127,7 +128,7 @@ class PDFServicePdfLib {
       });
 
       // ===== Título =====
-      page.drawText(comp.titulo, {
+      page.drawText(pdfUtils.sanitizeText(comp.titulo), {
         x: margin + 10,
         y: cursorY - 20,
         size: 12,
@@ -215,7 +216,7 @@ class PDFServicePdfLib {
         );
 
         obsLines.forEach(line => {
-          page.drawText(line, {
+          page.drawText(pdfUtils.sanitizeText(line), {
             x: margin + 25,
             y: lineaY,
             size: 9,
@@ -249,7 +250,7 @@ class PDFServicePdfLib {
           );
 
           recLines.forEach(line => {
-            page.drawText(line, {
+            page.drawText(pdfUtils.sanitizeText(line), {
               x: margin + 25,
               y: lineaY,
               size: 9,
@@ -300,7 +301,7 @@ class PDFServicePdfLib {
           );
 
           recLines.forEach(line => {
-            page.drawText(line, {
+            page.drawText(pdfUtils.sanitizeText(line), {
               x: margin + 25,
               y: lineaY,
               size: 9,
@@ -484,7 +485,13 @@ class PDFServicePdfLib {
     const pdfBytes = await pdfDoc.save();
     const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
     const outputPath = path.join(this.outputDir, filename);
+    // // CODIGO PARA OBLIGAR A DESCARGAR EL ARCHIVO
+    // return {
+    //   pdfBytes,
+    //   filename: `calidad_agua_${Date.now()}.pdf`
+    // };
 
+    // CODIGO DE ABAJO SI SE QUIERE GUARDAR E ARCHIVO EN EL SERVIDOR EN LUGAR DE RETORNAR LOS BYTES PARA DESCARGA DIRECTA 
     await fs.writeFile(outputPath, pdfBytes);
 
     return {

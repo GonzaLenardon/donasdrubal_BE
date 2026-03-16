@@ -7,7 +7,15 @@
 
     if (!text) return [];
 
-    const words = String(text).split(' ');
+    // text = String(text)
+    // .replace(/\r/g, ' ')
+    // .replace(/\n/g, ' ')
+    // .replace(/\t/g, ' ')
+    // .trim();
+
+    text = sanitizeText(text);
+    // const words = String(text).split(' ');
+    const words = text.split(/\s+/);
     const lines = [];
     let currentLine = '';
 
@@ -42,3 +50,17 @@ export const formatNumber = (value, decimals = 2) => {
   if (value === null || value === undefined) return '-';
   return Number(value).toFixed(decimals);
 };  
+
+export const sanitizeText = (text) => {
+
+  if (!text) return '';
+
+  return String(text)
+    .replace(/\r/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(//g, '-')     // bullet Word
+    .replace(/•/g, '-')     // bullet unicode
+    .replace(/[^\x00-\xFF]/g, '') // elimina unicode fuera WinAnsi
+    .trim();
+};
