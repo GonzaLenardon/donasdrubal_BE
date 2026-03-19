@@ -31,8 +31,8 @@ MaquinaTipo.init(
     sequelize: db,
     modelName: 'MaquinaTipo',
     tableName: 'maquina_tipos',
-    timestamps: false,          //no agrega automáticamente los campos createdAt y updatedAt
-  }
+    timestamps: false, //no agrega automáticamente los campos createdAt y updatedAt
+  },
 );
 
 export default MaquinaTipo;

@@ -25,7 +25,7 @@ Permissions.init(
     modelName: 'Permissions',
     tableName: 'permissions',
     timestamps: true,
-  }
+  },
 );
 
 export default Permissions;
