@@ -140,9 +140,6 @@ const allClientes = async (req, res) => {
   try {
     const { id, rol } = req.user;
 
-    console.log('Rollllllllllllllllllllllllllllllllllllllllllllllllllll ', rol);
-    if (rol === 'Administrador') console.log('jajajjjjdjajajajajajajaajaj');
-
     const clientes = await Clientes.findAll({
       include: [
         {

@@ -2,6 +2,7 @@ import Calibraciones from '../models/calibraciones.js';
 import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import Users from '../models/users.js';
 import { extractModelFields } from '../utils/payload.js';
 // import PDFService from '../services/pdfServicePuppeteer.js';
 import PDFService from '../services/pdfServicePdfLib.js';
@@ -309,6 +310,14 @@ export const calibracionesMaquinas = async (req, res) => {
           model: Clientes,
           as: 'cliente',
           attributes: ['id', 'razon_social', 'telefono'],
+          include: [
+            {
+              model: Users,
+              as: 'ingenieros',
+              attributes: ['id', 'nombre', 'email'], // ajustá según tu modelo
+              through: { attributes: [] }, // 🔥 evita traer tabla intermedia
+            },
+          ],
         },
         {
           model: Calibraciones,
@@ -341,8 +350,6 @@ export const calibracionesMaquinas = async (req, res) => {
     });
   }
 };
-
-
 
 // METODOS PARA GENERAR PDF DE CALIBRACIONES//
 

@@ -19,7 +19,7 @@ UserRoles.init(
     modelName: 'UserRoles',
     tableName: 'user_roles',
     timestamps: false,
-  }
+  },
 );
 
 export default UserRoles;
