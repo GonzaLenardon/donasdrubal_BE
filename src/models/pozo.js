@@ -29,6 +29,10 @@ Pozo.init(
     cliente_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'clientes',
+        key: 'id',
+      },      
     },
     deletedAt: {
       allowNull: true,
