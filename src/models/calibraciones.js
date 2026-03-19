@@ -41,8 +41,8 @@ Calibraciones.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    responsable: {
-      type: DataTypes.STRING,
+    responsable_id: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
 
@@ -136,11 +136,11 @@ Calibraciones.init(
       allowNull: true,
     },
     observaciones_acronex: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
-    Observaciones: {
-      type: DataTypes.STRING,
+    observaciones_generales: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     alerta: {
@@ -155,6 +155,15 @@ Calibraciones.init(
       validate: {
         isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
       },
+    },
+
+    observaciones_presion: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    recomendaciones_presion: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {

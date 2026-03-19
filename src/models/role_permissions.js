@@ -18,8 +18,8 @@ RolePermissions.init(
     sequelize: db,
     modelName: 'RolePermissions',
     tableName: 'role_permissions',
-    timestamps: false,     //Genera automaticamente los campos createdAt y updatedAt 
-  }
+    timestamps: false, //Genera automaticamente los campos createdAt y updatedAt
+  },
 );
 
 export default RolePermissions;

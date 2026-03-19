@@ -53,7 +53,7 @@ Maquinas.init(
     modelName: 'Maquinas',
     tableName: 'maquinas',
     timestamps: false,
-  }
+  },
 );
 
 export default Maquinas;
