@@ -97,6 +97,12 @@ Clientes.init(
       type: DataTypes.FLOAT,
       allowNull: true,
     },
+
+    comodato: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     sequelize: db,

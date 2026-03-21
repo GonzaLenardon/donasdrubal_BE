@@ -75,6 +75,7 @@ import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
 import pdfMuetraAguaService from '../services/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/uploadFiles.js';
+import Informes from '../controllers/informes.js';
 
 const router = express.Router();
 
@@ -154,7 +155,10 @@ router.get(
   '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
   calibracionController.calibracionesMaquinas,
 );
-router.put('/calibraciones/:calibracion_id', calibracionController.updateCalibraciones);
+router.put(
+  '/calibraciones/:calibracion_id',
+  calibracionController.updateCalibraciones,
+);
 /*router.post(
   '/calibraciones/upload',
   (req, res, next) => {
@@ -304,8 +308,6 @@ router.get(
   muestrasAguaController.getMuestraAguaPozoCliente,
 );
 
-
-
 // ========================================
 // RUTAS PROTEGIDAS - JORNADAS
 // ========================================
@@ -353,50 +355,9 @@ router.post(
   muestrasAguaController.previssualizarPdf,
 );
 
-router.post('/informes/pozos', async (req, res) => {
+router.post('/informes/pozos', Informes.muestraPozos);
 
-  try {
-    console.log('Request recibido para generar informe de pozos', req.body);
-    const { cliente_id, pozos_ids } = req.body;
-
-    if (!cliente_id) {
-      return res.status(400).json({
-        error: 'cliente_id requerido'
-      });
-    }
-
-    if (!Array.isArray(pozos_ids) || pozos_ids.length === 0) {
-      return res.status(400).json({
-        error: 'Debe enviar un array de pozos_ids'
-      });
-    }
-
-    const { pdfBytes, filename } =
-      await pdfMuetraAguaService.generarInformeCalidadAgua(
-        cliente_id,
-        pozos_ids
-      );
-
-    res.setHeader('Content-Type', 'application/pdf');
-
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${filename}"`
-    );
-
-    res.send(Buffer.from(pdfBytes));
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: 'Error generando el PDF'
-    });
-
-  }
-
-});
+router.get('/informes/muestra/:muestra_id', Informes.muestraAgua);
 
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF CALIBRACIONES
