@@ -109,7 +109,7 @@ class PDFServicePdfLib {
 
     for (const comp of componentes) {
 
-      const alturaCard = this.calcularAlturaCard(comp, font, width, margin);
+      const alturaCard = await this.calcularAlturaCard(comp, font, width, margin, pdfDoc);
 
       if (cursorY - alturaCard < 60) {
         page = pdfDoc.addPage();
@@ -266,16 +266,17 @@ class PDFServicePdfLib {
       // ================= IMAGEN =================
 
       if (estado.nombre_archivo) {
-        const image = await this.embedImage(pdfDoc, estado.nombre_archivo);
-        if (image) {
-          const img = image.scale(0.25);
-          page.drawImage(image, {
+        const imgData = await this.getImageDimensions(pdfDoc, estado.nombre_archivo);
+
+        if (imgData) {
+          page.drawImage(imgData.image, {
             x: margin + 15,
-            y: lineaY - img.height,
-            width: img.width,
-            height: img.height
+            y: lineaY - imgData.height,
+            width: imgData.width,
+            height: imgData.height
           });
-          lineaY -= img.height + 10;
+
+          lineaY -= imgData.height + 10;
         }
       }
 
@@ -688,80 +689,8 @@ class PDFServicePdfLib {
 
     cursorY -= 20;
     //-----------------------------------------------
-    console.log('Datos para presiones:', datos.presion_unimap || '-', datos.presion_computadora || '-', datos.presion_manometro || '-');   
-    // // ================= PRESIONES =================
-    //     const presion_unimap = datos.presion_unimap
-    //     ? JSON.parse(datos.presion_unimap)
-    //     : {};
-    //     const presion_computadora = datos.presion_computadora
-    //     ? JSON.parse(datos.presion_computadora)
-    //     : {};
-    //     const presion_manometro = datos.presion_manometro
-    //     ? JSON.parse(datos.presion_manometro)
-    //     : {};
 
-    const presiones = [
-      Number(datos.presion_unimap.valor),
-      Number(datos.presion_computadora.valor),
-      Number(datos.presion_manometro.valor)
-    ].filter(v => !isNaN(v));
-
-    const promedio =
-      presiones.reduce((a, b) => a + b, 0) / presiones.length;
-
-    const desvio = Math.sqrt(
-      presiones.reduce((a, v) => a + Math.pow(v - promedio, 2), 0) /
-      presiones.length
-    );
-
-    page.drawText('Resumen de Presiones', {
-      x: margin,
-      y: cursorY,
-      size: 14,
-      font: fontBold
-    });
-
-    cursorY -= 25;
-
-    page.drawText(`Unimap: ${datos.presion_unimap.valor || '-'} bar`, {
-      x: margin,
-      y: cursorY,
-      size: 11,
-      font
-    });
-
-    page.drawText(`Computadora: ${datos.presion_computadora.valor || '-'} bar`, {
-      x: margin + 180,
-      y: cursorY,
-      size: 11,
-      font
-    });
-
-    page.drawText(`Manómetro: ${datos.presion_manometro.valor || '-'} bar`, {
-      x: margin + 360,
-      y: cursorY,
-      size: 11,
-      font
-    });
-
-    cursorY -= 20;
-
-    page.drawText(`Promedio: ${promedio.toFixed(2)} bar`, {
-      x: margin,
-      y: cursorY,
-      size: 11,
-      font
-    });
-
-    page.drawText(`Desvío estándar: ${desvio.toFixed(2)} bar`, {
-      x: margin + 200,
-      y: cursorY,
-      size: 11,
-      font
-    });
-
-    cursorY -= 30;
-
+  
     //  // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
 
     // page.drawText('Estado de Componentes', {
@@ -843,109 +772,6 @@ class PDFServicePdfLib {
     cursorY -= 20;
     //-----------------------------------------------
 
-    // ================= COMPONENTES AGRUPADOS =================
-
-    const estados = [
-      datos.estado_maquina.estado,
-      datos.estado_bomba.estado,
-      datos.estado_agitador.estado,
-      datos.estado_filtroPrimario.estado,
-      datos.estado_filtroSecundario.estado,
-      datos.estado_filtroLinea.estado,
-      datos.estado_manguerayconexiones.estado,
-      datos.estado_antigoteo.estado,
-      datos.estado_limpiezaTanque.estado,
-      datos.estado_pastillas.estado,
-      datos.estabilidadVerticalBotalon.estado,
-      datos.mixer.estado
-    ];
-
-    const resumen = {
-      'muy bueno': 0,
-      'bueno': 0,
-      'regular': 0,
-      'malo': 0,
-      'no aplica': 0
-    };
-
-    estados.forEach(e => {
-      const key = e?.toLowerCase() || 'no aplica';
-      if (resumen[key] !== undefined) resumen[key]++;
-    });
-
-    page.drawText('Estado de Componentes', {
-      x: margin,
-      y: cursorY,
-      size: 14,
-      font: fontBold
-    });
-
-    cursorY -= 25;
-
-    Object.entries(resumen).forEach(([estado, cantidad]) => {
-
-      const color = this.getColorEstado(estado);
-
-      page.drawRectangle({
-        x: margin,
-        y: cursorY - 5,
-        width: 15,
-        height: 15,
-        color
-      });
-
-      page.drawText(
-        `${estado.toUpperCase()}: ${cantidad}`,
-        {
-          x: margin + 25,
-          y: cursorY,
-          size: 11,
-          font
-        }
-      );
-
-      cursorY -= 22;
-    });
-
-
-    // ================= ESTADO GLOBAL =================
-
-    cursorY -= 20;
-
-    let estadoGlobal = 'ÓPTIMO';
-
-    if (resumen['malo'] > 0) estadoGlobal = 'CRÍTICO';
-    else if (resumen['regular'] > 2) estadoGlobal = 'VARIABLE';
-
-    let colorGlobal = rgb(0, 0.6, 0);
-    if (estadoGlobal === 'CRÍTICO') colorGlobal = rgb(0.8, 0, 0);
-    if (estadoGlobal === 'VARIABLE') colorGlobal = rgb(1, 0.7, 0);
-
-    page.drawText('Estado General del Equipo', {
-      x: margin,
-      y: cursorY,
-      size: 14,
-      font: fontBold
-    });
-
-    cursorY -= 30;
-
-    page.drawRectangle({
-      x: margin,
-      y: cursorY - 10,
-      width: 200,
-      height: 30,
-      color: colorGlobal
-    });
-
-    page.drawText(estadoGlobal, {
-      x: margin + 15,
-      y: cursorY,
-      size: 14,
-      font: fontBold,
-      color: rgb(1, 1, 1)
-    });
-
     return page;
   }
 
@@ -971,7 +797,7 @@ class PDFServicePdfLib {
   // LINEAS DE TEXTO, IMAGEN, RECOMENDACIONES, ETC
   // ===============================================
  
-  calcularAlturaCard(comp, font, width, margin) {
+  async calcularAlturaCard(comp, font, width, margin, pdfDoc) {
 
     let altura = 50;
 
@@ -1041,16 +867,17 @@ class PDFServicePdfLib {
 
     // ===== IMAGEN =====
     if (estado.nombre_archivo) {
-      altura += 120;
+      const imgData = await this.getImageDimensions(pdfDoc, estado.nombre_archivo);
+
+      if (imgData) {
+        altura += imgData.height + 10;
+      }
     }
 
 
 
     return altura;
   }
-
-  
-
   // ===============================
   // PREPARAR DATOS
   // ===============================
@@ -1297,6 +1124,35 @@ class PDFServicePdfLib {
 
     return await chartJSNodeCanvas.renderToBuffer(configuration);
   }
+
+  async getImageDimensions(pdfDoc, nombreArchivo, maxWidth = 200, maxHeight = 150) {
+
+  if (!nombreArchivo) return null;
+
+  const image = await this.embedImage(pdfDoc, nombreArchivo);
+  if (!image) return null;
+
+  const originalWidth = image.width;
+  const originalHeight = image.height;
+
+  let scale = 1;
+
+  // limitar por ancho
+  if (originalWidth > maxWidth) {
+    scale = maxWidth / originalWidth;
+  }
+
+  // limitar por alto
+  if (originalHeight * scale > maxHeight) {
+    scale = maxHeight / originalHeight;
+  }
+
+  return {
+    image,
+    width: originalWidth * scale,
+    height: originalHeight * scale
+  };
+}
 
 }
 
