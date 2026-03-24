@@ -14,6 +14,9 @@ class PDFServicePdfLib {
 
   constructor() {
     this.outputDir = path.join(process.cwd(), 'public', 'reports');
+    this.assetsUrl = path.join(process.cwd(), 'src', 'assets');
+    this.imagesUrl = path.join(process.cwd(), 'uploads', 'calibraciones');
+
   }
 
   // ===============================
@@ -48,7 +51,7 @@ class PDFServicePdfLib {
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
 
-    let page = this.dibujarDashboardResumen(pdfDoc, datos, font, fontBold);
+    let page = await this.dibujarDashboardResumen(pdfDoc, datos, font, fontBold);
     page = pdfDoc.addPage(); // segunda página comienza informe detallado
     const { width, height } = page.getSize();
 
@@ -266,7 +269,7 @@ class PDFServicePdfLib {
       // ================= IMAGEN =================
 
       if (estado.nombre_archivo) {
-        const imgData = await this.getImageDimensions(pdfDoc, estado.nombre_archivo);
+        const imgData = await this.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
 
         if (imgData) {
           page.drawImage(imgData.image, {
@@ -373,7 +376,7 @@ class PDFServicePdfLib {
       let margen_x_img = margin;
       let presure_img_height = 0;
       if (datos.presion_manometro.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, datos.presion_manometro.nombreArchivo);
+        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
         if (image) {
           const img = image.scale(0.25);
           presure_img_height = img.height;
@@ -389,7 +392,7 @@ class PDFServicePdfLib {
       }    
 
       if (datos.presion_computadora.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, datos.presion_computadora.nombreArchivo);
+        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_computadora.nombreArchivo);
         if (image) {
           const img = image.scale(0.25);
           presure_img_height = img.height;
@@ -404,7 +407,7 @@ class PDFServicePdfLib {
         }
       }  
       if (datos.presion_unimap.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, datos.presion_unimap.nombreArchivo);
+        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
         if (image) {
           const img = image.scale(0.25);
           presure_img_height = img.height;
@@ -457,7 +460,7 @@ class PDFServicePdfLib {
 
     // ================= FOOTER =================
 
-    const pages = pdfDoc.getPages();
+    let pages = pdfDoc.getPages();
     const totalPages = pages.length;
 
     pages.forEach((p, index) => {
@@ -505,9 +508,9 @@ class PDFServicePdfLib {
   // ===============================
   // RESUMEN GENERAL PAGIN INICIAL
   // ===============================
-  dibujarDashboardResumen(pdfDoc, datos, font, fontBold) {
+  async dibujarDashboardResumen(pdfDoc, datos, font, fontBold) {
 
-    const page = pdfDoc.addPage();
+    let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
 
     const margin = 50;
@@ -515,71 +518,106 @@ class PDFServicePdfLib {
 
     // ================= HEADER DASHBOARD =================
 
-    const headerHeight = 90;
+    const headerHeight = 150;
 
     page.drawRectangle({
       x: 0,
       y: height - headerHeight,
       width,
-      height: headerHeight,
+      height: headerHeight-145,
       color: rgb(0.08, 0.35, 0.18)
     });
 
+// ------------- LOGOS -----------------
+    const logoDA = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
+
+        if (logoDA) {
+          page.drawImage(logoDA.image, {
+            x: margin-10,
+            y: cursorY,
+            width: logoDA.width,
+            height: logoDA.height
+          });
+
+          
+        }
+        const agrospData = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_agrospray.png', 150, 100);
+
+        if (agrospData) {
+          page.drawImage(agrospData.image, {
+            x: margin + logoDA.width + 150,
+            y: cursorY,
+            width: agrospData.width,
+            height: agrospData.height
+          });
+
+          
+        }
+        cursorY = cursorY - 30;
+//---INFO GENERAL----------------
+
     page.drawText('RESUMEN GENERAL DE CALIBRACIÓN', {
       x: margin,
-      y: height - 30,
+      y: cursorY,
       size: 16,
       font: fontBold,
-      color: rgb(1, 1, 1)
+      color: rgb(0, 0, 0)
     });
-
+    
     // Cliente
     page.drawText(`Cliente: ${datos.maquina.cliente?.razon_social || '-'}`, {
       x: margin,
-      y: height - 50,
+      y: cursorY - 15,
       size: 10,
       font,
-      color: rgb(1, 1, 1)
+      color: rgb(0, 0, 0)
     });
 
     page.drawText(`Dirección: ${datos.maquina.cliente?.direccion || '-'}`, {
       x: margin,
-      y: height - 65,
+      y: cursorY - 30,
       size: 10,
       font,
-      color: rgb(1, 1, 1)
+      color: rgb(0, 0, 0)
     });
 
     // Máquina (lado derecho)
-    page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}`, {
+    page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}  - ${datos.maquina?.tipo.modelo || '-'}`, {
       x: width / 2,
-      y: height - 50,
+      y: cursorY-15,
       size: 10,
       font,
-      color: rgb(1, 1, 1)
+      color: rgb(0, 0, 0)
     });
 
-    page.drawText(`Modelo: ${datos.maquina?.tipo.modelo || '-'}`, {
-      x: width / 2,
-      y: height - 65,
-      size: 10,
-      font,
-      color: rgb(1, 1, 1)
-    });
+
 
     page.drawText(`Tipo: ${datos.maquina?.tipo.tipo || '-'}`, {
       x: width / 2,
-      y: height - 80,
+      y: cursorY - 30,
       size: 10,
       font,
-      color: rgb(1, 1, 1)
+      color: rgb(0, 0, 0)
     });
 
     cursorY = height - headerHeight - 30;
 
+    //----------IMAGEN PRINCIPAL ----------------
+
+    const imgPrincipalData = await this.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 500, 150);  
+    if (imgPrincipalData) {
+      page.drawImage(imgPrincipalData.image, {
+        x: margin,
+        y: cursorY - imgPrincipalData.height,
+        width: imgPrincipalData.width,
+        height: imgPrincipalData.height
+      });
+    }
+    cursorY = cursorY - (imgPrincipalData ? imgPrincipalData.height : 0) - 20;
+
     // ================= SEPARADOR =================
 
-    cursorY -= 5;
+    // cursorY -= 5;
 
     page.drawRectangle({
       x: margin,
@@ -594,16 +632,6 @@ class PDFServicePdfLib {
 
     // ================= COMPONENTES DETALLADOS =================
     // cursorY -= 10;
-
-    page.drawText('Estado de Componentes', {
-      x: margin,
-      y: cursorY,
-      size: 14,
-      font: fontBold
-    });
-
-    cursorY -= 25;
-
     const componentes = [
       { nombre: 'Máquina', data: datos.estado_maquina },
       { nombre: 'Bomba', data: datos.estado_bomba },
@@ -620,78 +648,21 @@ class PDFServicePdfLib {
     ];
 
     const rowHeight = 24;
-    //---------- Fondo gris ----------------
-    const totalFilas = Math.ceil(componentes.length);
-    const sectionHeight = totalFilas * rowHeight + 30;
 
-    // Fondo gris claro
-    page.drawRectangle({
-      x: margin - 10,
-      y: cursorY - sectionHeight + 10,
-      width: width - (margin - 10) * 2,
-      height: sectionHeight,
-      color: rgb(0.96, 0.96, 0.96)
-    });   
-    //---------------------------------    
+    //-----------------COMONENETES EN UNA COLUMNA ----------------    
 
-    componentes.forEach(comp => {
+    // //---------- Fondo gris ----------------
+    // const totalFilas = Math.ceil(componentes.length);
+    // const sectionHeight = totalFilas * rowHeight + 30;
 
-      const estado = comp.data?.estado || 'No Aplica';
-      const colorEstado = this.getColorEstado(estado);
-
-      if (cursorY < 100) {
-        page = pdfDoc.addPage();
-        cursorY = page.getHeight() - margin;
-      }
-
-      // Nombre del componente
-      page.drawText(comp.nombre, {
-        x: margin,
-        y: cursorY,
-        size: 11,
-        font
-      });
-
-      // Badge de estado (rectángulo color)
-      page.drawRectangle({
-        x: width - margin - 140,
-        y: cursorY - 6,
-        width: 120,
-        height: 18,
-        color: colorEstado,
-        borderRadius: 4
-      });
-
-      // Texto estado
-      page.drawText(estado.toUpperCase(), {
-        x: width - margin - 130,
-        y: cursorY,
-        size: 9,
-        font: fontBold,
-        color: rgb(1, 1, 1)
-      });
-
-      cursorY -= rowHeight;
-    });
-
-
-    // ================= SEPARADOR =================
-
-    cursorY -= 10;
-
-    page.drawRectangle({
-      x: margin,
-      y: cursorY,
-      width: width - margin * 2,
-      height: 1,
-      color: rgb(0.85, 0.85, 0.85)
-    });
-
-    cursorY -= 20;
-    //-----------------------------------------------
-
-  
-    //  // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
+    // // Fondo gris claro
+    // page.drawRectangle({
+    //   x: margin - 10,
+    //   y: cursorY - sectionHeight + 10,
+    //   width: width - (margin - 10) * 2,
+    //   height: sectionHeight,
+    //   color: rgb(0.96, 0.96, 0.96)
+    // }); 
 
     // page.drawText('Estado de Componentes', {
     //   x: margin,
@@ -700,66 +671,115 @@ class PDFServicePdfLib {
     //   font: fontBold
     // });
 
-    // cursorY -= 25;
+ 
 
-    // // const componentes = [
-    // //   { nombre: 'Máquina', data: datos.estado_maquina },
-    // //   { nombre: 'Bomba', data: datos.estado_bomba },
-    // //   { nombre: 'Agitador', data: datos.estado_agitador },
-    // //   { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
-    // //   { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
-    // //   { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
-    // //   { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
-    // //   { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
-    // //   { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
-    // //   { nombre: 'Pastillas', data: datos.estado_pastillas },
-    // //   { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
-    // //   { nombre: 'Mixer', data: datos.mixer }
-    // // ];
-
-
-    // const colWidth = (width - margin * 2) / 2;
-    // const rowHeights = 28;
-
-    // componentes.forEach((comp, index) => {
-
-    //   const col = index % 2;
-    //   const row = Math.floor(index / 2);
-
-    //   const x = margin + col * colWidth;
-    //   const y = cursorY - row * rowHeights;
+    // componentes.forEach(comp => {
 
     //   const estado = comp.data?.estado || 'No Aplica';
     //   const colorEstado = this.getColorEstado(estado);
 
+    //   if (cursorY < 100) {
+    //     page = pdfDoc.addPage();
+    //     cursorY = page.getHeight() - margin;
+    //   }
+
+    //   // Nombre del componente
     //   page.drawText(comp.nombre, {
-    //     x,
-    //     y,
-    //     size: 10,
+    //     x: margin,
+    //     y: cursorY,
+    //     size: 11,
     //     font
     //   });
 
+    //   // Badge de estado (rectángulo color)
     //   page.drawRectangle({
-    //     x: x + colWidth - 110,
-    //     y: y - 6,
-    //     width: 100,
+    //     x: width - margin - 140,
+    //     y: cursorY - 6,
+    //     width: 120,
     //     height: 18,
-    //     color: colorEstado
+    //     color: colorEstado,
+    //     borderRadius: 4
     //   });
 
+    //   // Texto estado
     //   page.drawText(estado.toUpperCase(), {
-    //     x: x + colWidth - 100,
-    //     y,
+    //     x: width - margin - 130,
+    //     y: cursorY,
     //     size: 9,
     //     font: fontBold,
     //     color: rgb(1, 1, 1)
     //   });
+
+    //   cursorY -= rowHeight;
     // });
 
 
+     // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
+
+        //---------- Fondo gris ----------------
+    const totalFilas = Math.ceil(componentes.length) / 2;
+    const sectionHeight = totalFilas * rowHeight + 50;
+
+    // Fondo gris claro
+    page.drawRectangle({
+      x: margin - 10,
+      y: cursorY - sectionHeight + 10,
+      width: width - (margin - 10) * 2,
+      height: sectionHeight,
+      color: rgb(0.96, 0.96, 0.96)
+    });    
+
+    page.drawText('Estado de Componentes', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 25;
+
+    const colWidth = (width - margin * 2) / 2;
+    const rowHeights = 28;
+
+    componentes.forEach((comp, index) => {
+
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+
+      const x = margin + col * colWidth;
+      const y = cursorY - row * rowHeights;
+
+      const estado = comp.data?.estado || 'No Aplica';
+      const colorEstado = this.getColorEstado(estado);
+
+      page.drawText(comp.nombre, {
+        x,
+        y,
+        size: 10,
+        font
+      });
+
+      page.drawRectangle({
+        x: x + colWidth - 110,
+        y: y - 6,
+        width: 100,
+        height: 18,
+        color: colorEstado
+      });
+
+      page.drawText(estado.toUpperCase(), {
+        x: x + colWidth - 100,
+        y,
+        size: 9,
+        font: fontBold,
+        color: rgb(1, 1, 1)
+      });
+    });
+
+cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
     // ================= SEPARADOR =================
 
-    cursorY -= 10;
+ 
 
     page.drawRectangle({
       x: margin,
@@ -867,7 +887,7 @@ class PDFServicePdfLib {
 
     // ===== IMAGEN =====
     if (estado.nombre_archivo) {
-      const imgData = await this.getImageDimensions(pdfDoc, estado.nombre_archivo);
+      const imgData = await this.getImageDimensions(pdfDoc,this.imagesUrl, estado.nombre_archivo);
 
       if (imgData) {
         altura += imgData.height + 10;
@@ -913,6 +933,7 @@ class PDFServicePdfLib {
       id: calibracion.id,
       fecha: fecha.toLocaleDateString('es-AR'),
       responsable: calibracion.responsable || '',
+      imagen_portada: calibracion.imagen || '',
       estado_general: calibracion.estado || '',
 
       observaciones_acronex: calibracion.observaciones_acronex || '',
@@ -999,17 +1020,12 @@ class PDFServicePdfLib {
   }
 
 
-  async embedImage(pdfDoc, nombreArchivo) {
+  async embedImage(pdfDoc, imagesUrl, nombreArchivo) {
 
     if (!nombreArchivo) return null;
 
     try {
-      const ruta = path.join(
-        process.cwd(),
-        'uploads',
-        'calibraciones',
-        nombreArchivo
-      );
+      const ruta = path.join(imagesUrl, nombreArchivo);
 
       const imageBytes = await fs.readFile(ruta);
       const extension = path.extname(nombreArchivo).toLowerCase();
@@ -1125,11 +1141,11 @@ class PDFServicePdfLib {
     return await chartJSNodeCanvas.renderToBuffer(configuration);
   }
 
-  async getImageDimensions(pdfDoc, nombreArchivo, maxWidth = 200, maxHeight = 150) {
+  async getImageDimensions(pdfDoc, url, nombreArchivo, maxWidth = 200, maxHeight = 150) {
 
   if (!nombreArchivo) return null;
 
-  const image = await this.embedImage(pdfDoc, nombreArchivo);
+  const image = await this.embedImage(pdfDoc, url, nombreArchivo);
   if (!image) return null;
 
   const originalWidth = image.width;

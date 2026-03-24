@@ -59,7 +59,7 @@ const startServer = async () => {
     console.log('✅ Conexión a la base de datos establecida correctamente.');
 
     // 🔹 Luego sincronizar modelos (sin borrar da    // await db.sync({ force: false });
-    await db.sync({ alter: true }); // Ajusta tablas sin borrar datos
+    await db.sync({ alter: false }); // Ajusta tablas sin borrar datos
     console.log('📦 Base de datos sincronizada.');
 
     // 🔹 Iniciar servidor Express
