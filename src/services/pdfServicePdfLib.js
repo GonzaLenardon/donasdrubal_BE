@@ -8,6 +8,7 @@ import Calibraciones from '../models/calibraciones.js';
 import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
+import Users from '../models/users.js';
 import * as pdfUtils from '../utils/pdfText.js';
 import { Ticks } from 'chart.js';
 
@@ -34,6 +35,11 @@ class PDFServicePdfLib {
             { model: MaquinaTipo, as: 'tipo' },
             { model: Clientes, as: 'cliente' }
           ]
+        },
+        {
+          model: Users,
+          as: 'ingenieroResponsable',
+          attributes: ['id', 'nombre', 'email'] // opcional pero recomendable
         }
       ]
     });
@@ -162,7 +168,7 @@ class PDFServicePdfLib {
 
       const estado = comp.data;
 
- // ================= BOMBA (solo si aplica) =================
+      // ================= BOMBA (solo si aplica) =================
 
       if (comp.tipo === 'bomba') {
 
@@ -398,57 +404,57 @@ class PDFServicePdfLib {
     }
 
     // =========== IMAGENES PRESIONES =====================
-      // ================= IMAGEN =================
-      let margen_x_img = margin;
-      let presure_img_height = 0;
-      if (datos.presion_manometro.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
-        if (image) {
-          const img = image.scale(0.25);
-          presure_img_height = img.height;
-          page.drawImage(image, {
-            x: margen_x_img,
-            y: cursorY - 120,
-            width: 160,
-            height: 120
-          });
-          // lineaY -= img.height + 10;
-          margen_x_img += 160 + 20;
-        }
-      }    
+    // ================= IMAGEN =================
+    let margen_x_img = margin;
+    let presure_img_height = 0;
+    if (datos.presion_manometro.nombreArchivo) {
+      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
+      if (image) {
+        const img = image.scale(0.25);
+        presure_img_height = img.height;
+        page.drawImage(image, {
+          x: margen_x_img,
+          y: cursorY - 120,
+          width: 160,
+          height: 120
+        });
+        // lineaY -= img.height + 10;
+        margen_x_img += 160 + 20;
+      }
+    }
 
-      if (datos.presion_computadora.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_computadora.nombreArchivo);
-        if (image) {
-          const img = image.scale(0.25);
-          presure_img_height = img.height;
-          page.drawImage(image, {
-            x: margen_x_img,
-            y: cursorY - 120,
-            width: 160,
-            height: 120
-          });
-          // lineaY -= img.height + 10;
-          margen_x_img += 160 + 20;
-        }
-      }  
-      if (datos.presion_unimap.nombreArchivo) {
-        const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
-        if (image) {
-          const img = image.scale(0.25);
-          presure_img_height = img.height;
-          page.drawImage(image, {
-            x: margen_x_img,
-            y: cursorY - 120,
-            width: 160,
-            height: 120
-          });
-          
+    if (datos.presion_computadora.nombreArchivo) {
+      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_computadora.nombreArchivo);
+      if (image) {
+        const img = image.scale(0.25);
+        presure_img_height = img.height;
+        page.drawImage(image, {
+          x: margen_x_img,
+          y: cursorY - 120,
+          width: 160,
+          height: 120
+        });
+        // lineaY -= img.height + 10;
+        margen_x_img += 160 + 20;
+      }
+    }
+    if (datos.presion_unimap.nombreArchivo) {
+      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
+      if (image) {
+        const img = image.scale(0.25);
+        presure_img_height = img.height;
+        page.drawImage(image, {
+          x: margen_x_img,
+          y: cursorY - 120,
+          width: 160,
+          height: 120
+        });
 
-          // margen_x_img += img.width + 20;
-        }
-      }    
-      cursorY -= 120 + 10;    
+
+        // margen_x_img += img.width + 20;
+      }
+    }
+    cursorY -= 120 + 10;
 
 
     // ================= GRAFICA SECCIONES =================
@@ -488,71 +494,71 @@ class PDFServicePdfLib {
 
 
 
-     // ================= OBSERVACIÓN PRESION=================
+    // ================= OBSERVACIÓN PRESION=================
 
-      if (datos.observaciones_presion) {
+    if (datos.observaciones_presion) {
 
-        page.drawText('Observación:', {
-          x: margin + 15,
+      page.drawText('Observación:', {
+        x: margin + 15,
+        y: cursorY,
+        size: 9,
+        font: fontBold
+      });
+
+      cursorY -= 15;
+
+      const obsLines = pdfUtils.wrapText(
+        datos.observaciones_presion,
+        font,
+        9,
+        width - margin * 2 - 40
+      );
+
+      obsLines.forEach(line => {
+        page.drawText(pdfUtils.sanitizeText(line), {
+          x: margin + 25,
           y: cursorY,
           size: 9,
-          font: fontBold
+          font
         });
+        cursorY -= 30;
+      });
 
-        cursorY -= 14;
+    }
 
-        const obsLines = pdfUtils.wrapText(
-          datos.observaciones_presion,
-          font,
-          9,
-          width - margin * 2 - 40
-        );
+    // ================= RECOMENDACIONES PRESION=================
 
-        obsLines.forEach(line => {
-          page.drawText(pdfUtils.sanitizeText(line), {
-            x: margin + 25,
-            y: cursorY,
-            size: 9,
-            font
-          });
-          cursorY -= 12;
-        });
-
-      }
-
-      // ================= RECOMENDACIONES PRESION=================
-
-      if (datos.recomendaciones_presion) {
+    if (datos.recomendaciones_presion) {
 
       page.drawText('Recomendaciones:', {
-          x: margin + 15,
+        x: margin + 15,
+        y: cursorY,
+        size: 9,
+        font: fontBold
+      });
+
+      cursorY -= 15;
+
+      const obsLines = pdfUtils.wrapText(
+        datos.recomendaciones_presion,
+        font,
+        9,
+        width - margin * 2 - 40
+      );
+
+      obsLines.forEach(line => {
+        page.drawText(pdfUtils.sanitizeText(line), {
+          x: margin + 25,
           y: cursorY,
           size: 9,
-          font: fontBold
+          font
         });
+        cursorY -= 15;
+      });
+      cursorY -= 30;
+    }
 
-        cursorY -= 14;
-
-        const obsLines = pdfUtils.wrapText(
-          datos.recomendaciones_presion,
-          font,
-          9,
-          width - margin * 2 - 40
-        );
-
-        obsLines.forEach(line => {
-          page.drawText(pdfUtils.sanitizeText(line), {
-            x: margin + 25,
-            y: cursorY,
-            size: 9,
-            font
-          });
-          cursorY -= 12;
-        });
-
-      }
-
-   // ================= SEPARADOR =================
+    // ================= SEPARADOR =================
 
     // cursorY -= 5;
 
@@ -565,69 +571,69 @@ class PDFServicePdfLib {
     });
 
     cursorY -= 15;
-     // ================= OBSERVACIÓN ACRONEX=================
+    // ================= OBSERVACIÓN ACRONEX=================
 
-      if (datos.observaciones_acronex) {
+    if (datos.observaciones_acronex) {
 
-        page.drawText('Observación ACRONEX:', {
-          x: margin + 15,
+      page.drawText('Observación ACRONEX:', {
+        x: margin + 15,
+        y: cursorY,
+        size: 9,
+        font: fontBold
+      });
+
+      cursorY -= 10;
+
+      const obsLines = pdfUtils.wrapText(
+        datos.observaciones_acronex,
+        font,
+        9,
+        width - margin * 2 - 40
+      );
+
+      obsLines.forEach(line => {
+        page.drawText(pdfUtils.sanitizeText(line), {
+          x: margin + 25,
           y: cursorY,
           size: 9,
-          font: fontBold
+          font
         });
+        cursorY -= 10;
+      });
+      cursorY -= 15;
+    }
 
-        cursorY -= 14;
+    // ================= OBSERVACIONES GENERALES=================
 
-        const obsLines = pdfUtils.wrapText(
-          datos.observaciones_acronex,
-          font,
-          9,
-          width - margin * 2 - 40
-        );
+    if (datos.observaciones_generales) {
 
-        obsLines.forEach(line => {
-          page.drawText(pdfUtils.sanitizeText(line), {
-            x: margin + 25,
-            y: cursorY,
-            size: 9,
-            font
-          });
-          cursorY -= 12;
-        });
+      page.drawText('Observaciones Generales:', {
+        x: margin + 15,
+        y: cursorY,
+        size: 9,
+        font: fontBold
+      });
 
-      }
+      cursorY -= 10;
 
-      // ================= OBSERVACIONES GENERALES=================
+      const obsLines = pdfUtils.wrapText(
+        datos.observaciones_generales,
+        font,
+        9,
+        width - margin * 2 - 40
+      );
 
-      if (datos.observaciones_generales) {
-
-        page.drawText('Observaciones Generales:', {
-          x: margin + 15,
+      obsLines.forEach(line => {
+        page.drawText(pdfUtils.sanitizeText(line), {
+          x: margin + 25,
           y: cursorY,
           size: 9,
-          font: fontBold
+          font
         });
-
-        cursorY -= 14;
-
-        const obsLines = pdfUtils.wrapText(
-          datos.observaciones_generales,
-          font,
-          9,
-          width - margin * 2 - 40
-        );
-
-        obsLines.forEach(line => {
-          page.drawText(pdfUtils.sanitizeText(line), {
-            x: margin + 25,
-            y: cursorY,
-            size: 9,
-            font
-          });
-          cursorY -= 12;
-        });
-
-      }
+        cursorY -= 10;
+      });
+      cursorY -= 15;
+    }
 
     // ================= FOOTER =================
 
@@ -643,7 +649,8 @@ class PDFServicePdfLib {
       });
 
       p.drawText(
-        `Don Asdrúbal S.R.L – Departamento I+D — Página ${index + 1} de ${totalPages}`,
+        `Don Asdrúbal S.R.L - Departamento I+D  - Página ${index + 1} de ${totalPages}-`,
+        // `Don Asdrúbal S.R.L - Departamento I+D  - Página ${index + 1} de ${totalPages}-   ${datos.ingenieroResponsable || ''}`,
         {
           x: 60,
           y: 35,
@@ -689,43 +696,43 @@ class PDFServicePdfLib {
 
     // ================= HEADER DASHBOARD =================
 
-    const headerHeight = 150;
+    const headerHeight = 170;
 
     page.drawRectangle({
       x: 0,
       y: height - headerHeight,
       width,
-      height: headerHeight-145,
+      height: headerHeight - 165,
       color: rgb(0.08, 0.35, 0.18)
     });
 
-// ------------- LOGOS -----------------
+    // ------------- LOGOS -----------------
     const logoDA = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
 
-        if (logoDA) {
-          page.drawImage(logoDA.image, {
-            x: margin-10,
-            y: cursorY,
-            width: logoDA.width,
-            height: logoDA.height
-          });
+    if (logoDA) {
+      page.drawImage(logoDA.image, {
+        x: margin - 10,
+        y: cursorY,
+        width: logoDA.width,
+        height: logoDA.height
+      });
 
-          
-        }
-        const agrospData = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_agrospray.png', 150, 100);
 
-        if (agrospData) {
-          page.drawImage(agrospData.image, {
-            x: margin + logoDA.width + 150,
-            y: cursorY,
-            width: agrospData.width,
-            height: agrospData.height
-          });
+    }
+    const agrospData = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_agrospray.png', 150, 100);
 
-          
-        }
-        cursorY = cursorY - 30;
-//---INFO GENERAL----------------
+    if (agrospData) {
+      page.drawImage(agrospData.image, {
+        x: margin + logoDA.width + 150,
+        y: cursorY,
+        width: agrospData.width,
+        height: agrospData.height
+      });
+
+
+    }
+    cursorY = cursorY - 35;
+    //---INFO GENERAL----------------
 
     page.drawText('RESUMEN GENERAL DE CALIBRACIÓN', {
       x: margin,
@@ -734,7 +741,7 @@ class PDFServicePdfLib {
       font: fontBold,
       color: rgb(0, 0, 0)
     });
-    
+
     // Cliente
     page.drawText(`Cliente: ${datos.maquina.cliente?.razon_social || '-'}`, {
       x: margin,
@@ -744,7 +751,7 @@ class PDFServicePdfLib {
       color: rgb(0, 0, 0)
     });
 
-    page.drawText(`${datos.maquina.cliente?.direccion || '-' }`, {
+    page.drawText(`${datos.maquina.cliente?.direccion || '-'}`, {
       x: margin,
       y: cursorY - 30,
       size: 10,
@@ -752,42 +759,42 @@ class PDFServicePdfLib {
       color: rgb(0, 0, 0)
     });
 
-    page.drawText(`${datos.maquina.cliente?.ciudad || ''} ${datos.maquina.cliente?.provincia || ''} ${datos.maquina.cliente?.pais || ''} `,  
+    page.drawText(`${datos.maquina.cliente?.ciudad || ''} ${datos.maquina.cliente?.provincia || ''} ${datos.maquina.cliente?.pais || ''} `,
       {
-      x: margin,
-      y: cursorY - 45,
-      size: 8,
-      font,
-      color: rgb(0, 0, 0)
-    });
+        x: margin,
+        y: cursorY - 45,
+        size: 8,
+        font,
+        color: rgb(0, 0, 0)
+      });
 
-    // Máquina (lado derecho)
-    page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}  - ${datos.maquina?.tipo.modelo || '-'}`, {
-      x: width / 2,
-      y: cursorY-15,
-      size: 10,
-      font,
-      color: rgb(0, 0, 0)
-    });
+    // // Máquina (lado derecho)
+    // page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}  - ${datos.maquina?.tipo.modelo || '-'}`, {
+    //   x: width / 2,
+    //   y: cursorY-15,
+    //   size: 10,
+    //   font,
+    //   color: rgb(0, 0, 0)
+    // });
 
 
 
-    page.drawText(`Tipo: ${datos.maquina?.tipo.tipo || '-'}`, {
-      x: width / 2,
-      y: cursorY - 30,
-      size: 10,
-      font,
-      color: rgb(0, 0, 0)
-    });
+    // page.drawText(`Tipo: ${datos.maquina?.tipo.tipo || '-'}`, {
+    //   x: width / 2,
+    //   y: cursorY - 30,
+    //   size: 10,
+    //   font,
+    //   color: rgb(0, 0, 0)
+    // });
 
     cursorY = height - headerHeight - 30;
 
     //----------IMAGEN PRINCIPAL ----------------
 
-    const imgPrincipalData = await this.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 500, 150);  
+    const imgPrincipalData = await this.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 800, 150);
     if (imgPrincipalData) {
       page.drawImage(imgPrincipalData.image, {
-        x: margin,
+        x: (width - imgPrincipalData.width) / 2,
         y: cursorY - imgPrincipalData.height,
         width: imgPrincipalData.width,
         height: imgPrincipalData.height
@@ -795,9 +802,11 @@ class PDFServicePdfLib {
     }
     cursorY = cursorY - (imgPrincipalData ? imgPrincipalData.height : 0) - 20;
 
+    //-----------------------------------------------
+
     // ================= SEPARADOR =================
 
-    // cursorY -= 5;
+    cursorY -= 10;
 
     page.drawRectangle({
       x: margin,
@@ -807,11 +816,85 @@ class PDFServicePdfLib {
       color: rgb(0.85, 0.85, 0.85)
     });
 
-    cursorY -= 15;
+    cursorY -= 30;
+    //-----------------------------------------------    
+
+    // ================= INFO MÁQUINA (FICHA TÉCNICA) =================
+
+    page.drawText('Ficha Técnica de la Máquina', {
+      x: margin,
+      y: cursorY,
+      size: 14,
+      font: fontBold
+    });
+
+    cursorY -= 20;
+
+    // Fondo
+    const boxHeight = 130;
+
+    page.drawRectangle({
+      x: margin - 10,
+      y: cursorY - boxHeight + 10,
+      width: width - (margin - 10) * 2,
+      height: boxHeight,
+      color: rgb(0.96, 0.96, 0.96)
+    });
+
+    cursorY -= 5;
+
+    // Columna izquierda
+    this.drawFichaTecnica(page, {
+      x: margin,
+      y: cursorY,
+      width,
+      font,
+      fontBold,
+      data: [
+        { label: 'Tipo', value: datos.maquina?.tipo?.tipo || '-' },
+        { label: 'Marca', value: datos.maquina?.tipo?.marca || '-' },
+        { label: 'Modelo', value: datos.maquina?.tipo?.modelo || '-' },
+        // { label: 'Fabricación', value: datos.maquina?.tipo?.fecha_fabricacion || '-' }
+      ]
+    });
+
+    // Columna derecha
+    this.drawFichaTecnica(page, {
+      x: (width / 2) + 20,
+      y: cursorY,
+      width,
+      font,
+      fontBold,
+      data: [
+        { label: 'Responsable', value: datos.maquina?.responsable || '-' },
+        { label: 'Ancho de trabajo', value: `${datos.maquina?.ancho_trabajo || '-'} m` },
+        { label: 'Distancia entre picos', value: `${datos.maquina?.distancia_entrePicos || '-'} m` },
+        { label: 'Número de picos', value: `${datos.maquina?.numero_picos || '-'}` },
+        { label: 'Capacidad tanque', value: `${datos.maquina?.capacidad_tanque || '-'} L` },
+        { label: 'Sistema de corte', value: `${datos.maquina?.sistema_corte || '-'}` }
+      ]
+    });
+
+    cursorY -= boxHeight;
+    //---------------------------------------------
+
+    // ================= SEPARADOR =================
+
+    // cursorY -= 10;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY,
+      width: width - margin * 2,
+      height: 1,
+      color: rgb(0.85, 0.85, 0.85)
+    });
+
+    cursorY -= 10;
     //-----------------------------------------------
 
     // ================= COMPONENTES DETALLADOS =================
-    // cursorY -= 10;
+    cursorY -= 10;
     const componentes = [
       { nombre: 'Máquina', data: datos.estado_maquina },
       { nombre: 'Bomba', data: datos.estado_bomba },
@@ -851,7 +934,7 @@ class PDFServicePdfLib {
     //   font: fontBold
     // });
 
- 
+
 
     // componentes.forEach(comp => {
 
@@ -894,20 +977,20 @@ class PDFServicePdfLib {
     // });
 
 
-     // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
+    // ================= COMPONENTES DETALLADO DOS COLUMNAS =================
 
-        //---------- Fondo gris ----------------
+    //---------- Fondo gris ----------------
     const totalFilas = Math.ceil(componentes.length) / 2;
-    const sectionHeight = totalFilas * rowHeight + 50;
+    const sectionHeight = totalFilas * rowHeight + 30;
 
     // Fondo gris claro
     page.drawRectangle({
       x: margin - 10,
-      y: cursorY - sectionHeight + 10,
+      y: cursorY - sectionHeight - 10,
       width: width - (margin - 10) * 2,
       height: sectionHeight,
       color: rgb(0.96, 0.96, 0.96)
-    });    
+    });
 
     page.drawText('Estado de Componentes', {
       x: margin,
@@ -916,7 +999,7 @@ class PDFServicePdfLib {
       font: fontBold
     });
 
-    cursorY -= 25;
+    cursorY -= 30;
 
     const colWidth = (width - margin * 2) / 2;
     const rowHeights = 28;
@@ -956,21 +1039,8 @@ class PDFServicePdfLib {
       });
     });
 
-cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
-    // ================= SEPARADOR =================
+    cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
 
- 
-
-    page.drawRectangle({
-      x: margin,
-      y: cursorY,
-      width: width - margin * 2,
-      height: 1,
-      color: rgb(0.85, 0.85, 0.85)
-    });
-
-    cursorY -= 20;
-    //-----------------------------------------------
 
     return page;
   }
@@ -996,7 +1066,7 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
   // CALCULA EL ALTO DE CADA CUADRO EN FUNCION DE 
   // LINEAS DE TEXTO, IMAGEN, RECOMENDACIONES, ETC
   // ===============================================
- 
+
   async calcularAlturaCard(comp, font, width, margin, pdfDoc) {
 
     let altura = 50;
@@ -1067,7 +1137,7 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
 
     // ===== IMAGEN =====
     if (estado.nombre_archivo) {
-      const imgData = await this.getImageDimensions(pdfDoc,this.imagesUrl, estado.nombre_archivo);
+      const imgData = await this.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
 
       if (imgData) {
         altura += imgData.height + 10;
@@ -1122,23 +1192,24 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
 
       observaciones_acronex: calibracion.observaciones_acronex || '',
       observaciones_generales: calibracion.observaciones_generales || '',
+      ingenieroResponsable: calibracion.ingenieroResponsable.nombre || '',
 
       secciones: calibracion.secciones
         ? JSON.parse(calibracion.secciones)
         : {},
 
       // ================= PRESIONES =================
-        presion_unimap: calibracion.presion_unimap
+      presion_unimap: calibracion.presion_unimap
         ? JSON.parse(calibracion.presion_unimap)
         : {},
-        presion_computadora: calibracion.presion_computadora
+      presion_computadora: calibracion.presion_computadora
         ? JSON.parse(calibracion.presion_computadora)
         : {},
-        presion_manometro: calibracion.presion_manometro
+      presion_manometro: calibracion.presion_manometro
         ? JSON.parse(calibracion.presion_manometro)
         : {},
-        observaciones_presion: calibracion.observaciones_presion || '',
-        recomendaciones_presion: calibracion.recomendaciones_presion || '',
+      observaciones_presion: calibracion.observaciones_presion || '',
+      recomendaciones_presion: calibracion.recomendaciones_presion || '',
 
       // presion_unimap: calibracion.presion_unimap?.valor || '',
       // presion_computadora: calibracion.presion_computadora.valor || '',
@@ -1279,7 +1350,7 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
     const labels = secciones.map(s => s.numero);
     const data = secciones.map(s => s.valor);
     const maximo = Math.max(...data);
-    const minimo = Math.min(...data);    
+    const minimo = Math.min(...data);
 
     const configuration = {
       type: 'line',
@@ -1317,11 +1388,11 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
             }
           },
           y: {
-            min: minimo - 1, 
+            min: minimo - 1,
             max: maximo + 1,
             ticks: {
               stepSize: 0.2
-            },  
+            },
             title: {
               display: true,
               text: 'Presión (bares)'
@@ -1337,32 +1408,80 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
 
   async getImageDimensions(pdfDoc, url, nombreArchivo, maxWidth = 200, maxHeight = 150) {
 
-  if (!nombreArchivo) return null;
+    if (!nombreArchivo) return null;
 
-  const image = await this.embedImage(pdfDoc, url, nombreArchivo);
-  if (!image) return null;
+    const image = await this.embedImage(pdfDoc, url, nombreArchivo);
+    if (!image) return null;
 
-  const originalWidth = image.width;
-  const originalHeight = image.height;
+    const originalWidth = image.width;
+    const originalHeight = image.height;
 
-  let scale = 1;
+    let scale = 1;
 
-  // limitar por ancho
-  if (originalWidth > maxWidth) {
-    scale = maxWidth / originalWidth;
+    // limitar por ancho
+    if (originalWidth > maxWidth) {
+      scale = maxWidth / originalWidth;
+    }
+
+    // limitar por alto
+    if (originalHeight * scale > maxHeight) {
+      scale = maxHeight / originalHeight;
+    }
+
+    return {
+      image,
+      width: originalWidth * scale,
+      height: originalHeight * scale
+    };
   }
 
-  // limitar por alto
-  if (originalHeight * scale > maxHeight) {
-    scale = maxHeight / originalHeight;
-  }
+  drawFichaTecnica(page, {
+    x,
+    y,
+    width,
+    rowHeight = 18,
+    labelWidth = 140,
+    data = [],
+    font,
+    fontBold
+  }) {
 
-  return {
-    image,
-    width: originalWidth * scale,
-    height: originalHeight * scale
-  };
-}
+    const iconSize = 3;
+    const gap = 3;
+
+    data.forEach((item, index) => {
+
+      const posY = y - (index * rowHeight);
+
+      // Icono (círculo)
+      page.drawCircle({
+        x: x,
+        y: posY + 3,
+        size: iconSize,
+        color: rgb(0.2, 0.5, 0.3)
+      });
+
+      // Label
+      page.drawText(item.label, {
+        x: x + iconSize + gap,
+        y: posY,
+        size: 9,
+        font,
+        color: rgb(0.4, 0.4, 0.4)
+      });
+
+      // Valor
+      page.drawText(item.value, {
+        x: x + labelWidth,
+        y: posY,
+        size: 10,
+        font: fontBold,
+        color: rgb(0, 0, 0)
+      });
+
+    });
+
+  }
 
 }
 
