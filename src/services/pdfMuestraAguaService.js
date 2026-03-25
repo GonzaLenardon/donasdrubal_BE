@@ -58,6 +58,66 @@ class PdfMuestraAguaService {
   }
 
   /**
+   * Conclusiones
+   */
+  _drawConclusion({
+    page,
+    pdfDoc,
+    cursorY,
+    font,
+    fontBold,
+    width,
+    conclusion,
+  }) {
+    const { margin } = this;
+
+    const _checkPage = (cursor, minSpace = 100) => {
+      if (cursor < minSpace) {
+        page = pdfDoc.addPage();
+        cursor = page.getHeight() - 60;
+      }
+      return cursor;
+    };
+
+    // 🔹 espacio antes de la sección
+    cursorY -= 20;
+
+    cursorY = _checkPage(cursorY, 120);
+
+    // ── Título ─────────────────────────────────────────────
+    page.drawText('Conclusión final del informe', {
+      x: margin,
+      y: cursorY,
+      size: 12,
+      font: fontBold,
+    });
+
+    cursorY -= 20;
+
+    // ── Texto ──────────────────────────────────────────────
+    const text = conclusion?.trim() ? conclusion : '-';
+
+    const lines = pdfUtils.wrapText(text, font, 10, width - margin * 2);
+
+    for (const line of lines) {
+      cursorY = _checkPage(cursorY, 60);
+
+      page.drawText(line, {
+        x: margin,
+        y: cursorY,
+        size: 10,
+        font,
+      });
+
+      cursorY -= 14;
+    }
+
+    cursorY -= 20;
+
+    return { page, cursorY };
+  }
+
+  /**
    * Dibuja el footer con el nombre de la empresa.
    */
   _drawFooter({ page, font }) {
@@ -288,7 +348,7 @@ class PdfMuestraAguaService {
   // GENERAR INFORME CALIDAD DE AGUA (múltiples pozos)
   // ══════════════════════════════════════════════════════════════════════
 
-  async generarInformeCalidadAgua(cliente_id, pozos_ids = []) {
+  async generarInformeCalidadAgua(cliente_id, pozos_ids = [], conclusion) {
     const pozos = await Pozo.findAll({
       where: { id: pozos_ids, cliente_id },
       include: [
@@ -396,6 +456,24 @@ class PdfMuestraAguaService {
     });
 
     page = factoresResult.page;
+    cursorY = factoresResult.cursorY - 30; // 🔥 CLAVE
+
+    // ── Conclusión ──────────────────────────────────────────────────────
+    const conclusionResult = this._drawConclusion({
+      page,
+      pdfDoc,
+      cursorY,
+      font,
+      fontBold,
+      width,
+      conclusion,
+    });
+
+    page = conclusionResult.page;
+    cursorY = conclusionResult.cursorY;
+
+    // ── Footer ──────────────────────────────────────────────────────────
+    this._drawFooter({ page, font });
 
     // ── Footer ──────────────────────────────────────────────────────────
     this._drawFooter({ page, font });

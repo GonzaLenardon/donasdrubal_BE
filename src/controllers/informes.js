@@ -34,7 +34,7 @@ const Informes = {
   muestraPozos: async (req, res) => {
     try {
       console.log('Request recibido para generar informe de pozos', req.body);
-      const { cliente_id, pozos_ids } = req.body;
+      const { cliente_id, pozos_ids, conclusion } = req.body;
 
       if (!cliente_id) {
         return res.status(400).json({
@@ -52,6 +52,7 @@ const Informes = {
         await pdfMuestraAguaService.generarInformeCalidadAgua(
           cliente_id,
           pozos_ids,
+          conclusion,
         );
 
       res.setHeader('Content-Type', 'application/pdf');
