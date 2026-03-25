@@ -172,6 +172,21 @@ Calibraciones.belongsTo(Maquinas, {
 });
 
 // ============================================================================
+// ASOCIACIONES CALIBRACIONES - USUARIO INGENIERO
+// ============================================================================
+Users.hasMany(Calibraciones, {
+  foreignKey: 'responsable_id',
+  as: 'calibraciones',
+  constraints: false, // ✅ AGREGAR
+});
+
+Calibraciones.belongsTo(Users, {
+  foreignKey: 'responsable_id',
+  as: 'ingenieroResponsable',
+  constraints: false, // ✅ AGREGAR
+});
+
+// ============================================================================
 // ASOCIACIONES POZOS - MUESTRAS DE AGUA
 // ============================================================================
 
