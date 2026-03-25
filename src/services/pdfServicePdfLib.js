@@ -9,6 +9,7 @@ import Maquinas from '../models/maquinas.js';
 import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import * as pdfUtils from '../utils/pdfText.js';
+import { Ticks } from 'chart.js';
 
 class PDFServicePdfLib {
 
@@ -94,7 +95,7 @@ class PDFServicePdfLib {
 
     const componentes = [
       { titulo: 'Máquina', data: datos.estado_maquina, tipo: 'normal' },
-      { titulo: 'Bomba', data: datos.estado_bomba, tipo: 'normal' },
+      { titulo: 'Bomba', data: datos.estado_bomba, tipo: 'bomba' },
       { titulo: 'Agitador', data: datos.estado_agitador, tipo: 'normal' },
 
       { titulo: 'Filtro Primario', data: datos.estado_filtroPrimario, tipo: 'filtro' },
@@ -161,6 +162,31 @@ class PDFServicePdfLib {
 
       const estado = comp.data;
 
+ // ================= BOMBA (solo si aplica) =================
+
+      if (comp.tipo === 'bomba') {
+
+        if (estado.modelo) {
+          page.drawText(`Modelo: ${estado.modelo}`, {
+            x: margin + 15,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 14;
+        }
+
+        if (estado.material !== '' && estado.material !== null) {
+          page.drawText(`Material: ${estado.material}`, {
+            x: margin + 15,
+            y: lineaY,
+            size: 9,
+            font
+          });
+          lineaY -= 14;
+        }
+
+      }
       // ================= FILTROS (solo si aplica) =================
 
       if (comp.tipo === 'filtro') {
@@ -456,7 +482,152 @@ class PDFServicePdfLib {
       }
 
     }
+
+
     // ========FIN GRAFICA SECCIONES
+
+
+
+     // ================= OBSERVACIÓN PRESION=================
+
+      if (datos.observaciones_presion) {
+
+        page.drawText('Observación:', {
+          x: margin + 15,
+          y: cursorY,
+          size: 9,
+          font: fontBold
+        });
+
+        cursorY -= 14;
+
+        const obsLines = pdfUtils.wrapText(
+          datos.observaciones_presion,
+          font,
+          9,
+          width - margin * 2 - 40
+        );
+
+        obsLines.forEach(line => {
+          page.drawText(pdfUtils.sanitizeText(line), {
+            x: margin + 25,
+            y: cursorY,
+            size: 9,
+            font
+          });
+          cursorY -= 12;
+        });
+
+      }
+
+      // ================= RECOMENDACIONES PRESION=================
+
+      if (datos.recomendaciones_presion) {
+
+      page.drawText('Recomendaciones:', {
+          x: margin + 15,
+          y: cursorY,
+          size: 9,
+          font: fontBold
+        });
+
+        cursorY -= 14;
+
+        const obsLines = pdfUtils.wrapText(
+          datos.recomendaciones_presion,
+          font,
+          9,
+          width - margin * 2 - 40
+        );
+
+        obsLines.forEach(line => {
+          page.drawText(pdfUtils.sanitizeText(line), {
+            x: margin + 25,
+            y: cursorY,
+            size: 9,
+            font
+          });
+          cursorY -= 12;
+        });
+
+      }
+
+   // ================= SEPARADOR =================
+
+    // cursorY -= 5;
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY,
+      width: width - margin * 2,
+      height: 1,
+      color: rgb(0.85, 0.85, 0.85)
+    });
+
+    cursorY -= 15;
+     // ================= OBSERVACIÓN ACRONEX=================
+
+      if (datos.observaciones_acronex) {
+
+        page.drawText('Observación ACRONEX:', {
+          x: margin + 15,
+          y: cursorY,
+          size: 9,
+          font: fontBold
+        });
+
+        cursorY -= 14;
+
+        const obsLines = pdfUtils.wrapText(
+          datos.observaciones_acronex,
+          font,
+          9,
+          width - margin * 2 - 40
+        );
+
+        obsLines.forEach(line => {
+          page.drawText(pdfUtils.sanitizeText(line), {
+            x: margin + 25,
+            y: cursorY,
+            size: 9,
+            font
+          });
+          cursorY -= 12;
+        });
+
+      }
+
+      // ================= OBSERVACIONES GENERALES=================
+
+      if (datos.observaciones_generales) {
+
+        page.drawText('Observaciones Generales:', {
+          x: margin + 15,
+          y: cursorY,
+          size: 9,
+          font: fontBold
+        });
+
+        cursorY -= 14;
+
+        const obsLines = pdfUtils.wrapText(
+          datos.observaciones_generales,
+          font,
+          9,
+          width - margin * 2 - 40
+        );
+
+        obsLines.forEach(line => {
+          page.drawText(pdfUtils.sanitizeText(line), {
+            x: margin + 25,
+            y: cursorY,
+            size: 9,
+            font
+          });
+          cursorY -= 12;
+        });
+
+      }
 
     // ================= FOOTER =================
 
@@ -573,10 +744,19 @@ class PDFServicePdfLib {
       color: rgb(0, 0, 0)
     });
 
-    page.drawText(`Dirección: ${datos.maquina.cliente?.direccion || '-'}`, {
+    page.drawText(`${datos.maquina.cliente?.direccion || '-' }`, {
       x: margin,
       y: cursorY - 30,
       size: 10,
+      font,
+      color: rgb(0, 0, 0)
+    });
+
+    page.drawText(`${datos.maquina.cliente?.ciudad || ''} ${datos.maquina.cliente?.provincia || ''} ${datos.maquina.cliente?.pais || ''} `,  
+      {
+      x: margin,
+      y: cursorY - 45,
+      size: 8,
       font,
       color: rgb(0, 0, 0)
     });
@@ -911,6 +1091,10 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
       observacion: estado.observacion || '',
       nombre_archivo: estado.nombreArchivo || '',
 
+      // SOLO PARA BOBAS(si no existen quedan vacíos)
+      modelo: estado.modelo || '',
+      material: estado.materiales || '',
+
       // SOLO PARA FILTROS (si no existen quedan vacíos)
       color: estado.color || '',
       numero: estado.numero ?? '',
@@ -937,7 +1121,7 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
       estado_general: calibracion.estado || '',
 
       observaciones_acronex: calibracion.observaciones_acronex || '',
-      observaciones_generales: calibracion.Observaciones || '',
+      observaciones_generales: calibracion.observaciones_generales || '',
 
       secciones: calibracion.secciones
         ? JSON.parse(calibracion.secciones)
@@ -953,6 +1137,8 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
         presion_manometro: calibracion.presion_manometro
         ? JSON.parse(calibracion.presion_manometro)
         : {},
+        observaciones_presion: calibracion.observaciones_presion || '',
+        recomendaciones_presion: calibracion.recomendaciones_presion || '',
 
       // presion_unimap: calibracion.presion_unimap?.valor || '',
       // presion_computadora: calibracion.presion_computadora.valor || '',
@@ -1083,6 +1269,7 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
     const width = 800;
     const height = 400;
 
+
     const chartJSNodeCanvas = new ChartJSNodeCanvas({
       width,
       height,
@@ -1091,6 +1278,8 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
 
     const labels = secciones.map(s => s.numero);
     const data = secciones.map(s => s.valor);
+    const maximo = Math.max(...data);
+    const minimo = Math.min(...data);    
 
     const configuration = {
       type: 'line',
@@ -1128,6 +1317,11 @@ cursorY = cursorY - (Math.ceil(componentes.length / 2) * rowHeights) - 20;
             }
           },
           y: {
+            min: minimo - 1, 
+            max: maximo + 1,
+            ticks: {
+              stepSize: 0.2
+            },  
             title: {
               display: true,
               text: 'Presión (bares)'
