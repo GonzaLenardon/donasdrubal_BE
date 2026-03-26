@@ -10,6 +10,7 @@ import Clientes from '../models/clientes.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import Users from '../models/users.js';
 import * as pdfUtils from '../utils/pdfText.js';
+import * as parseUtils from '../utils/parseJson.js';
 import { Ticks } from 'chart.js';
 
 class PDFServicePdfLib {
@@ -1161,7 +1162,7 @@ class PDFServicePdfLib {
       observacion: estado.observacion || '',
       nombre_archivo: estado.nombreArchivo || '',
 
-      // SOLO PARA BOBAS(si no existen quedan vacíos)
+      // SOLO PARA BOMBAS(si no existen quedan vacíos)
       modelo: estado.modelo || '',
       material: estado.materiales || '',
 
@@ -1178,7 +1179,7 @@ class PDFServicePdfLib {
         }))
         : []
     });
-
+console.log('TYPEOF calibracion.presion_computadora:', typeof calibracion.presion_computadora);
 
     return {
 
@@ -1195,18 +1196,18 @@ class PDFServicePdfLib {
       ingenieroResponsable: calibracion.ingenieroResponsable.nombre || '',
 
       secciones: calibracion.secciones
-        ? JSON.parse(calibracion.secciones)
+        ? parseUtils.parseJsonField(calibracion.secciones)
         : {},
 
       // ================= PRESIONES =================
       presion_unimap: calibracion.presion_unimap
-        ? JSON.parse(calibracion.presion_unimap)
+        ? parseUtils.parseJsonField(calibracion.presion_unimap)
         : {},
       presion_computadora: calibracion.presion_computadora
-        ? JSON.parse(calibracion.presion_computadora)
+        ? parseUtils.parseJsonField(calibracion.presion_computadora)
         : {},
       presion_manometro: calibracion.presion_manometro
-        ? JSON.parse(calibracion.presion_manometro)
+        ? parseUtils.parseJsonField(calibracion.presion_manometro)
         : {},
       observaciones_presion: calibracion.observaciones_presion || '',
       recomendaciones_presion: calibracion.recomendaciones_presion || '',
@@ -1220,18 +1221,18 @@ class PDFServicePdfLib {
 
       // ================= COMPONENTES =================
 
-      estado_maquina: formatear(calibracion.estado_maquina),
-      estado_bomba: formatear(calibracion.estado_bomba),
-      estado_agitador: formatear(calibracion.estado_agitador),
-      estado_filtroPrimario: formatear(calibracion.estado_filtroPrimario),
-      estado_filtroSecundario: formatear(calibracion.estado_filtroSecundario),
-      estado_filtroLinea: formatear(calibracion.estado_filtroLinea),
-      estado_manguerayconexiones: formatear(calibracion.estado_manguerayconexiones),
-      estado_antigoteo: formatear(calibracion.estado_antigoteo),
-      estado_limpiezaTanque: formatear(calibracion.estado_limpiezaTanque),
-      estado_pastillas: formatear(calibracion.estado_pastillas),
-      estabilidadVerticalBotalon: formatear(calibracion.estabilidadVerticalBotalon),
-      mixer: formatear(calibracion.mixer),
+      estado_maquina: formatear(parseUtils.parseJsonField(calibracion.estado_maquina)),
+      estado_bomba: formatear(parseUtils.parseJsonField(calibracion.estado_bomba)),
+      estado_agitador: formatear(parseUtils.parseJsonField(calibracion.estado_agitador)),
+      estado_filtroPrimario: formatear(parseUtils.parseJsonField(calibracion.estado_filtroPrimario)),
+      estado_filtroSecundario: formatear(parseUtils.parseJsonField(calibracion.estado_filtroSecundario)),
+      estado_filtroLinea: formatear(parseUtils.parseJsonField(calibracion.estado_filtroLinea)),
+      estado_manguerayconexiones: formatear(parseUtils.parseJsonField(calibracion.estado_manguerayconexiones)),
+      estado_antigoteo: formatear(parseUtils.parseJsonField(calibracion.estado_antigoteo)),
+      estado_limpiezaTanque: formatear(parseUtils.parseJsonField(calibracion.estado_limpiezaTanque)),
+      estado_pastillas: formatear(parseUtils.parseJsonField(calibracion.estado_pastillas)),
+      estabilidadVerticalBotalon: formatear(parseUtils.parseJsonField(calibracion.estabilidadVerticalBotalon)),
+      mixer: formatear(parseUtils.parseJsonField(calibracion.mixer)),
 
       // ================= MAQUINA =================
 
