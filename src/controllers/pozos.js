@@ -1,4 +1,4 @@
-import { extractModelFields } from '../utils/payload.js';
+import { extractModelFields } from '../utils/model/payload.js';
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
 

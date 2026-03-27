@@ -2,7 +2,7 @@ import { ROLES } from '../config/constants/roles.js';
 
 import Roles from '../models/roles.js';
 import UserRoles from '../models/user_roles.js';
-import { createUser } from '../services/userService.js';
+import { createUser } from '../services/model/userService.js';
 import db from '../config/database.js';
 import TipoClientes from '../models/tipoClientes.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';

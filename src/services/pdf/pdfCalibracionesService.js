@@ -1,21 +1,22 @@
-// src/services/pdfServicePdfLib.js
+// src/services/pdfCalibracionesService.js
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
-import Calibraciones from '../models/calibraciones.js';
-import Maquinas from '../models/maquinas.js';
-import Clientes from '../models/clientes.js';
-import MaquinaTipo from '../models/maquina_tipo.js';
-import Users from '../models/users.js';
-import * as pdfUtils from '../utils/pdfText.js';
-import * as parseUtils from '../utils/parseJson.js';
+import Calibraciones from '../../models/calibraciones.js';
+import Maquinas from '../../models/maquinas.js';
+import Clientes from '../../models/clientes.js';
+import MaquinaTipo from '../../models/maquina_tipo.js';
+import Users from '../../models/users.js';
+import * as parseUtils from '../../utils/common/parseJson.js';
+import * as pdfUtils from '../../utils/pdf/pdfText.js';
 import { Ticks } from 'chart.js';
 
-class PDFServicePdfLib {
+class pdfCalibracionesService {
 
   constructor() {
+    //uploads/clientes/{clienteId}/maquinas/{maquinaId}/calibraciones/{calibracionCodigo}/imagenes/
     this.outputDir = path.join(process.cwd(), 'public', 'reports');
     this.assetsUrl = path.join(process.cwd(), 'src', 'assets');
     this.imagesUrl = path.join(process.cwd(), 'uploads', 'calibraciones');
@@ -105,9 +106,9 @@ class PDFServicePdfLib {
       { titulo: 'Bomba', data: datos.estado_bomba, tipo: 'bomba' },
       { titulo: 'Agitador', data: datos.estado_agitador, tipo: 'normal' },
 
-      { titulo: 'Filtro Primario', data: datos.estado_filtroPrimario, tipo: 'filtro' },
-      { titulo: 'Filtro Secundario', data: datos.estado_filtroSecundario, tipo: 'filtro' },
-      { titulo: 'Filtro Línea', data: datos.estado_filtroLinea, tipo: 'filtro' },
+      { titulo: 'Filtro Primario:', subTitulo: 'Protege a la bomba de pulverización', data: datos.estado_filtroPrimario, tipo: 'filtro' },
+      { titulo: 'Filtro Secundario', subTitulo: 'Protegen caudalímetro, electroválvulas', data: datos.estado_filtroSecundario, tipo: 'filtro' },
+      { titulo: 'Filtro Línea', subTitulo: 'Protegen a las boquillas de taponamiento', data: datos.estado_filtroLinea, tipo: 'filtro' },
 
       { titulo: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones, tipo: 'normal' },
       { titulo: 'Antigoteo', data: datos.estado_antigoteo, tipo: 'normal' },
@@ -165,6 +166,17 @@ class PDFServicePdfLib {
         color: rgb(1, 1, 1)
       });
 
+      // ... SOLO FILTROS (subtítulo) ...
+      if (comp.subTitulo) {
+        page.drawText(pdfUtils.sanitizeText(comp.subTitulo), {
+          x: margin + 10,
+          y: cursorY - 35,
+          size: 10,
+          font,
+          color: rgb(0.4, 0.4, 0.4)
+        });
+        cursorY -= 14
+      }
       let lineaY = cursorY - 45;
 
       const estado = comp.data;
@@ -665,7 +677,22 @@ class PDFServicePdfLib {
     // GUARDAR PDF
     // ===============================
 
-    const pdfBytes = await pdfDoc.save();
+    let pdfBytes = await pdfDoc.save();
+//------------ UNIR PDFS -----------------
+// Ruta del PDF que querés anexar
+const rutaExtra = path.join(this.imagesUrl, 'estado_pastillas_1773667678179.pdf');
+
+// Unir
+try {
+  pdfBytes = await this.unirPDFs(pdfBytes, rutaExtra);
+} catch (e) {
+  console.log('No se pudo anexar PDF extra:', e.message);
+  console.log('ruta', rutaExtra);
+}
+
+//-----------------------------------
+
+
     const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
     const outputPath = path.join(this.outputDir, filename);
     // // CODIGO PARA OBLIGAR A DESCARGAR EL ARCHIVO
@@ -674,7 +701,8 @@ class PDFServicePdfLib {
     //   filename: `calidad_agua_${Date.now()}.pdf`
     // };
 
-    // CODIGO DE ABAJO SI SE QUIERE GUARDAR E ARCHIVO EN EL SERVIDOR EN LUGAR DE RETORNAR LOS BYTES PARA DESCARGA DIRECTA 
+    // CODIGO DE ABAJO SI SE QUIERE GUARDAR EL ARCHIVO EN EL SERVIDOR 
+    // EN LUGAR DE RETORNAR LOS BYTES PARA DESCARGA DIRECTA 
     await fs.writeFile(outputPath, pdfBytes);
 
     return {
@@ -900,7 +928,7 @@ class PDFServicePdfLib {
       { nombre: 'Máquina', data: datos.estado_maquina },
       { nombre: 'Bomba', data: datos.estado_bomba },
       { nombre: 'Agitador', data: datos.estado_agitador },
-      { nombre: 'Filtro Primario', data: datos.estado_filtroPrimario },
+      { nombre: 'Filtro Primario:', data: datos.estado_filtroPrimario },
       { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
       { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
       { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
@@ -1079,6 +1107,7 @@ class PDFServicePdfLib {
 
     // ===== FILTROS =====
     if (comp.tipo === 'filtro') {
+      if (comp.subtitulo) altura += 14;
       if (estado.color) altura += 14;
       if (estado.numero !== '' && estado.numero !== null) altura += 14;
       if (estado.presenciaORing) altura += 14;
@@ -1484,6 +1513,55 @@ console.log('TYPEOF calibracion.presion_computadora:', typeof calibracion.presio
 
   }
 
+async unirPDFs(pdfPrincipalBytes, rutaPdfSecundario) {
+
+  // Cargar PDF principal (el que generás)
+  const pdfPrincipal = await PDFDocument.load(pdfPrincipalBytes);
+
+  // Leer PDF secundario desde disco
+  const pdfSecundarioBytes = await fs.readFile(rutaPdfSecundario);
+  const pdfSecundario = await PDFDocument.load(pdfSecundarioBytes);
+
+  // Copiar páginas del secundario
+  const paginas = await pdfPrincipal.copyPages(
+    pdfSecundario,
+    pdfSecundario.getPageIndices()
+  );
+
+  // Agregarlas al final del principal
+  paginas.forEach(p => pdfPrincipal.addPage(p));
+
+  // Devolver PDF final
+  return await pdfPrincipal.save();
+}  
+// -------------- UNE VARIOS PDFS --------------
+//-----CASO DE USO
+// pdfBytes = await this.unirMultiplesPDFs(pdfBytes, [
+//   'public/pdfs/manual.pdf',
+//   'public/pdfs/anexo.pdf'
+// ]);
+
+async unirMultiplesPDFs(pdfBaseBytes, rutas = []) {
+
+  const pdfFinal = await PDFDocument.load(pdfBaseBytes);
+
+  for (const ruta of rutas) {
+
+    try {
+      const bytes = await fs.readFile(ruta);
+      const doc = await PDFDocument.load(bytes);
+
+      const paginas = await pdfFinal.copyPages(doc, doc.getPageIndices());
+      paginas.forEach(p => pdfFinal.addPage(p));
+
+    } catch (err) {
+      console.log('Error uniendo:', ruta);
+    }
+  }
+
+  return await pdfFinal.save();
 }
 
-export default new PDFServicePdfLib();
+}
+
+export default new pdfCalibracionesService();
