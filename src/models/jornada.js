@@ -37,7 +37,7 @@ Jornada.init(
       allowNull: true,
       defaultValue: 'PENDIENTE',
       validate: {
-        isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
+        isIn: [['Pendiente', 'Alertado', 'Vencido', 'Completado', 'Cancelado']],
       },
     },
 
