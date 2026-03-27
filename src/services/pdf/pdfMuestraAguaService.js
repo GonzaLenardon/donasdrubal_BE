@@ -2,11 +2,11 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
 
-import Pozo from '../models/pozo.js';
-import MuestraAgua from '../models/muestra_agua.js';
-import Clientes from '../models/clientes.js';
-import { FACTORES_CALIDAD_AGUA } from '../config/constants/muestrasAgua.informeTextos.js';
-import * as pdfUtils from '../utils/pdfText.js';
+import Pozo from '../../models/pozo.js';
+import MuestraAgua from '../../models/muestra_agua.js';
+import Clientes from '../../models/clientes.js';
+import { FACTORES_CALIDAD_AGUA } from '../../config/constants/muestrasAgua.informeTextos.js';
+import * as pdfUtils from '../../utils/pdf/pdfText.js';
 
 class PdfMuestraAguaService {
   constructor() {

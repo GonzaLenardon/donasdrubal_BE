@@ -1,4 +1,4 @@
-import pdfMuestraAguaService from '../services/pdfMuestraAguaService.js';
+import pdfMuestraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 
 const Informes = {
   muestraAgua: async (req, res) => {

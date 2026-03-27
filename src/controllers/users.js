@@ -1,5 +1,5 @@
 // import Users from '../models/users.js';
-import { createUser } from '../services/userService.js';
+import { createUser } from '../services/model/userService.js';
 import { Users, Roles, UserRoles, db } from '../models/index.js';
 import jwt from 'jsonwebtoken';
 

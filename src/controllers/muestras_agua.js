@@ -1,8 +1,8 @@
-import { extractModelFields } from '../utils/payload.js';
+import { extractModelFields } from '../utils/model/payload.js';
 import Clientes from '../models/clientes.js';
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
-import pdfAguaService from '../services/pdfMuestraAguaService.js';
+import pdfAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import path from 'path';
 
 export const allMuestrasAgua = async (req, res) => {

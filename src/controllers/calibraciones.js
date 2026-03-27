@@ -3,9 +3,9 @@ import Clientes from '../models/clientes.js';
 import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import Users from '../models/users.js';
-import { extractModelFields } from '../utils/payload.js';
+import { extractModelFields } from '../utils/model/payload.js';
 // import PDFService from '../services/pdfServicePuppeteer.js';
-import PDFService from '../services/pdfServicePdfLib.js';
+import PDFService from '../services/pdf/pdfCalibracionesService.js';
 import path from 'path';
 
 // Lista de campos que son JSON

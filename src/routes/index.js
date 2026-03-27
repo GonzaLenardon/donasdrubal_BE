@@ -73,8 +73,8 @@ import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
-import pdfMuetraAguaService from '../services/pdfMuestraAguaService.js';
-import { uploadArchivo } from '../utils/uploadFiles.js';
+import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
+import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import Informes from '../controllers/informes.js';
 
 const router = express.Router();

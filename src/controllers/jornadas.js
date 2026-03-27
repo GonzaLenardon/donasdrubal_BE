@@ -1,4 +1,4 @@
-import { extractModelFields } from "../utils/payload.js";
+import { extractModelFields } from "../utils/model/payload.js";
 import Jornada from '../models/jornada.js';
 
 export const allJornadas = async (req, res) => {
