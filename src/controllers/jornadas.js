@@ -1,4 +1,4 @@
-import { extractModelFields } from "../utils/payload.js";
+import { extractModelFields } from '../utils/payload.js';
 import Jornada from '../models/jornada.js';
 
 export const allJornadas = async (req, res) => {
@@ -24,7 +24,7 @@ export const addJornada = async (req, res) => {
   try {
     const payload = extractModelFields(Jornada, req.body);
     payload.cliente_id = req.params.cliente_id;
-    console.log('addJornada controller: payload->', payload );
+    console.log('addJornada controller: payload->', payload);
     const resp = await Jornada.create(payload);
 
     return res.status(201).json({
@@ -41,7 +41,7 @@ export const addJornada = async (req, res) => {
 
 export const getJornada = async (req, res) => {
   const { jornada_id } = req.params;
-  console.log('getJornada controller: jornada_id->', jornada_id );     
+  console.log('getJornada controller: jornada_id->', jornada_id);
   try {
     const jornada = await Jornada.findByPk(jornada_id);
     if (!jornada) {
@@ -60,41 +60,46 @@ export const getJornada = async (req, res) => {
 };
 
 export const updateJornada = async (req, res) => {
-  const { jornada_id } = req.params; 
+  const { jornada_id } = req.params;
+
+  console.log(
+    'Llegamos a update Jornadas ........................',
+    jornada_id,
+  );
   try {
-    const payload = extractModelFields(Jornada, req.body); 
+    const payload = extractModelFields(Jornada, req.body);
     const jornada = await Jornada.findByPk(jornada_id);
 
     if (!jornada) {
       return res.status(404).json({ error: 'Jornada no encontrada' });
-    } 
-    console.log('updateJornada controller: payload->', payload );   
+    }
+    console.log('updateJornada controller: payload->', payload);
     const resp = await jornada.update(payload);
 
     return res.status(200).json({
-      message: 'Jornada actualizada exitosamente', 
+      message: 'Jornada actualizada exitosamente',
       data: resp,
     });
   } catch (error) {
+    console.log('Erroreeeeeeeeeeeeee', error);
     return res.status(500).json({
-      error: 'Error en el servidor',  
+      error: 'Error al actualizar Jornada',
       details: error.message,
     });
-  } 
+  }
 };
-
 
 export const jornadasCliente = async (req, res) => {
   const cliente_id = req.params.cliente_id;
   console.log('jornadasCliente Controllerr: cliente_id->', cliente_id);
 
   try {
-    const resp = await Jornada.findAll({ 
-      where: { cliente_id: cliente_id }
+    const resp = await Jornada.findAll({
+      where: { cliente_id: cliente_id },
     });
 
     return res.status(200).json({
-      message: 'Jornada de cliente_id' + cliente_id +' encontrados',
+      message: 'Jornada de cliente_id' + cliente_id + ' encontrados',
       data: resp,
     });
   } catch (error) {
@@ -104,5 +109,3 @@ export const jornadasCliente = async (req, res) => {
     });
   }
 };
-
-
