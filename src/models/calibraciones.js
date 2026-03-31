@@ -8,6 +8,7 @@ const estadoJSON = () => ({
   estado: ESTADOS_CALIDAD.NO_APLICA,
   observacion: '',
   nombre_archivo: '',
+  nombre_archivoPdf: '',
   path: '',
 });
 

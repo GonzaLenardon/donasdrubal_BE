@@ -37,6 +37,7 @@ const ESTADO_DEFAULT = {
   materiales: '',
   observacion: '',
   nombreArchivo: '',
+  nombreArchivoPdf: '',
   color: '',
   numero: '',
   presenciaORing: '',
@@ -163,10 +164,11 @@ const normalizeEstadoObject = (obj) => {
 
   return {
     estado: obj.estado || '',
-    modelo: obj.modelo || '', // ✅ CRÍTICO: Incluir modelo
-    materiales: obj.materiales || '', // ✅ CRÍTICO: Incluir materiales
+    modelo: obj.modelo || '',
+    materiales: obj.materiales || '',
     observacion: obj.observacion || '',
     nombreArchivo: obj.nombreArchivo || obj.nombre_archivo || '',
+    nombreArchivoPdf: obj.nombreArchivoPdf || obj.nombre_archivoPdf || '',
     color: obj.color || '',
     presenciaORing: obj.presenciaORing || '',
     numero: obj.numero || '',
@@ -258,6 +260,7 @@ export const updateCalibraciones = async (req, res) => {
 
     // 2. Parsear y validar campos JSON
     let bodyParsed = parseJSONFields(req.body);
+    console.log('Lo que llega al body', bodyParsed);
     bodyParsed = validateRecomendaciones(bodyParsed);
 
     // 3. Extraer campos del modelo
