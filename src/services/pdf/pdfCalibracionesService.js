@@ -10,7 +10,7 @@ import Clientes from '../../models/clientes.js';
 import MaquinaTipo from '../../models/maquina_tipo.js';
 import Users from '../../models/users.js';
 import * as parseUtils from '../../utils/common/parseJson.js';
-import * as pdfUtils from '../../utils/pdf/pdfText.js';
+import * as pdfUtils from '../../utils/pdf/pdfUtlis.js';
 import { Ticks } from 'chart.js';
 
 class pdfCalibracionesService {
@@ -113,7 +113,7 @@ class pdfCalibracionesService {
       { titulo: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones, tipo: 'normal' },
       { titulo: 'Antigoteo', data: datos.estado_antigoteo, tipo: 'normal' },
       { titulo: 'Limpieza Tanque', data: datos.estado_limpiezaTanque, tipo: 'normal' },
-      { titulo: 'Pastillas', data: datos.estado_pastillas, tipo: 'normal' },
+      { titulo: 'Pastillas', data: datos.estado_pastillas, tipo: 'pastillas' },
       { titulo: 'Estabilidad Vertical Botalón', data: datos.estabilidadVerticalBotalon, tipo: 'normal' },
       { titulo: 'Mixer', data: datos.mixer, tipo: 'normal' }
     ];
@@ -194,6 +194,7 @@ class pdfCalibracionesService {
           });
           lineaY -= 14;
         }
+
 
         if (estado.material !== '' && estado.material !== null) {
           page.drawText(`Material: ${estado.material}`, {
@@ -678,19 +679,22 @@ class pdfCalibracionesService {
     // ===============================
 
     let pdfBytes = await pdfDoc.save();
-//------------ UNIR PDFS -----------------
-// Ruta del PDF que querés anexar
-const rutaExtra = path.join(this.imagesUrl, 'estado_pastillas_1773667678179.pdf');
+    //------------ ANEXAR PDF INFORMA PÄSTILLAS -----------------
+    // Ruta del PDF que querés anexar
+    datos.estado_pastillas.nombre_archivo = 'estado_pastillas_1773667678179.pdf';
+    if(datos.estado_pastillas.nombre_archivo) {
+      // const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
+      const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
 
-// Unir
-try {
-  pdfBytes = await this.unirPDFs(pdfBytes, rutaExtra);
-} catch (e) {
-  console.log('No se pudo anexar PDF extra:', e.message);
-  console.log('ruta', rutaExtra);
-}
-
-//-----------------------------------
+      // Unir
+      try {
+        pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);
+      } catch (e) {
+        console.log('No se pudo anexar PDF extra:', e.message);
+        console.log('ruta', rutaExtra);
+      }
+    }
+    //-----------------------------------
 
 
     const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
@@ -1195,6 +1199,10 @@ try {
       modelo: estado.modelo || '',
       material: estado.materiales || '',
 
+      // SOLO PARA PASTILLAS(si no existen quedan vacíos)
+      informe_pastillas: estado.informe_pastillas || '',
+    
+
       // SOLO PARA FILTROS (si no existen quedan vacíos)
       color: estado.color || '',
       numero: estado.numero ?? '',
@@ -1208,7 +1216,7 @@ try {
         }))
         : []
     });
-console.log('TYPEOF calibracion.presion_computadora:', typeof calibracion.presion_computadora);
+
 
     return {
 
@@ -1512,55 +1520,6 @@ console.log('TYPEOF calibracion.presion_computadora:', typeof calibracion.presio
     });
 
   }
-
-async unirPDFs(pdfPrincipalBytes, rutaPdfSecundario) {
-
-  // Cargar PDF principal (el que generás)
-  const pdfPrincipal = await PDFDocument.load(pdfPrincipalBytes);
-
-  // Leer PDF secundario desde disco
-  const pdfSecundarioBytes = await fs.readFile(rutaPdfSecundario);
-  const pdfSecundario = await PDFDocument.load(pdfSecundarioBytes);
-
-  // Copiar páginas del secundario
-  const paginas = await pdfPrincipal.copyPages(
-    pdfSecundario,
-    pdfSecundario.getPageIndices()
-  );
-
-  // Agregarlas al final del principal
-  paginas.forEach(p => pdfPrincipal.addPage(p));
-
-  // Devolver PDF final
-  return await pdfPrincipal.save();
-}  
-// -------------- UNE VARIOS PDFS --------------
-//-----CASO DE USO
-// pdfBytes = await this.unirMultiplesPDFs(pdfBytes, [
-//   'public/pdfs/manual.pdf',
-//   'public/pdfs/anexo.pdf'
-// ]);
-
-async unirMultiplesPDFs(pdfBaseBytes, rutas = []) {
-
-  const pdfFinal = await PDFDocument.load(pdfBaseBytes);
-
-  for (const ruta of rutas) {
-
-    try {
-      const bytes = await fs.readFile(ruta);
-      const doc = await PDFDocument.load(bytes);
-
-      const paginas = await pdfFinal.copyPages(doc, doc.getPageIndices());
-      paginas.forEach(p => pdfFinal.addPage(p));
-
-    } catch (err) {
-      console.log('Error uniendo:', ruta);
-    }
-  }
-
-  return await pdfFinal.save();
-}
 
 }
 
