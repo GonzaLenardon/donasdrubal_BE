@@ -681,10 +681,10 @@ class pdfCalibracionesService {
     let pdfBytes = await pdfDoc.save();
     //------------ ANEXAR PDF INFORMA PÄSTILLAS -----------------
     // Ruta del PDF que querés anexar
-    datos.estado_pastillas.nombre_archivo = 'estado_pastillas_1773667678179.pdf';
-    if(datos.estado_pastillas.nombre_archivo) {
+    // datos.estado_pastillas.nombre_archivo = 'estado_pastillas_1773667678179.pdf';
+    if(datos.estado_pastillas.informe_pastillas){ 
       // const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
-      const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
+      const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.informe_pastillas);
 
       // Unir
       try {
@@ -1200,7 +1200,7 @@ class pdfCalibracionesService {
       material: estado.materiales || '',
 
       // SOLO PARA PASTILLAS(si no existen quedan vacíos)
-      informe_pastillas: estado.informe_pastillas || '',
+      informe_pastillas: estado.nombreArchivoPdf || '',
     
 
       // SOLO PARA FILTROS (si no existen quedan vacíos)
