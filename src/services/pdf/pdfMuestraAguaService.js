@@ -1,16 +1,19 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fs from 'fs/promises';
+import fsPromises  from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 
 import Pozo from '../../models/pozo.js';
 import MuestraAgua from '../../models/muestra_agua.js';
 import Clientes from '../../models/clientes.js';
 import { FACTORES_CALIDAD_AGUA } from '../../config/constants/muestrasAgua.informeTextos.js';
-import * as pdfUtils from '../../utils/pdf/pdfText.js';
+import * as pdfUtils from '../../utils/pdf/pdfUtlis.js';
 
 class PdfMuestraAguaService {
   constructor() {
     this.outputDir = path.join(process.cwd(), 'public', 'reports');
+    this.imagesUrl = path.join(process.cwd(), 'uploads', 'muestrasagua');
+    this.informesPath = path.join(process.cwd(), 'uploads', 'muestrasagua');
     this.margin = 40;
   }
 
@@ -344,6 +347,61 @@ class PdfMuestraAguaService {
     return { page, cursorY };
   }
 
+prepararDatosInforme = (pozos) => {
+
+  const datosTabla = [];
+
+
+  pozos.forEach((p, i) => {
+    const muestra = p.muestrasAgua?.[0];
+
+    // TABLA
+    datosTabla.push([
+      String(i + 1),
+      p.nombre ?? '-',
+      String(muestra?.ph ?? '-'),
+      String(muestra?.dureza ?? '-'),
+      String(muestra?.alcalinidad ?? '-'),
+      String(muestra?.salinidad ?? '-'),
+      String(muestra?.conductividad ?? '-'),
+      String(muestra?.fuerza_ionica ?? '-'),
+      String(muestra?.dosis ?? '-'),
+    ]);
+
+
+  });
+
+  return datosTabla;
+}  
+
+listarArchivosInformes = (pozos) => {
+  const archivos = [];
+  pozos.forEach((p) => {
+    const muestra = p.muestrasAgua?.[0];
+    if (muestra?.informe) { 
+      archivos.push({
+        pozo_id: p.id,
+        pozo_nombre: p.nombre,
+        archivo: this.getPathInforme(muestra.informe)
+      });
+    }   
+  });
+  return archivos;
+}
+
+getPathInforme(nombreArchivo) {
+  if (!nombreArchivo) return null;
+
+  const fullPath = path.join(this.informesPath, nombreArchivo);
+
+  if (!fs.existsSync(fullPath)) {
+    console.warn('Archivo no encontrado:', fullPath);
+    return null;
+  }
+
+  return fullPath;
+}
+
   // ══════════════════════════════════════════════════════════════════════
   // GENERAR INFORME CALIDAD DE AGUA (múltiples pozos)
   // ══════════════════════════════════════════════════════════════════════
@@ -367,21 +425,24 @@ class PdfMuestraAguaService {
     }
 
     const cliente = pozos[0].cliente;
+    const datosTabla = this.prepararDatosInforme(pozos);
+    const archivos = this.listarArchivosInformes(pozos);
+    // const datosTabla = pozos.map((p, i) => {
+    //   const muestra = p.muestrasAgua?.[0];
+    //   return [
+    //     String(i + 1),
+    //     p.nombre ?? '-',
+    //     String(muestra?.ph ?? '-'),
+    //     String(muestra?.dureza ?? '-'),
+    //     String(muestra?.alcalinidad ?? '-'),
+    //     String(muestra?.salinidad ?? '-'),
+    //     String(muestra?.conductividad ?? '-'),
+    //     String(muestra?.fuerza_ionica ?? '-'),
+    //     String(muestra?.dosis ?? '-'),    
+    //   ];
+    // });
+    // vecto de archivos a adjuntar al final del PDF (informes individuales de cada pozo)
 
-    const datosTabla = pozos.map((p, i) => {
-      const muestra = p.muestrasAgua?.[0];
-      return [
-        String(i + 1),
-        p.nombre ?? '-',
-        String(muestra?.ph ?? '-'),
-        String(muestra?.dureza ?? '-'),
-        String(muestra?.alcalinidad ?? '-'),
-        String(muestra?.salinidad ?? '-'),
-        String(muestra?.conductividad ?? '-'),
-        String(muestra?.fuerza_ionica ?? '-'),
-        String(muestra?.dosis ?? '-'),
-      ];
-    });
 
     // ── Setup PDF ───────────────────────────────────────────────────────
     const pdfDoc = await PDFDocument.create();
@@ -478,13 +539,37 @@ class PdfMuestraAguaService {
     // ── Footer ──────────────────────────────────────────────────────────
     this._drawFooter({ page, font });
 
-    const pdfBytes = await pdfDoc.save();
+    let pdfBytes = await pdfDoc.save();
+
+    //------------ ANEXAR PDF INFORMA POZO AGUA -----------------
+    // Ruta del PDF que querés anexar
+    
+    if(archivos && archivos.length > 0) {
+
+      // const rutaExtra = path.join(this.imagesUrl, muestra.informe);
+      // Unir
+      try {
+        // pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);
+        const rutas =[
+          ...archivos.map(a => a.archivo)
+        ]
+        console.log('Rutas a anexar:', rutas);
+        pdfBytes = await pdfUtils.unirMultiplesPDFs(pdfBytes, rutas);
+
+      } catch (e) {
+        console.log('No se pudo anexar PDF extra:', e.message);
+
+      }
+    }
+    //-----------------------------------         
 
     return {
       pdfBytes,
       filename: `calidad_agua_${Date.now()}.pdf`,
     };
   }
+  
+  
 
   // ══════════════════════════════════════════════════════════════════════
   // GENERAR INFORME MUESTRA DE AGUA (una muestra específica)
@@ -606,7 +691,27 @@ class PdfMuestraAguaService {
     // ── Footer ──────────────────────────────────────────────────────────
     this._drawFooter({ page, font });
 
-    const pdfBytes = await pdfDoc.save();
+    // ===============================
+    // GUARDAR PDF
+    // ===============================    
+
+    let pdfBytes = await pdfDoc.save();
+    //------------ ANEXAR PDF INFORMA POZO AGUA -----------------
+    // Ruta del PDF que querés anexar
+    
+    if(muestra.informe) {
+
+      const rutaExtra = path.join(this.informesPath, muestra.informe);
+      console.log('Ruta del informe a anexar:', rutaExtra);
+      // Unir
+      try {
+        pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);        
+      } catch (e) {
+        console.log('No se pudo anexar PDF extra:', e.message);
+        console.log('ruta', rutaExtra);
+      }
+    }
+    //-----------------------------------    
 
     return {
       pdfBytes,
@@ -618,5 +723,5 @@ class PdfMuestraAguaService {
 export default new PdfMuestraAguaService();
 
 // ── Opcional: guardar el reporte en disco ────────────────────────────────────
-// await fs.writeFile(outputPath, pdfBytes);
+// await fsPromises.writeFile(outputPath, pdfBytes);
 // return { success: true, path: outputPath, filename };

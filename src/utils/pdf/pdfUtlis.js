@@ -1,3 +1,5 @@
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fsPromises from 'fs/promises';
 // ===================================
   // DEVUELVE ARRAY CON LÍNEAS DE TEXTO 
   // AJUSTADAS AL ANCHO MÁXIMO 
@@ -64,3 +66,53 @@ export const sanitizeText = (text) => {
     .replace(/[^\x00-\xFF]/g, '') // elimina unicode fuera WinAnsi
     .trim();
 };
+
+export const unirPDFs = async (pdfPrincipalBytes, rutaPdfsPromisesecundario) => {
+
+  // Cargar PDF principal (el que generás)
+  const pdfPrincipal = await PDFDocument.load(pdfPrincipalBytes);
+
+  // Leer PDF secundario desde disco
+  const pdfsPromisesecundarioBytes = await fsPromises.readFile(rutaPdfsPromisesecundario);
+  const pdfsPromisesecundario = await PDFDocument.load(pdfsPromisesecundarioBytes);
+
+  // Copiar páginas del secundario
+  const paginas = await pdfPrincipal.copyPages(
+    pdfsPromisesecundario,
+    pdfsPromisesecundario.getPageIndices()
+  );
+
+  // Agregarlas al final del principal
+  paginas.forEach(p => pdfPrincipal.addPage(p));
+
+  // Devolver PDF final
+  return await pdfPrincipal.save();
+}  
+
+// -------------- UNE VARIOS PDfsPromises --------------
+//-----CASO DE USO
+// pdfBytes = await this.unirMultiplesPDfsPromises(pdfBytes, [
+//   'public/pdfsPromises/manual.pdf',
+//   'public/pdfsPromises/anexo.pdf'
+// ]);
+
+export const unirMultiplesPDFs = async (pdfBaseBytes, rutas = []) => {
+
+  const pdfFinal = await PDFDocument.load(pdfBaseBytes);
+
+  for (const ruta of rutas) {
+
+    try {
+      const bytes = await fsPromises.readFile(ruta);
+      const doc = await PDFDocument.load(bytes);
+
+      const paginas = await pdfFinal.copyPages(doc, doc.getPageIndices());
+      paginas.forEach(p => pdfFinal.addPage(p));
+
+    } catch (err) {
+      console.error('Error uniendo:', ruta, err.message);
+    }
+  }
+
+  return await pdfFinal.save();
+}
