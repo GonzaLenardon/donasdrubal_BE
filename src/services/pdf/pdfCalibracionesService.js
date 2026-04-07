@@ -49,8 +49,8 @@ class pdfCalibracionesService {
     if (!calibracion) {
       throw new Error('Calibración no encontrada');
     }
-    console.log('Calibración encontrada:', calibracion.toJSON());
     const datos = this.prepararDatosTemplate(calibracion);
+    console.log('Calibración encontrada:', calibracion.toJSON());
     console.log('Datos preparados para PDF:', datos);
 
     await fs.mkdir(this.outputDir, { recursive: true });
@@ -113,7 +113,7 @@ class pdfCalibracionesService {
       { titulo: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones, tipo: 'normal' },
       { titulo: 'Antigoteo', data: datos.estado_antigoteo, tipo: 'normal' },
       { titulo: 'Limpieza Tanque', data: datos.estado_limpiezaTanque, tipo: 'normal' },
-      { titulo: 'Pastillas', data: datos.estado_pastillas, tipo: 'pastillas' },
+      { titulo: 'Pastillas', subTitulo: datos.estado_pastillas?.informe_pastillas ? 'Ver anexo informe FLUXIM ' : undefined, data: datos.estado_pastillas, tipo: 'pastillas' },
       { titulo: 'Estabilidad Vertical Botalón', data: datos.estabilidadVerticalBotalon, tipo: 'normal' },
       { titulo: 'Mixer', data: datos.mixer, tipo: 'normal' }
     ];
@@ -166,7 +166,7 @@ class pdfCalibracionesService {
         color: rgb(1, 1, 1)
       });
 
-      // ... SOLO FILTROS (subtítulo) ...
+      // ... SOLO FILTROS  Y PASTILLAS(subtítulo) ...
       if (comp.subTitulo) {
         page.drawText(pdfUtils.sanitizeText(comp.subTitulo), {
           x: margin + 10,
@@ -725,17 +725,17 @@ class pdfCalibracionesService {
     const { width, height } = page.getSize();
 
     const margin = 50;
-    let cursorY = height - 60;
+    let cursorY = height - 70;
 
     // ================= HEADER DASHBOARD =================
 
-    const headerHeight = 170;
+    const headerHeight = 160;
 
     page.drawRectangle({
       x: 0,
       y: height - headerHeight,
       width,
-      height: headerHeight - 165,
+      height: headerHeight - 155,
       color: rgb(0.08, 0.35, 0.18)
     });
 
@@ -761,7 +761,7 @@ class pdfCalibracionesService {
         width: agrospData.width,
         height: agrospData.height
       });
-
+//-----------------FIN LOGOS------------------------------------------------------
 
     }
     cursorY = cursorY - 35;
@@ -772,7 +772,7 @@ class pdfCalibracionesService {
       y: cursorY,
       size: 16,
       font: fontBold,
-      color: rgb(0, 0, 0)
+      color: rgb(0.3, 0.3, 0.3)
     });
 
     // Cliente
@@ -780,26 +780,26 @@ class pdfCalibracionesService {
       x: margin,
       y: cursorY - 15,
       size: 10,
-      font,
+      font: fontBold,
       color: rgb(0, 0, 0)
     });
 
-    page.drawText(`${datos.maquina.cliente?.direccion || '-'}`, {
-      x: margin,
-      y: cursorY - 30,
-      size: 10,
-      font,
-      color: rgb(0, 0, 0)
-    });
+    // page.drawText(`${datos.maquina.cliente?.direccion || '-'}`, {
+    //   x: margin,
+    //   y: cursorY - 30,
+    //   size: 10,
+    //   font,
+    //   color: rgb(0, 0, 0)
+    // });
 
-    page.drawText(`${datos.maquina.cliente?.ciudad || ''} ${datos.maquina.cliente?.provincia || ''} ${datos.maquina.cliente?.pais || ''} `,
-      {
-        x: margin,
-        y: cursorY - 45,
-        size: 8,
-        font,
-        color: rgb(0, 0, 0)
-      });
+    // page.drawText(`${datos.maquina.cliente?.ciudad || ''} ${datos.maquina.cliente?.provincia || ''} ${datos.maquina.cliente?.pais || ''} `,
+    //   {
+    //     x: margin,
+    //     y: cursorY - 45,
+    //     size: 8,
+    //     font,
+    //     color: rgb(0, 0, 0)
+    //   });
 
     // // Máquina (lado derecho)
     // page.drawText(`Marca: ${datos.maquina?.tipo.marca || '-'}  - ${datos.maquina?.tipo.modelo || '-'}`, {
