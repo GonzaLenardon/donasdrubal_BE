@@ -166,6 +166,46 @@ class PdfMuestraAguaService {
     return { page: result.page, cursorY: result.cursorY };
   }
 
+/**
+ * Tabla de clasificación de dureza del agua
+ */
+_drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
+  const { margin } = this;
+
+  // ── Título ─────────────────────────────────────────────
+  page.drawText('Clasificación de dureza del agua', {
+    x: margin,
+    y: cursorY,
+    size: 12,
+    font: fontBold,
+  });
+
+  cursorY -= 20;
+
+  // ── Tabla ──────────────────────────────────────────────
+  const result = this.drawTable({
+    page,
+    pdfDoc,
+    startY: cursorY,
+
+    headers: ['Análisis', 'Referencia', 'Rango', 'Unidad'],
+
+    rows: [
+      ['DUREZA', 'BLANDA', '< 75', 'ppm'],
+      ['DUREZA', 'SEMIDURA', '75 - 150', 'ppm'],
+      ['DUREZA', 'DURA', '150 - 300', 'ppm'],
+    ],
+
+    // Ajustado para que no se corte
+    columnRatios: [0.2, 0.3, 0.25, 0.25],
+
+    font,
+    fontBold,
+  });
+
+  return { page: result.page, cursorY: result.cursorY };
+}  
+
   /**
    * Dibuja los factores de calidad de agua con sus subsecciones.
    * Gestiona saltos de página automáticos correctamente.
@@ -504,7 +544,19 @@ getPathInforme(nombreArchivo) {
       fontBold,
     });
     page = refResult.page;
-    cursorY = refResult.cursorY - 80;
+    cursorY = refResult.cursorY - 30;
+    
+    // ── Tabla dureza agua ─────────────────────────────────────────────
+    const durezaResult = this._drawTablaDureza({
+      page,
+      pdfDoc,
+      cursorY,
+      font,
+      fontBold,
+    });
+
+page = durezaResult.page;
+cursorY = durezaResult.cursorY - 40;    
 
     // ── Factores de calidad ─────────────────────────────────────────────
     const factoresResult = this._drawFactoresCalidad({
@@ -674,7 +726,18 @@ getPathInforme(nombreArchivo) {
       fontBold,
     });
     page = refResult.page;
-    cursorY = refResult.cursorY - 80;
+    cursorY = refResult.cursorY - 30;
+
+        // ── Tabla dureza agua ─────────────────────────────────────────────
+    const durezaResult = this._drawTablaDureza({
+      page,
+      pdfDoc,
+      cursorY,
+      font,
+      fontBold,
+    });
+        page = durezaResult.page;
+    cursorY = durezaResult.cursorY - 40;
 
     // ── Factores de calidad ─────────────────────────────────────────────
     const factoresResult = this._drawFactoresCalidad({
