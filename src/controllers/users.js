@@ -367,7 +367,7 @@ const logout = (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Solo secure en producción
 
-      sameSite: 'None',
+      sameSite: 'Lax',
       path: '/',
     });
 
