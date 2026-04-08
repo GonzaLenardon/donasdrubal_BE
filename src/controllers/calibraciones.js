@@ -375,7 +375,8 @@ export const generarPDF = async (req, res) => {
     }
 
     // Generar PDF
-    const resultado = await PDFService.generarInformeCalibracion(id);
+    informes = new PDFService();
+    const resultado = await informes.generarInformeCalibracion(id);
 
     if (download === 'true' || download === true) {
       // Descargar archivo
@@ -429,7 +430,8 @@ export const enviarPDFPorEmail = async (req, res) => {
     }
 
     // Generar PDF
-    const resultado = await PDFService.generarInformeCalibracion(id);
+    const PDFServiceInstance = new PDFService();
+    const resultado = await PDFServiceInstance.generarInformeCalibracion(id);
 
     // TODO: Implementar servicio de email
     // await EmailService.enviarPDF(email, resultado.path);
@@ -458,8 +460,8 @@ export const enviarPDFPorEmail = async (req, res) => {
 export const previsualizarPDF = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const resultado = await PDFService.generarInformeCalibracion(id);
+    const informes = new PDFService();
+    const resultado = await informes.generarInformeCalibracion(id);
 
     if (!resultado.success || !resultado.path) {
       throw new Error('No se pudo generar el PDF');
@@ -489,8 +491,8 @@ export const previsualizarPDF = async (req, res) => {
 export const limpiarPDFsAntiguos = async (req, res) => {
   try {
     const { dias = 30 } = req.query;
-
-    await PDFService.limpiarPDFsAntiguos(parseInt(dias));
+    const informes = new PDFService();
+    await informes.limpiarPDFsAntiguos(parseInt(dias));
 
     res.json({
       success: true,
