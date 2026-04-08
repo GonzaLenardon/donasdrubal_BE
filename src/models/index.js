@@ -229,6 +229,37 @@ Alertas.belongsTo(TipoServicios, {
 });
 
 // ===============================================
+// ASOCIACIONES POLIMÓRFICAS Alertas
+// ===============================================
+
+/* 
+NO pongas belongsTo porque no hay FK real.
+¿Qué hace scope? 
+Le dice a Sequelize:
+Solo unir donde entidad_tipo = 'muestra_agua'
+*/
+
+// MuestraAgua -> Alertas
+MuestraAgua.hasMany(Alertas, {
+  foreignKey: 'entidad_id',
+  constraints: false,
+  scope: {
+    entidad_tipo: 'muestra_agua',
+  },
+  as: 'alertas',
+});
+
+// Calibracion -> Alertas
+Calibraciones.hasMany(Alertas, {
+  foreignKey: 'entidad_id',
+  constraints: false,
+  scope: {
+    entidad_tipo: 'calibracion',
+  },
+  as: 'alertas',
+});
+
+// ===============================================
 // ASOCIACIONES Alertas  <==> MUESTRAS DE AGUA
 // ===============================================
 
