@@ -12,8 +12,8 @@ import * as pdfUtils from '../../utils/pdf/pdfUtlis.js';
 class PdfMuestraAguaService {
   constructor() {
     this.outputDir = path.join(process.cwd(), 'public', 'reports');
-    this.imagesUrl = path.join(process.cwd(), 'uploads', 'muestrasagua');
-    this.informesPath = path.join(process.cwd(), 'uploads', 'muestrasagua');
+    this.imagesUrl = path.join(process.cwd(), 'uploads', 'clientes');
+    this.informesPath = path.join(process.cwd(), 'uploads', 'clientes');
     this.margin = 40;
   }
 
@@ -419,20 +419,25 @@ listarArchivosInformes = (pozos) => {
   pozos.forEach((p) => {
     const muestra = p.muestrasAgua?.[0];
     if (muestra?.informe) { 
+      const pathInforme = path.join(this.informesPath, `${p.cliente_id}`, 'pozos', `${p.id}`, 'muestras', `${muestra.id}`);
+      console.log('Buscando informe en:', pathInforme);
       archivos.push({
         pozo_id: p.id,
         pozo_nombre: p.nombre,
-        archivo: this.getPathInforme(muestra.informe)
+        archivo: this.getPathInforme(pathInforme, muestra.informe)
       });
     }   
   });
+  console.log('Archivos encontrados para anexar:', archivos);
   return archivos;
 }
 
-getPathInforme(nombreArchivo) {
+getPathInforme(pathInforme, nombreArchivo) {
   if (!nombreArchivo) return null;
 
-  const fullPath = path.join(this.informesPath, nombreArchivo);
+  const fullPath = path.join(
+    pathInforme, 
+    nombreArchivo);
 
   if (!fs.existsSync(fullPath)) {
     console.warn('Archivo no encontrado:', fullPath);
@@ -463,7 +468,6 @@ getPathInforme(nombreArchivo) {
     if (!pozos.length) {
       throw new Error('No se encontraron pozos para el cliente indicado');
     }
-
     const cliente = pozos[0].cliente;
     const datosTabla = this.prepararDatosInforme(pozos);
     const archivos = this.listarArchivosInformes(pozos);
@@ -763,7 +767,8 @@ cursorY = durezaResult.cursorY - 40;
     // Ruta del PDF que querés anexar
     
     if(muestra.informe) {
-
+      this.informesPath = path.join(this.informesPath, `${cliente.id}`,'pozos', `${pozo.id}`,'muestras', `${muestra.id}`);  
+      console.log('Ruta base para informes:', this.informesPath);
       const rutaExtra = path.join(this.informesPath, muestra.informe);
       console.log('Ruta del informe a anexar:', rutaExtra);
       // Unir

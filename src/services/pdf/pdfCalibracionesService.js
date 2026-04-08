@@ -19,7 +19,8 @@ class pdfCalibracionesService {
     //uploads/clientes/{clienteId}/maquinas/{maquinaId}/calibraciones/{calibracionCodigo}/imagenes/
     this.outputDir = path.join(process.cwd(), 'public', 'reports');
     this.assetsUrl = path.join(process.cwd(), 'src', 'assets');
-    this.imagesUrl = path.join(process.cwd(), 'uploads', 'calibraciones');
+    this.imagesUrl = path.join(process.cwd(), 'uploads', 'clientes');
+    this.informesPath = path.join(process.cwd(), 'uploads', 'clientes');
 
   }
 
@@ -49,7 +50,12 @@ class pdfCalibracionesService {
     if (!calibracion) {
       throw new Error('Calibración no encontrada');
     }
+    this.imagesUrl = path.join(this.imagesUrl, `${calibracion.maquina.cliente.id}`,'maquinas', `${calibracion.maquina_id}`,'calibraciones', `${calibracion.id}`);  
+    this.informesPath = path.join(this.informesPath, `${calibracion.maquina.cliente.id}`,'maquinas', `${calibracion.maquina_id}`,'calibraciones', `${calibracion.id}`);  
+
     const datos = this.prepararDatosTemplate(calibracion);
+    console.log('Ruta imágenes:', this.imagesUrl);
+    console.log('Ruta informes:', this.informesPath);
     console.log('Calibración encontrada:', calibracion.toJSON());
     console.log('Datos preparados para PDF:', datos);
 
@@ -684,7 +690,8 @@ class pdfCalibracionesService {
     // datos.estado_pastillas.nombre_archivo = 'estado_pastillas_1773667678179.pdf';
     if(datos.estado_pastillas.informe_pastillas){ 
       // const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
-      const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.informe_pastillas);
+      const rutaExtra = path.join(this.informesPath, datos.estado_pastillas.informe_pastillas);
+      console.log('Ruta del PDF a anexar:', rutaExtra);
 
       // Unir
       try {
@@ -1523,4 +1530,4 @@ class pdfCalibracionesService {
 
 }
 
-export default new pdfCalibracionesService();
+export default pdfCalibracionesService;
