@@ -788,7 +788,7 @@ cursorY = durezaResult.cursorY - 40;
   }
 }
 
-export default new PdfMuestraAguaService();
+export default PdfMuestraAguaService;
 
 // ── Opcional: guardar el reporte en disco ────────────────────────────────────
 // await fsPromises.writeFile(outputPath, pdfBytes);

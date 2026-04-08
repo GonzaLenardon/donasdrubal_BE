@@ -233,8 +233,8 @@ export const getMuestraAguaPozoCliente = async (req, res) => {
 export const previssualizarPdf = async (req, res) => {
 try {
     const {cliente_id, pozos_ids } = req.body;
-
-    const resultado = await pdfAguaService.generarInformeCalidadAgua(
+    informe = new pdfAguaService();
+    const resultado = await informe.generarInformeCalidadAgua(
       cliente_id,
       pozos_ids
     );

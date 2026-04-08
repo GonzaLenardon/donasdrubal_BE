@@ -10,9 +10,10 @@ const Informes = {
           error: 'muestra_id debe ser un número válido',
         });
       }
-
+      const informe = new pdfMuestraAguaService();
       const { pdfBytes, filename } =
-        await pdfMuestraAguaService.generarInformeMuestraAgua(muestra_id);
+      
+        await informe.generarInformeMuestraAgua(muestra_id);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
@@ -48,8 +49,10 @@ const Informes = {
         });
       }
 
+      const informe = new pdfMuestraAguaService();
+
       const { pdfBytes, filename } =
-        await pdfMuestraAguaService.generarInformeCalidadAgua(
+        await informe.generarInformeCalidadAgua(
           cliente_id,
           pozos_ids,
           conclusion,
