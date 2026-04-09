@@ -73,6 +73,8 @@ import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
 import * as dashboardController from '../controllers/clienteDashboard.js';
+import * as userDashboard from '../controllers/userDashboard.js';
+
 import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import Informes from '../controllers/informes.js';
@@ -434,6 +436,12 @@ router.get(
 );
 
 // router.post('/informes/pozos', pozoController.multiInformesPozos);
+
+router.post('/dashboard/user/services', userDashboard.getUserServices);
+
+router.post('/dashboard/user/machines', userDashboard.getUserMachine);
+
+router.post('/dashboard/user/all', userDashboard.allServicesToClients);
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
