@@ -161,6 +161,12 @@ router.put(
   '/calibraciones/:calibracion_id',
   calibracionController.updateCalibraciones,
 );
+
+router.put(
+  '/calibraciones/close/:id',
+  calibracionController.closeCalibraciones,
+);
+
 /*router.post(
   '/calibraciones/upload',
   (req, res, next) => {
