@@ -154,7 +154,7 @@ Calibraciones.init(
       allowNull: true,
       defaultValue: 'PENDIENTE',
       validate: {
-        isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'COMPLETADO', 'CANCELADO']],
+        isIn: [['PENDIENTE', 'ALERTADO', 'VENCIDO', 'CERRADO', 'CANCELADO']],
       },
     },
 

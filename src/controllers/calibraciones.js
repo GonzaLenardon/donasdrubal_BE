@@ -507,3 +507,29 @@ export const limpiarPDFsAntiguos = async (req, res) => {
     });
   }
 };
+
+export const closeCalibraciones = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const calibracion = await Calibraciones.findByPk(id);
+    if (!calibracion) {
+      return res.status(404).json({
+        success: false,
+        message: `Calibración con ID ${id} no encontrada`,
+      });
+    }
+    await calibracion.update({ estado: 'CERRADO' });
+    return res.status(200).json({
+      success: true,
+      message: `Calibración con ID ${id} cerrada exitosamente`,
+    });
+  } catch (error) {
+    console.error('Error en closeCalibracione:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al cerrar la calibración',
+      error: error.message,
+    });
+  }
+};
