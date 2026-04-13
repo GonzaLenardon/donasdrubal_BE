@@ -77,6 +77,33 @@ export const updateMuestraAgua = async (req, res) => {
   }
 };
 
+export const closeMuestraAgua = async (req, res) => {
+  const { muestra_agua_id } = req.params;
+
+  console.log('Que llega al back ?', muestra_agua_id);
+
+  try {
+    const muetras_agua = await MuestraAgua.findByPk(muestra_agua_id);
+
+    if (!muetras_agua) {
+      return res.status(404).json({ error: 'Muestra Agua no encontrada' });
+    }
+
+    const resp = await muetras_agua.update({ estado: 'CERRADO' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Muestra Agua cerrada exitosamente',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Error al querere cerrar la muestra de agua',
+    });
+  }
+};
+
 export const getMuestrasAgua = async (req, res) => {
   const { muestra_agua_id } = req.params;
 
@@ -101,26 +128,21 @@ export const getMuestrasAgua = async (req, res) => {
 export const getMuestrasAguaPozo = async (req, res) => {
   const { pozo_id } = req.params;
   try {
-
- const resp = await Pozo.findOne({
+    const resp = await Pozo.findOne({
       where: { id: pozo_id },
       attributes: ['id', 'nombre', 'establecimiento'],
       include: [
         {
           model: Clientes,
           as: 'cliente',
-          attributes: [
-            'id',
-            'razon_social',
-            'telefono',
-          ],
+          attributes: ['id', 'razon_social', 'telefono'],
         },
         {
           model: MuestraAgua,
           as: 'muestrasAgua',
-        }
+        },
       ],
-    });    
+    });
 
     return res.status(200).json({
       message: 'Muestrasa de Agua del Pozo obtenidas correctamente',
@@ -157,27 +179,21 @@ export const getMuestrasAguaPozoCliente = async (req, res) => {
   try {
     // const pozo = await Pozo.findOne({ where: { id: pozo_id, cliente_id } });
 
-
-const pozo = await Pozo.findOne({
-      where: { id: pozo_id, cliente_id } ,
+    const pozo = await Pozo.findOne({
+      where: { id: pozo_id, cliente_id },
       attributes: ['id', 'nombre', 'establecimiento'],
       include: [
         {
           model: Clientes,
           as: 'cliente',
-          attributes: [
-            'id',
-            'razon_social',
-            'telefono',
-          ],
+          attributes: ['id', 'razon_social', 'telefono'],
         },
         {
           model: MuestraAgua,
           as: 'muestrasAgua',
-        }
+        },
       ],
-    });    
-
+    });
 
     if (!pozo) {
       return res
@@ -231,12 +247,12 @@ export const getMuestraAguaPozoCliente = async (req, res) => {
 };
 
 export const previssualizarPdf = async (req, res) => {
-try {
-    const {cliente_id, pozos_ids } = req.body;
+  try {
+    const { cliente_id, pozos_ids } = req.body;
     informe = new pdfAguaService();
     const resultado = await informe.generarInformeCalidadAgua(
       cliente_id,
-      pozos_ids
+      pozos_ids,
     );
 
     if (!resultado.success || !resultado.path) {
@@ -258,8 +274,7 @@ try {
       error: error.message,
     });
   }
-}
-
+};
 
 const calcularDosis = (dureza) => {
   const cantAguaLitros = parseFloat(process.env.CANT_AGUA_MUESTRA_LITROS);

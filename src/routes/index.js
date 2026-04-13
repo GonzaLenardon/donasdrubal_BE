@@ -299,6 +299,12 @@ router.put(
   '/muestras_agua/:muestra_agua_id',
   muestrasAguaController.updateMuestraAgua,
 );
+
+router.put(
+  '/muestras_agua/close/:muestra_agua_id',
+  muestrasAguaController.closeMuestraAgua,
+);
+
 router.get(
   '/pozos/:pozo_id/muestras_agua',
   muestrasAguaController.getMuestrasAguaPozo,
