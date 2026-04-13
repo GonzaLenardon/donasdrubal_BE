@@ -24,7 +24,10 @@ ClienteIngenieros.init(
     modelName: 'ClienteIngenieros',
     tableName: 'cliente_ingenieros',
     timestamps: false,
+    id: false,
   },
 );
+
+ClienteIngenieros.removeAttribute('id');
 
 export default ClienteIngenieros;
