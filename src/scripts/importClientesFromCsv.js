@@ -2,9 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import db from '../config/database.js';
 import Clientes from '../models/clientes.js';
+import Users from '../models/users.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Maquinas from '../models/maquinas.js';
+import Calibraciones from '../models/calibraciones.js';
 import Pozo from '../models/pozo.js';
+import MuestraAgua from '../models/muestra_agua.js';
 import Jornada from '../models/jornada.js';
 
 const CSV_PATH = path.resolve('src', 'assets', 'clientes_import.csv');
@@ -110,27 +113,30 @@ const importClients = async () => {
           },
           { transaction },
         );
-         console.log('Ingenieros asignados al cliente:', ingenieros);
-    const relacionesIngenieros = ingenieros.map((ing) => ({
-      cliente_id: cliente.id,
-      user_id: parseInt(ing.user_id),
-      es_principal: !!ing.es_principal,
-    }));
 
-    await ClienteIngenieros.bulkCreate(relacionesIngenieros);
-    console.log('----------------------------');
-        // if (ingenieros.length > 0) {
-        //   for (const ing of ingenieros) {
-        //     await ClienteIngenieros.create(
-        //       {
-        //         cliente_id: cliente.id,
-        //         user_id: ing.user_id,
-        //         es_principal: ing.es_principal,
-        //       },
-        //       { transaction },
-        //     );
-        //   }
-        // }
+        // ✅ Crear usuario asociado al cliente
+        const usuarioCliente = await Users.create(
+          {
+            nombre: razon_social,
+            email: email,
+            password: '123456', // Contraseña estándar
+            telefono: '0', // Teléfono por defecto
+          },
+          { transaction },
+        );
+
+        // Actualizar cliente con user_id
+        await cliente.update({ user_id: usuarioCliente.id }, { transaction });
+
+        console.log('Ingenieros asignados al cliente:', ingenieros);
+        const relacionesIngenieros = ingenieros.map((ing) => ({
+          cliente_id: cliente.id,
+          user_id: parseInt(ing.user_id),
+          es_principal: !!ing.es_principal,
+        }));
+
+        await ClienteIngenieros.bulkCreate(relacionesIngenieros, { transaction });
+        console.log('----------------------------');
 
         if (maquinasCount > 0) {
           const maquinas = Array.from({ length: maquinasCount }, (_, index) => ({
@@ -143,7 +149,16 @@ const importClients = async () => {
             responsable: 'Importado CSV',
             cliente_id: cliente.id,
           }));
-          await Maquinas.bulkCreate(maquinas, { transaction });
+          const maquinasCreadas = await Maquinas.bulkCreate(maquinas, { transaction });
+
+          // ✅ Crear calibración para cada máquina
+          const calibraciones = maquinasCreadas.map((maquina) => ({
+            maquina_id: maquina.id,
+            fecha: null,
+            responsable_id: null,
+            alerta: false,
+          }));
+          await Calibraciones.bulkCreate(calibraciones, { transaction });
         }
 
         if (pozosCount > 0) {
@@ -152,7 +167,15 @@ const importClients = async () => {
             establecimiento: 'Importado CSV',
             cliente_id: cliente.id,
           }));
-          await Pozo.bulkCreate(pozos, { transaction });
+          const pozosCreados = await Pozo.bulkCreate(pozos, { transaction });
+
+          // ✅ Crear muestra de agua para cada pozo
+          const muestras = pozosCreados.map((pozo) => ({
+            pozo_id: pozo.id,
+            estado: 'PENDIENTE',
+            alerta: false,
+          }));
+          await MuestraAgua.bulkCreate(muestras, { transaction });
         }
 
         if (jornadasCount > 0) {
@@ -164,7 +187,7 @@ const importClients = async () => {
           await Jornada.bulkCreate(jornadas, { transaction });
         }
 
-        console.log(`✅ Fila ${rowIndex + 2}: cliente importado "${razon_social}"`);
+        console.log(`✅ Fila ${rowIndex + 2}: cliente importado "${razon_social}" con usuario, calibraciones y muestras`);
         importedCount += 1;
       });
     }
