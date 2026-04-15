@@ -1,4 +1,4 @@
-import { extractModelFields } from "../utils/model/payload.js";
+import { extractModelFields } from '../utils/model/payload.js';
 import Jornada from '../models/jornada.js';
 
 export const allJornadas = async (req, res) => {
@@ -105,6 +105,31 @@ export const jornadasCliente = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
+export const closeJornada = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const jornada = await Jornada.findByPk(id);
+
+    if (!jornada) {
+      return res.status(404).json({ error: 'Jornada no encontrada' });
+    }
+
+    const resp = await jornada.update({ estado: 'CERRADO' });
+
+    return res.status(200).json({
+      message: 'Jornada cerrada exitosamente',
+      data: resp,
+    });
+  } catch (error) {
+    console.log('Erroreeeeeeeeeeeeee', error);
+    return res.status(500).json({
+      error: 'Error al CERRAR Jornada',
       details: error.message,
     });
   }
