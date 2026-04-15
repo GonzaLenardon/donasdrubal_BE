@@ -352,6 +352,7 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 // ========================================
 
 router.post('/alertas', controllersAlertas.add);
+router.put('/alertas/:id', controllersAlertas.update);
 router.post('/alertaservicios', controllersAlertas.addAllService);
 router.get('/alertas/to_user/:to_user_id', controllersAlertas.getByUserToId);
 router.get('/alertas/from_user/:from_user_id', controllersAlertas.getByUserFromId);

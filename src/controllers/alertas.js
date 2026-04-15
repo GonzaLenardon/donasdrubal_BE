@@ -220,7 +220,20 @@ const controllersAlertas = {
       });
     }
   },
+  update: async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
 
+    try {
+      const alerta = await Alertas.update(data, { where: { id } });
+      return res.status(200).json(alerta);
+    } catch (error) {
+      console.error('Error al actualizar Alerta de Servicios:', error);
+      return res.status(500).json({
+        message: 'Error al actualizar Alerta de Servicios',
+      });
+    }
+  },  
   getAll: async (req, res) => {
     try {
       const alertas = await Alertas.findAll();
