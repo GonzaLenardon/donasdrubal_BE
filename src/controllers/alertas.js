@@ -184,7 +184,7 @@ const controllersAlertas = {
         });
 
         console.log('Jornadas .......... ', jornada);
- */
+        */
       }
 
       /* =========================
@@ -232,6 +232,40 @@ const controllersAlertas = {
         .json({ message: 'Error al obtener Alertas de Servicios' });
     }
   },
+  getByUserFromId: async (req, res) => {
+    const {from_user_id} = req.params;
+    console.log('from_user_id', from_user_id);
+    console.log('parametros', req.params);
+    try {
+      const alertas = await Alertas.findAll({
+        where: {
+          usuario_from_id: from_user_id
+        }
+      });
+      return res.status(200).json(alertas);
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: 'Error al obtener Alertas Enviadas' });
+    }
+  },  
+  getByUserToId: async (req, res) => {
+    const {to_user_id} = req.params;
+    try {
+      const alertas = await Alertas.findAll({
+        where: {
+          usuario_to_id: to_user_id
+        }
+      });
+      return res.status(200).json(alertas);
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: 'Error al obtener Alertas Recibidas' });
+    }
+  },    
 };
 
 export default controllersAlertas;
