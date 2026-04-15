@@ -351,9 +351,10 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 // RUTAS PROTEGIDAS - ALERTAS SERVICIOS
 // ========================================
 
-router.post('/alertaservicios', controllersAlertas.add);
-
-router.post('/alertas', controllersAlertas.addAllService);
+router.post('/alertas', controllersAlertas.add);
+router.post('/alertaservicios', controllersAlertas.addAllService);
+router.get('/alertas/to_user/:to_user_id', controllersAlertas.getByUserToId);
+router.get('/alertas/from_user/:from_user_id', controllersAlertas.getByUserFromId);
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF MUESTRAS DE AGUA
 // =============================================================

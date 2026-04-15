@@ -1,4 +1,4 @@
-// matchea los campos definidos en el modelo con lo enviado desde el formatInTimeZone
+// matchea los campos definidos en el modelo con lo enviado
 // extraExclude = [] se usa para exluir algunos campos adicionales
 // ejemplo uso const payload = extractModelFields(User, req.body, ['password_hash']);
 

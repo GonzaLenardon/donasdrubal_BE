@@ -15,6 +15,7 @@ export const ENTIDAD_TIPOS = {
   MUESTRA_AGUA: 'muestra_agua',
   JORNADA: 'jornada',
   POZO: 'pozo',
+  MAQUINA: 'maquina',
   CLIENTE: 'cliente',
   USER: 'user',
 };
@@ -25,6 +26,7 @@ export const ENTIDAD_TO_MODEL = {
   [ENTIDAD_TIPOS.MUESTRA_AGUA]: 'MuestraAgua',
   [ENTIDAD_TIPOS.JORNADA]: 'Jornada',
   [ENTIDAD_TIPOS.POZO]: 'Pozo',
+  [ENTIDAD_TIPOS.MAQUINA]: 'Maquina',
   [ENTIDAD_TIPOS.CLIENTE]: 'Cliente',
   [ENTIDAD_TIPOS.USER]: 'User',
 };
@@ -35,6 +37,7 @@ export const ENTIDAD_TO_TABLE = {
   [ENTIDAD_TIPOS.MUESTRA_AGUA]: 'muestras_agua',
   [ENTIDAD_TIPOS.JORNADA]: 'jornadas',
   [ENTIDAD_TIPOS.POZO]: 'pozos',
+  [ENTIDAD_TIPOS.MAQUINA]: 'maquinas',
   [ENTIDAD_TIPOS.CLIENTE]: 'clientes',
   [ENTIDAD_TIPOS.USER]: 'users',
 };
@@ -44,6 +47,7 @@ export const ENTIDAD_CATEGORIA = {
   [ENTIDAD_TIPOS.CALIBRACION]: 'servicio',
   [ENTIDAD_TIPOS.MUESTRA_AGUA]: 'servicio',
   [ENTIDAD_TIPOS.JORNADA]: 'servicio',
+  [ENTIDAD_TIPOS.MAQUINA]: 'infraestructura',
   [ENTIDAD_TIPOS.POZO]: 'infraestructura',
   [ENTIDAD_TIPOS.CLIENTE]: 'cliente',
   [ENTIDAD_TIPOS.USER]: 'usuario',
@@ -107,6 +111,7 @@ Alertas.init(
             ENTIDAD_TIPOS.MUESTRA_AGUA,
             ENTIDAD_TIPOS.JORNADA,
             ENTIDAD_TIPOS.POZO,
+            ENTIDAD_TIPOS.MAQUINA,
             ENTIDAD_TIPOS.CLIENTE,
             ENTIDAD_TIPOS.USER,
           ],
@@ -131,6 +136,7 @@ Alertas.init(
             // Servicios
             'servicio_vencido',
             'servicio_proximo',
+            // Calibraciones
             'calibracion_vencida',
             'calibracion_proxima',
             // Muestras
@@ -146,6 +152,7 @@ Alertas.init(
             // Sistema
             'tarea_asignada',
             'mensaje_recibido',
+            'mensaje_enviado',
             'recordatorio',
           ],
         ],
