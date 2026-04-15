@@ -146,6 +146,11 @@ export const allServicesToClients = async (req, res) => {
             },
           ],
         },
+
+        {
+          model: Jornada,
+          as: 'jornadas',
+        },
       ],
     });
 

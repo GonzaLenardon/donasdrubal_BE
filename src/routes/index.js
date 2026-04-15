@@ -330,6 +330,7 @@ router.get('/jornadas', jornadaController.allJornadas);
 router.get('/jornadas/:jornada_id', jornadaController.getJornada);
 router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
 router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
+router.put('/jornadas/close/:id', jornadaController.closeJornada);
 router.put(
   '/cliente/:cliente_id/jornadas/:jornada_id',
   jornadaController.updateJornada,
@@ -355,7 +356,10 @@ router.post('/alertas', controllersAlertas.add);
 router.put('/alertas/:id', controllersAlertas.update);
 router.post('/alertaservicios', controllersAlertas.addAllService);
 router.get('/alertas/to_user/:to_user_id', controllersAlertas.getByUserToId);
-router.get('/alertas/from_user/:from_user_id', controllersAlertas.getByUserFromId);
+router.get(
+  '/alertas/from_user/:from_user_id',
+  controllersAlertas.getByUserFromId,
+);
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF MUESTRAS DE AGUA
 // =============================================================
