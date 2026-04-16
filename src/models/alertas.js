@@ -136,6 +136,7 @@ Alertas.init(
             // Servicios
             'servicio_vencido',
             'servicio_proximo',
+            'servicio_sin_configurar',
             // Calibraciones
             'calibracion_vencida',
             'calibracion_proxima',
@@ -166,7 +167,7 @@ Alertas.init(
       comment: 'Categoría general para agrupar',
       validate: {
         isIn: [
-          ['servicio', 'muestra', 'jornada', 'cliente', 'sistema', 'tarea'],
+          ['clientes', 'maquinas', 'pozos', 'jornadas', 'servicios', 'muestras_agua', 'sistema', 'tarea', 'alertas', 'notificaciones', 'otros'],
         ],
       },
     },
