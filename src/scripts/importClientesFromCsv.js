@@ -9,6 +9,9 @@ import Calibraciones from '../models/calibraciones.js';
 import Pozo from '../models/pozo.js';
 import MuestraAgua from '../models/muestra_agua.js';
 import Jornada from '../models/jornada.js';
+import Roles from '../models/roles.js';
+import UserRoles from '../models/user_roles.js';
+import { Op } from 'sequelize';
 
 const CSV_PATH = path.resolve('src', 'assets', 'clientes_import.csv');
 const TIPO_CLIENTE_MAP = {
@@ -57,6 +60,11 @@ const importClients = async () => {
     const rows = lines; // El archivo ya no tiene cabecera
     let importedCount = 0;
     let skippedCount = 0;
+
+    const roles = await Roles.findOne({
+        where: { nombre: { [Op.like]: '%Cliente%' } },
+    });
+    const role_id = roles ? roles.id : 4; // ID del rol "Cliente" (ajustar según tu base de datos)
 
     for (const [rowIndex, line] of rows.entries()) {
       const columns = parseCsvLine(line);
@@ -124,6 +132,15 @@ const importClients = async () => {
           },
           { transaction },
         );
+
+        // Crear relación user_roles
+          await UserRoles.create(
+            {
+              user_id: usuarioCliente.id, //new user_id
+              role_id: role_id,
+            },
+            { transaction },
+          );        
 
         // Actualizar cliente con user_id
         await cliente.update({ user_id: usuarioCliente.id }, { transaction });

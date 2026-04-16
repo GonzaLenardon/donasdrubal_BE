@@ -23,7 +23,7 @@ const controllersAlertas = {
        1️⃣ Tipos base
     ========================== */
       const tipoCliente = await TipoClientes.findOne({
-        where: { tipoClientes: { [Op.like]: 'AAA%' } },
+        where: { tipoClientes: { [Op.like]: 'A' } },
       });
 
       const tipoServicioCalibracion = await TipoServicios.findOne({
@@ -55,9 +55,9 @@ const controllersAlertas = {
 
       for (const cliente of clientes) {
 
-      /* =====================================================
-         🔧 CALIBRACIONES (por máquina)
-      ====================================================== */
+        /* =====================================================
+          🔧 CALIBRACIONES (por máquina)
+        ====================================================== */
         const maquinas = await Maquinas.findAll({
           where: { cliente_id: cliente.id },
         });
@@ -77,8 +77,8 @@ const controllersAlertas = {
             // id_servicio_realizado: calibracion.id,
             entidad_id: calibracion.id,           // ← AGREGADO
             entidad_tipo: 'calibracion',              // ← AGREGADO
-            tipo_alerta: 'calibracion_proxima',    // ← AGREGADO
-            categoria: 'servicio',                 // ← AGREGADO
+            tipo_alerta: 'sin_configurar',    // ← AGREGADO
+            categoria: 'calibraciones',                 // ← AGREGADO
             titulo: `Calibración programada - ${maquina.nombre || 'Máquina'}`,  // ← AGREGADO
             mensaje: `Se ha programado una calibración para ${maquina.nombre || 'la máquina'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO
             fecha_vencimiento,
@@ -102,9 +102,13 @@ const controllersAlertas = {
           });
         }
 
+        await Alertas.bulkCreate(alertasGeneradas);
+
+        alertasGeneradas.length = 0;
+
         /* =====================================================
-         💧 MUESTRAS DE AGUA (por pozo)
-      ====================================================== */
+          💧 MUESTRAS DE AGUA (por pozo)
+        ====================================================== */
         const pozos = await Pozo.findAll({
           where: { cliente_id: cliente.id },
         });
@@ -124,8 +128,8 @@ const controllersAlertas = {
             // entidad_id: muestra.id,                // ← AGREGADO
             entidad_id: muestra.id,              // ← AGREGADO
             entidad_tipo: 'muestra_agua',        // ← AGREGADO
-            tipo_alerta: 'muestra_pendiente',      // ← AGREGADO
-            categoria: 'muestra',                  // ← AGREGADO
+            tipo_alerta: 'servicio_sin_configurar',      // ← AGREGADO
+            categoria: 'muestras_agua',                  // ← AGREGADO
             titulo: `Muestra de agua pendiente - ${pozo.nombre || 'Pozo'}`,  // ← AGREGADO
             mensaje: `Se ha programado un análisis de agua para ${pozo.nombre || 'el pozo'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO            
             fecha_vencimiento,
@@ -146,6 +150,14 @@ const controllersAlertas = {
           });
         }
 
+        await Alertas.bulkCreate(alertasGeneradas);
+        
+        alertasGeneradas.length = 0;        
+
+        /* =====================================================
+          JORNADAS DE CAPACITACIÓN (1 por cliente)
+        ====================================================== */        
+
         for (let index = 0; index < 2; index++) {
           const newJornada = await Jornada.create({
             cliente_id: cliente.id,
@@ -159,7 +171,7 @@ const controllersAlertas = {
             // entidad_id: newJornada.id,             // ← AGREGADO
             entidad_id: newJornada.id,              // ← AGREGADO
             entidad_tipo: 'jornada',              // ← AGREGADO
-            tipo_alerta: 'jornada_programada',     // ← AGREGADO
+            tipo_alerta: 'servicio_sin_configurar',     // ← AGREGADO
             categoria: 'jornada',                  // ← AGREGADO
             titulo: `Jornada de capacitación programada`,  // ← AGREGADO
             mensaje: `Se ha programado una jornada de capacitación para el cliente ${cliente.razon_social}. Fecha: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO            
@@ -178,19 +190,11 @@ const controllersAlertas = {
             }
           });
         }
+        await Alertas.bulkCreate(alertasGeneradas);
+        alertasGeneradas.length = 0;  
 
-        /*   const jornada = await Jornada.findAll({
-          where: { cliente_id: cliente.id },
-        });
-
-        console.log('Jornadas .......... ', jornada);
-        */
       }
 
-      /* =========================
-       3️⃣ Inserción masiva
-    ========================== */
-      await Alertas.bulkCreate(alertasGeneradas);
 
       return res.status(200).json({
         message: 'Servicios y alertas generados correctamente',
