@@ -104,6 +104,34 @@ export const closeMuestraAgua = async (req, res) => {
   }
 };
 
+
+export const openMuestraAgua = async (req, res) => {
+  const { muestra_agua_id } = req.params;
+
+  
+
+  try {
+    const muetras_agua = await MuestraAgua.findByPk(muestra_agua_id);
+
+    if (!muetras_agua) {
+      return res.status(404).json({ error: 'Muestra Agua no encontrada' });
+    }
+
+    const resp = await muetras_agua.update({ estado: 'PENDIENTE' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Muestra Agua abierta exitosamente',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Error al querere abrir la muestra de agua',
+    });
+  }
+};
+
 export const getMuestrasAgua = async (req, res) => {
   const { muestra_agua_id } = req.params;
 
