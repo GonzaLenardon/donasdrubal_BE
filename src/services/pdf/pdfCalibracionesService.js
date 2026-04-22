@@ -11,13 +11,14 @@ import MaquinaTipo from '../../models/maquina_tipo.js';
 import Users from '../../models/users.js';
 import * as parseUtils from '../../utils/common/parseJson.js';
 import * as pdfUtils from '../../utils/pdf/pdfUtlis.js';
+import * as imagesUtils from '../../utils/images/imagesUtils.js';
 import { Ticks } from 'chart.js';
 
 class pdfCalibracionesService {
 
   constructor() {
     //uploads/clientes/{clienteId}/maquinas/{maquinaId}/calibraciones/{calibracionCodigo}/imagenes/
-    this.outputDir = path.join(process.cwd(), 'public', 'reports');
+    this.outputDir = path.join(process.cwd(), 'public', 'reports', 'calibraciones');
     this.assetsUrl = path.join(process.cwd(), 'src', 'assets');
     this.imagesUrl = path.join(process.cwd(), 'uploads', 'clientes');
     this.informesPath = path.join(process.cwd(), 'uploads', 'clientes');
@@ -59,7 +60,7 @@ class pdfCalibracionesService {
     console.log('Calibración encontrada:', calibracion.toJSON());
     console.log('Datos preparados para PDF:', datos);
 
-    await fs.mkdir(this.outputDir, { recursive: true });
+    
 
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -321,7 +322,7 @@ class pdfCalibracionesService {
       // ================= IMAGEN =================
 
       if (estado.nombre_archivo) {
-        const imgData = await this.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
+        const imgData = await imagesUtils.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
 
         if (imgData) {
           page.drawImage(imgData.image, {
@@ -669,8 +670,8 @@ class pdfCalibracionesService {
       });
 
       p.drawText(
-        `Don Asdrúbal S.R.L - Departamento I+D  - Página ${index + 1} de ${totalPages}-`,
-        // `Don Asdrúbal S.R.L - Departamento I+D  - Página ${index + 1} de ${totalPages}-   ${datos.ingenieroResponsable || ''}`,
+        `Don Asdrúbal S.R.L - Departamento I+D   - Página ${index + 1} de ${totalPages} -   `,
+        // `Don Asdrúbal S.R.L - Departamento I+D   - Página ${index + 1} de ${totalPages} -   ${datos.ingenieroResponsable || ''}`,
         {
           x: 60,
           y: 35,
@@ -701,11 +702,8 @@ class pdfCalibracionesService {
         console.log('ruta', rutaExtra);
       }
     }
-    //-----------------------------------
 
 
-    const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
-    const outputPath = path.join(this.outputDir, filename);
     // // CODIGO PARA OBLIGAR A DESCARGAR EL ARCHIVO
     // return {
     //   pdfBytes,
@@ -714,7 +712,13 @@ class pdfCalibracionesService {
 
     // CODIGO DE ABAJO SI SE QUIERE GUARDAR EL ARCHIVO EN EL SERVIDOR 
     // EN LUGAR DE RETORNAR LOS BYTES PARA DESCARGA DIRECTA 
+    // -----------------------------------
+    // Si se quiere guardar el informe en el servidor en lugar de retornar los bytes para descarga directa, se descomenta el siguiente bloque y se comenta el bloque de retorno de bytes
+    await fs.mkdir(this.outputDir, { recursive: true });
+    const filename = `calibracion_${calibracionId}_${Date.now()}.pdf`;
+    const outputPath = path.join(this.outputDir, filename);
     await fs.writeFile(outputPath, pdfBytes);
+    //------------------------------------------------------     
 
     return {
       success: true,
@@ -747,8 +751,8 @@ class pdfCalibracionesService {
     });
 
     // ------------- LOGOS -----------------
-    const logoDA = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
-
+    // LOGO DA
+    const logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
     if (logoDA) {
       page.drawImage(logoDA.image, {
         x: margin - 10,
@@ -759,7 +763,8 @@ class pdfCalibracionesService {
 
 
     }
-    const agrospData = await this.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_agrospray.png', 150, 100);
+    //LOGO AGROSPRAY
+    const agrospData = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_agrospray.png', 150, 100);
 
     if (agrospData) {
       page.drawImage(agrospData.image, {
@@ -788,6 +793,14 @@ class pdfCalibracionesService {
       y: cursorY - 15,
       size: 10,
       font: fontBold,
+      color: rgb(0, 0, 0)
+    });
+
+    page.drawText(`Ing. Responsable: ${datos.ingenieroResponsable  || '-'}`, {
+      x: margin,
+      y: cursorY - 30,
+      size: 10,
+      font,
       color: rgb(0, 0, 0)
     });
 
@@ -831,7 +844,7 @@ class pdfCalibracionesService {
 
     //----------IMAGEN PRINCIPAL ----------------
 
-    const imgPrincipalData = await this.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 800, 150);
+    const imgPrincipalData = await imagesUtils.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 800, 150);
     if (imgPrincipalData) {
       page.drawImage(imgPrincipalData.image, {
         x: (width - imgPrincipalData.width) / 2,
@@ -1178,7 +1191,7 @@ class pdfCalibracionesService {
 
     // ===== IMAGEN =====
     if (estado.nombre_archivo) {
-      const imgData = await this.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
+      const imgData = await imagesUtils.getImageDimensions(pdfDoc, this.imagesUrl, estado.nombre_archivo);
 
       if (imgData) {
         altura += imgData.height + 10;
@@ -1237,7 +1250,7 @@ class pdfCalibracionesService {
 
       observaciones_acronex: calibracion.observaciones_acronex || '',
       observaciones_generales: calibracion.observaciones_generales || '',
-      ingenieroResponsable: calibracion.ingenieroResponsable.nombre || '',
+      ingenieroResponsable: calibracion.ingenieroResponsable?.nombre || '',
 
       secciones: calibracion.secciones
         ? parseUtils.parseJsonField(calibracion.secciones)
@@ -1320,29 +1333,27 @@ class pdfCalibracionesService {
         : {}
     };
   }
+// async embedImage(pdfDoc, imagesUrl, nombreArchivo) {
 
+//     if (!nombreArchivo) return null;
 
-  async embedImage(pdfDoc, imagesUrl, nombreArchivo) {
+//     try {
+//       const ruta = path.join(imagesUrl, nombreArchivo);
 
-    if (!nombreArchivo) return null;
+//       const imageBytes = await fs.readFile(ruta);
+//       const extension = path.extname(nombreArchivo).toLowerCase();
 
-    try {
-      const ruta = path.join(imagesUrl, nombreArchivo);
+//       if (extension === '.png') {
+//         return await pdfDoc.embedPng(imageBytes);
+//       }
 
-      const imageBytes = await fs.readFile(ruta);
-      const extension = path.extname(nombreArchivo).toLowerCase();
+//       return await pdfDoc.embedJpg(imageBytes);
 
-      if (extension === '.png') {
-        return await pdfDoc.embedPng(imageBytes);
-      }
-
-      return await pdfDoc.embedJpg(imageBytes);
-
-    } catch (err) {
-      console.log('No se pudo cargar imagen:', nombreArchivo);
-      return null;
-    }
-  }
+//     } catch (err) {
+//       console.log('No se pudo cargar imagen:', nombreArchivo);
+//       return null;
+//     }
+//   }
 
   getSugerenciasPredeterminadas(titulo) {
 
@@ -1451,34 +1462,34 @@ class pdfCalibracionesService {
     return await chartJSNodeCanvas.renderToBuffer(configuration);
   }
 
-  async getImageDimensions(pdfDoc, url, nombreArchivo, maxWidth = 200, maxHeight = 150) {
+  // async getImageDimensions(pdfDoc, url, nombreArchivo, maxWidth = 200, maxHeight = 150) {
 
-    if (!nombreArchivo) return null;
+  //   if (!nombreArchivo) return null;
 
-    const image = await this.embedImage(pdfDoc, url, nombreArchivo);
-    if (!image) return null;
+  //   const image = await this.embedImage(pdfDoc, url, nombreArchivo);
+  //   if (!image) return null;
 
-    const originalWidth = image.width;
-    const originalHeight = image.height;
+  //   const originalWidth = image.width;
+  //   const originalHeight = image.height;
 
-    let scale = 1;
+  //   let scale = 1;
 
-    // limitar por ancho
-    if (originalWidth > maxWidth) {
-      scale = maxWidth / originalWidth;
-    }
+  //   // limitar por ancho
+  //   if (originalWidth > maxWidth) {
+  //     scale = maxWidth / originalWidth;
+  //   }
 
-    // limitar por alto
-    if (originalHeight * scale > maxHeight) {
-      scale = maxHeight / originalHeight;
-    }
+  //   // limitar por alto
+  //   if (originalHeight * scale > maxHeight) {
+  //     scale = maxHeight / originalHeight;
+  //   }
 
-    return {
-      image,
-      width: originalWidth * scale,
-      height: originalHeight * scale
-    };
-  }
+  //   return {
+  //     image,
+  //     width: originalWidth * scale,
+  //     height: originalHeight * scale
+  //   };
+  // }
 
   drawFichaTecnica(page, {
     x,

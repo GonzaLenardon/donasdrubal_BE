@@ -8,12 +8,14 @@ import MuestraAgua from '../../models/muestra_agua.js';
 import Clientes from '../../models/clientes.js';
 import { FACTORES_CALIDAD_AGUA } from '../../config/constants/muestrasAgua.informeTextos.js';
 import * as pdfUtils from '../../utils/pdf/pdfUtlis.js';
+import * as imagesUtils from '../../utils/images/imagesUtils.js';
 
 class PdfMuestraAguaService {
   constructor() {
-    this.outputDir = path.join(process.cwd(), 'public', 'reports');
+    this.outputDir = path.join(process.cwd(), 'public', 'reports', 'muestras_agua');
     this.imagesUrl = path.join(process.cwd(), 'uploads', 'clientes');
     this.informesPath = path.join(process.cwd(), 'uploads', 'clientes');
+    this.assetsUrl = path.join(process.cwd(), 'src', 'assets');
     this.margin = 40;
   }
 
@@ -29,35 +31,36 @@ class PdfMuestraAguaService {
 
     page.drawRectangle({
       x: 0,
-      y: height - 60,
+      y: height - 130,
       width,
-      height: 60,
+      height: 5,
       color: rgb(0.1, 0.4, 0.2),
     });
 
     page.drawText(titulo, {
       x: margin,
-      y: height - 30,
+      y: height - 95,
       size: 14,
       font: fontBold,
-      color: rgb(1, 1, 1),
+      color: rgb(0.1, 0.1, 0.1),
     });
 
     page.drawText(`Cliente: ${clienteNombre}`, {
       x: margin,
-      y: height - 45,
+      y: height - 110,
       size: 10,
       font,
-      color: rgb(1, 1, 1),
+      color: rgb(0.1, 0.1, 0.1),
     });
 
     page.drawText(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, {
       x: width - 150,
-      y: height - 45,
+      y: height - 110,
       size: 10,
       font,
-      color: rgb(1, 1, 1),
+      color: rgb(0.1, 0.1, 0.1),
     });
+
   }
 
   /**
@@ -496,7 +499,20 @@ getPathInforme(pathInforme, nombreArchivo) {
     let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
     const { margin } = this;
-    let cursorY = height - 50;
+    let cursorY = height - 70;
+
+    // ------------- LOGOS -----------------
+    // LOGO DA
+    let logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
+      console.log('LOGO DA:', logoDA);
+    if (logoDA) {
+        page.drawImage(logoDA.image, {
+          x: margin - 10,
+          y: cursorY,
+          width: logoDA.width,
+          height: logoDA.height
+        });
+    }    
 
     // ── Header ──────────────────────────────────────────────────────────
     this._drawHeader({
@@ -509,7 +525,8 @@ getPathInforme(pathInforme, nombreArchivo) {
       clienteNombre: cliente?.razon_social ?? '-',
     });
 
-    cursorY -= 60;
+    cursorY -= 90;
+  
 
     // ── Tabla principal ─────────────────────────────────────────────────
     const headers = [
@@ -658,7 +675,19 @@ cursorY = durezaResult.cursorY - 40;
     let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
     const { margin } = this;
-    let cursorY = height - 50;
+    let cursorY = height - 70;
+
+    // ------------- LOGOS -----------------
+    // LOGO DA
+    const logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
+    if (logoDA) {
+        page.drawImage(logoDA.image, {
+          x: margin - 10,
+          y: cursorY,
+          width: logoDA.width,
+          height: logoDA.height
+        });
+    }        
 
     // ── Header ──────────────────────────────────────────────────────────
     this._drawHeader({
@@ -671,7 +700,7 @@ cursorY = durezaResult.cursorY - 40;
       clienteNombre: cliente?.razon_social ?? '-',
     });
 
-    cursorY -= 60;
+    cursorY -= 100;
 
     // ── Info del pozo y muestra ─────────────────────────────────────────
     page.drawText(`Pozo: ${pozo?.nombre ?? '-'}`, {
