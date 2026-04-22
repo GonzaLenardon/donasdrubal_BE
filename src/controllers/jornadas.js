@@ -134,3 +134,29 @@ export const closeJornada = async (req, res) => {
     });
   }
 };
+
+
+export const openJornada = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const jornada = await Jornada.findByPk(id);
+
+    if (!jornada) {
+      return res.status(404).json({ error: 'Jornada no encontrada' });
+    }
+
+    const resp = await jornada.update({ estado: 'PENDIENTE' });
+
+    return res.status(200).json({
+      message: 'Jornada abierta exitosamente',
+      data: resp,
+    });
+  } catch (error) {
+    console.log('Erroreeeeeeeeeeeeee', error);
+    return res.status(500).json({
+      error: 'Error al CERRAR Jornada',
+      details: error.message,
+    });
+  }
+};

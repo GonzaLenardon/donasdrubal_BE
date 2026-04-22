@@ -149,7 +149,7 @@ const addUser = async (req, res) => {
 const updateUser = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { id, nombre, email, telefono, role_id } = req.body;
+    const { id, nombre, email, telefono, role_id, password } = req.body;
 
     const user = await Users.findOne({ where: { id } });
 
@@ -159,7 +159,12 @@ const updateUser = async (req, res) => {
     const role = await Roles.findByPk(role_id);
     if (!role) return res.status(400).json({ error: 'Rol no registrado' });
 
-    await user.update({ nombre, email, telefono }, { transaction: t });
+    const updateData = { nombre, email, telefono };
+
+    if (password) {
+      updateData.password = password;
+    }
+    await user.update(updateData, { transaction: t });
 
     await user.setRoles([role_id], { transaction: t });
     await t.commit();
@@ -300,13 +305,11 @@ const login = async (req, res) => {
         through: { attributes: [] }, // oculta user_roles
       },
     });
-    if (!user)
-      return res.status(401).json({ mensaje: 'Usuario no encontrado' });
+    if (!user) return res.status(400).json({ mensaje: 'Datos invalidos' });
 
     const isValid = await user.validatePass(password);
 
-    if (!isValid)
-      return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+    if (!isValid) return res.status(400).json({ mensaje: 'Datos invalidos' });
 
     const payload = {
       id: user.id,

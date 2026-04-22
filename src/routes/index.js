@@ -167,6 +167,11 @@ router.put(
   calibracionController.closeCalibraciones,
 );
 
+
+router.put(
+  '/calibraciones/open/:id', calibracionController.openCalibraciones
+);
+
 /*router.post(
   '/calibraciones/upload',
   (req, res, next) => {
@@ -305,6 +310,11 @@ router.put(
   muestrasAguaController.closeMuestraAgua,
 );
 
+router.put(
+  '/muestras_agua/open/:muestra_agua_id',
+  muestrasAguaController.openMuestraAgua,
+);
+
 router.get(
   '/pozos/:pozo_id/muestras_agua',
   muestrasAguaController.getMuestrasAguaPozo,
@@ -331,6 +341,8 @@ router.get('/jornadas/:jornada_id', jornadaController.getJornada);
 router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
 router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
 router.put('/jornadas/close/:id', jornadaController.closeJornada);
+router.put('/jornadas/open/:id', jornadaController.openJornada);
+
 router.put(
   '/cliente/:cliente_id/jornadas/:jornada_id',
   jornadaController.updateJornada,
