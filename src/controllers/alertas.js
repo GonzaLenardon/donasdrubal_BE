@@ -1,6 +1,7 @@
 //controllers/alertas.js
 import {
   Clientes,
+  Users,
   Maquinas,
   Pozo,
   MuestraAgua,
@@ -13,6 +14,7 @@ import {
 import dayjs from 'dayjs';
 import { allMuestrasAgua } from './muestras_agua.js';
 import { Op } from 'sequelize';
+import { allIngenieros } from './users.js';
 
 const controllersAlertas = {
   addAllService: async (req, res) => {
@@ -49,11 +51,27 @@ const controllersAlertas = {
     ========================== */
       const clientes = await Clientes.findAll({
         where: { tipo_cliente_id: tipoCliente.id },
+        include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          attributes: ['id', 'nombre', 'email'],
+          required: false, 
+          through: {
+            attributes: ['es_principal'],
+            where: {
+              es_principal: 1
+            }
+          },
+        }],
       });
 
       const alertasGeneradas = [];
 
       for (const cliente of clientes) {
+        // console.log('Cliente:', cliente);
+        console.log('Ingenieros asociados:', cliente.ingenieros.map(ing => ({ id: ing.id, nombre: ing.nombre, email: ing.email, es_principal: ing.ClienteIngenieros.es_principal })));
+        console.log('Ingeniero principal:', cliente.ingenieros[0]?.id ?? null);
 
         /* =====================================================
           🔧 CALIBRACIONES (por máquina)
@@ -72,7 +90,7 @@ const controllersAlertas = {
 
           alertasGeneradas.push({
             usuario_from_id: req.user.id, // Sistema
-            usuario_to_id: cliente.user_id,
+            usuario_to_id: cliente.ingenieros[0]?.id ?? cliente.user_id,
             // tipo_servicio_id: tipoServicioCalibracion.id,
             // id_servicio_realizado: calibracion.id,
             entidad_id: calibracion.id,           // ← AGREGADO
@@ -102,9 +120,9 @@ const controllersAlertas = {
           });
         }
 
-        await Alertas.bulkCreate(alertasGeneradas);
+        // await Alertas.bulkCreate(alertasGeneradas);
 
-        alertasGeneradas.length = 0;
+        // alertasGeneradas.length = 0;
 
         /* =====================================================
           💧 MUESTRAS DE AGUA (por pozo)
@@ -150,9 +168,9 @@ const controllersAlertas = {
           });
         }
 
-        await Alertas.bulkCreate(alertasGeneradas);
+        // await Alertas.bulkCreate(alertasGeneradas);
         
-        alertasGeneradas.length = 0;        
+        // alertasGeneradas.length = 0;        
 
         /* =====================================================
           JORNADAS DE CAPACITACIÓN (1 por cliente)
