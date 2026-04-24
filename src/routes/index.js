@@ -167,10 +167,7 @@ router.put(
   calibracionController.closeCalibraciones,
 );
 
-
-router.put(
-  '/calibraciones/open/:id', calibracionController.openCalibraciones
-);
+router.put('/calibraciones/open/:id', calibracionController.openCalibraciones);
 
 /*router.post(
   '/calibraciones/upload',
@@ -254,19 +251,10 @@ router.delete(
 // RUTAS PROTEGIDAS - MAQUINAS TIPOS (Solo Admin)
 // ========================================
 
-router.get(
-  '/maquinas_tipos',
-  verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.allMaquinaTipo,
-);
-router.post(
-  '/maquina_tipo',
-  verifyRole([ROLES.ADMIN]),
-  maquinaTipoController.addMaquinaTipo,
-);
+router.get('/maquinas_tipos', maquinaTipoController.allMaquinaTipo);
+router.post('/maquina_tipo', maquinaTipoController.addMaquinaTipo);
 router.put(
   '/maquina_tipo/:maquina_tipo_id',
-  verifyRole([ROLES.ADMIN]),
   maquinaTipoController.updateMaquinaTipo,
 );
 router.delete(
@@ -276,7 +264,6 @@ router.delete(
 );
 router.get(
   '/maquina_tipo/:maquina_tipo_id',
-  verifyRole([ROLES.ADMIN]),
   maquinaTipoController.getMaquinaTipo,
 );
 
