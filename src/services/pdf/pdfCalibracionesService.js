@@ -113,16 +113,16 @@ class pdfCalibracionesService {
       { titulo: 'Bomba', data: datos.estado_bomba, tipo: 'bomba' },
       { titulo: 'Agitador', data: datos.estado_agitador, tipo: 'normal' },
 
-      { titulo: 'Filtro Primario:', subTitulo: 'Protege a la bomba de pulverización', data: datos.estado_filtroPrimario, tipo: 'filtro' },
+      { titulo: 'Filtro Primario', subTitulo: 'Protege a la bomba de pulverización', data: datos.estado_filtroPrimario, tipo: 'filtro' },
       { titulo: 'Filtro Secundario', subTitulo: 'Protegen caudalímetro, electroválvulas', data: datos.estado_filtroSecundario, tipo: 'filtro' },
       { titulo: 'Filtro Línea', subTitulo: 'Protegen a las boquillas de taponamiento', data: datos.estado_filtroLinea, tipo: 'filtro' },
 
       { titulo: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones, tipo: 'normal' },
       { titulo: 'Antigoteo', data: datos.estado_antigoteo, tipo: 'normal' },
       { titulo: 'Limpieza Tanque', data: datos.estado_limpiezaTanque, tipo: 'normal' },
-      { titulo: 'Pastillas', subTitulo: datos.estado_pastillas?.informe_pastillas ? 'Ver anexo informe FLUXIM ' : undefined, data: datos.estado_pastillas, tipo: 'pastillas' },
       { titulo: 'Estabilidad Vertical Botalón', data: datos.estabilidadVerticalBotalon, tipo: 'normal' },
-      { titulo: 'Mixer', data: datos.mixer, tipo: 'normal' }
+      { titulo: 'Mixer', data: datos.mixer, tipo: 'normal' },
+      { titulo: 'Pastillas', subTitulo: datos.estado_pastillas?.informe_pastillas ? 'Ver anexo informe FLUXIM ' : undefined, data: datos.estado_pastillas, tipo: 'pastillas' },
     ];
 
 
@@ -779,7 +779,7 @@ class pdfCalibracionesService {
     cursorY = cursorY - 35;
     //---INFO GENERAL----------------
 
-    page.drawText('RESUMEN GENERAL DE CALIBRACIÓN', {
+    page.drawText('RESUMEN GENERAL DE CALIBRACIÓN - ' + (datos.fecha ? datos.fecha : ''), {
       x: margin,
       y: cursorY,
       size: 16,
@@ -1208,7 +1208,7 @@ class pdfCalibracionesService {
 
   prepararDatosTemplate(calibracion) {
 
-    const fecha = new Date(calibracion.fecha);
+    const fecha = calibracion.fecha ? new Date(calibracion.fecha) : null;
 
     const formatear = (estado = {}) => ({
       estado: estado.estado || 'NO APLICA',
@@ -1364,17 +1364,17 @@ class pdfCalibracionesService {
         'Mantener orden correcto de filtros, Mesh de menos a más.'
       ],
 
-      'Filtro Secundario': [
-        'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
-        'Mantener orden correcto de filtros, Mesh de menos a más.'
-      ],
+      // 'Filtro Secundario': [
+      //   'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
+      //   'Mantener orden correcto de filtros, Mesh de menos a más.'
+      // ],
 
-      'Filtro Línea': [
-        'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
-        'Mantener orden correcto de filtros, Mesh de menos a más.'
-      ],
+      // 'Filtro Línea': [
+      //   'Mantener limpios los filtros y los vasos de los mismos de esta manera no generamos sobre esfuerzos en la bomba para mantener la presión y un desgaste prematuro en la misma y evitamos posibles fito en los cultivos.',
+      //   'Mantener orden correcto de filtros, Mesh de menos a más.'
+      // ],
 
-      'Antigoteo': [
+      'Mangueras y Conexiones': [
         'Mantener limpias las partes externas de la pulverizadora con MBM (Súper detergente industrial) para preservar las partes y la seguridad del operario.'
       ],
 
