@@ -950,17 +950,17 @@ class pdfCalibracionesService {
     cursorY -= 10;
     const componentes = [
       { nombre: 'Máquina', data: datos.estado_maquina },
-      { nombre: 'Bomba', data: datos.estado_bomba },
-      { nombre: 'Agitador', data: datos.estado_agitador },
-      { nombre: 'Filtro Primario:', data: datos.estado_filtroPrimario },
-      { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
-      { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
       { nombre: 'Mangueras y Conexiones', data: datos.estado_manguerayconexiones },
+      { nombre: 'Bomba', data: datos.estado_bomba },
       { nombre: 'Sistema Antigoteo', data: datos.estado_antigoteo },
+      { nombre: 'Agitador', data: datos.estado_agitador },
       { nombre: 'Limpieza Tanque', data: datos.estado_limpiezaTanque },
+      { nombre: 'Filtro Primario:', data: datos.estado_filtroPrimario },
       { nombre: 'Pastillas', data: datos.estado_pastillas },
+      { nombre: 'Filtro Secundario', data: datos.estado_filtroSecundario },
       { nombre: 'Estabilidad Botalón', data: datos.estabilidadVerticalBotalon },
-      { nombre: 'Mixer', data: datos.mixer }
+      { nombre: 'Filtro Línea', data: datos.estado_filtroLinea },
+      { nombre: 'Mixer', data: datos.mixer },
     ];
 
     const rowHeight = 24;
