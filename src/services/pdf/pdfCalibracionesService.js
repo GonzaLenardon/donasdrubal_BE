@@ -429,7 +429,7 @@ class pdfCalibracionesService {
     let margen_x_img = margin;
     let presure_img_height = 0;
     if (datos.presion_manometro.nombreArchivo) {
-      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -445,7 +445,7 @@ class pdfCalibracionesService {
     }
 
     if (datos.presion_computadora.nombreArchivo) {
-      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_computadora.nombreArchivo);
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_computadora.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -460,7 +460,7 @@ class pdfCalibracionesService {
       }
     }
     if (datos.presion_unimap.nombreArchivo) {
-      const image = await this.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -1466,7 +1466,7 @@ class pdfCalibracionesService {
 
   //   if (!nombreArchivo) return null;
 
-  //   const image = await this.embedImage(pdfDoc, url, nombreArchivo);
+  //   const image = await imagesUtils.embedImage(pdfDoc, url, nombreArchivo);
   //   if (!image) return null;
 
   //   const originalWidth = image.width;
