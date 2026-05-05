@@ -49,6 +49,7 @@ import {
   maquinasUser,
   updateMaquina,
   maquinasCliente,
+  delMaquina,
 } from '../controllers/maquinas.js';
 // import {
 //   addCalibraciones,
@@ -143,6 +144,8 @@ router.get('/cliente/:cliente_id', getCliente);
 // ========================================
 
 router.get('/maquinas', allMaquinas);
+router.delete('/maquinas/:id', verifyRole([ROLES.ADMIN]), delMaquina);
+
 /* router.get('/cliente/:cliente_id/maquinas', maquinasUser); */
 router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
 router.post('/cliente/:cliente_id/maquinas', addMaquina);
@@ -168,6 +171,11 @@ router.put(
 );
 
 router.put('/calibraciones/open/:id', calibracionController.openCalibraciones);
+router.delete(
+  '/calibraciones',
+  verifyRole([ROLES.ADMIN]),
+  calibracionController.delCalibraciones,
+);
 
 /*router.post(
   '/calibraciones/upload',

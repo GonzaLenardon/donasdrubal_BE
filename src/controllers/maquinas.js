@@ -1,6 +1,8 @@
 import Maquinas from '../models/maquinas.js';
+import Calibraciones from '../models/calibraciones.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import Cliente from '../models/clientes.js';
+import { where } from 'sequelize';
 
 export const allMaquinas = async (req, res) => {
   console.log('all Maquinas');
@@ -98,6 +100,45 @@ export const maquinasCliente = async (req, res) => {
     return res.status(200).json({
       message: 'Máquinas encontradas',
       data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
+
+export const delMaquina = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 🔎 Contar calibraciones asociadas
+    const cantidadCalibraciones = await Calibraciones.count({
+      where: { maquina_id: id },
+    });
+
+    // ❌ Si existen calibraciones → no permitir eliminar
+    if (cantidadCalibraciones > 0) {
+      return res.status(409).json({
+        error: `No se puede eliminar la máquina porque tiene ${cantidadCalibraciones} calibración${cantidadCalibraciones > 1 ? 'es' : ''} asociada${cantidadCalibraciones > 1 ? 's' : ''}.`,
+        calibraciones: cantidadCalibraciones,
+      });
+    }
+
+    // ✅ Si no tiene calibraciones → eliminar
+    const maquinaEliminada = await Maquinas.destroy({
+      where: { id },
+    });
+
+    if (!maquinaEliminada) {
+      return res.status(404).json({
+        error: 'La máquina no existe.',
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Máquina eliminada correctamente.',
     });
   } catch (error) {
     return res.status(500).json({
