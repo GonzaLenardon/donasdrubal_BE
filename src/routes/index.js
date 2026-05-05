@@ -73,7 +73,7 @@ import * as muestrasAguaController from '../controllers/muestras_agua.js';
 import * as jornadaController from '../controllers/jornadas.js';
 import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
-import * as dashboardController from '../controllers/clienteDashboard.js';
+import * as clientDashboardController from '../controllers/clienteDashboard.js';
 import * as userDashboard from '../controllers/userDashboard.js';
 
 import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
@@ -443,21 +443,34 @@ router.delete(
   RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
 
-router.get('/cliente/:cliente_id/stats', dashboardController.getClienteStats);
+router.get('/cliente/:cliente_id/stats', clientDashboardController.getClienteStats);
+
+router.get(
+  '/cliente/:cliente_id/analisis-chart',
+  clientDashboardController.getClienteAnalisisChart,
+);
+router.get(
+  '/cliente/:cliente_id/calibraciones-chart',
+  clientDashboardController.getClienteCalibracionesChart,
+);
+router.get(
+  '/cliente/:cliente_id/jornadas-chart',
+  clientDashboardController.getClienteJornadasChart,
+);
 
 router.get(
   '/cliente/:cliente_id/services-chart',
-  dashboardController.getClienteServicesChart,
+  clientDashboardController.getClienteServicesChart,
 );
 
 router.get(
   '/cliente/:cliente_id/machines-chart',
-  dashboardController.getClienteMachinesChart,
+  clientDashboardController.getClienteMachinesChart,
 );
 
 router.get(
   '/cliente/:cliente_id/upcoming-services',
-  dashboardController.getClienteUpcomingServices,
+  clientDashboardController.getClienteUpcomingServices,
 );
 
 // router.post('/informes/pozos', pozoController.multiInformesPozos);
