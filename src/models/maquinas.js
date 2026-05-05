@@ -52,7 +52,8 @@ Maquinas.init(
     sequelize: db,
     modelName: 'Maquinas',
     tableName: 'maquinas',
-    timestamps: false,
+    timestamps: true,
+    paranoid: true,
   },
 );
 
