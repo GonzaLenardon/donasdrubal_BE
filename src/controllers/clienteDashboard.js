@@ -1,5 +1,5 @@
 // controllers/dashboardController.js
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col} from 'sequelize';
 import Pozo from '../models/pozo.js';
 import Maquina from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
@@ -9,6 +9,7 @@ import MuestraAgua from '../models/muestra_agua.js';
 import Alertas, { ENTIDAD_TIPOS } from '../models/alertas.js';
 import Clientes from '../models/clientes.js';
 import Users from '../models/users.js';
+import db from '../config/database.js';
 
 export const getClienteStats = async (req, res) => {
   try {
@@ -63,7 +64,7 @@ export const getClienteStats = async (req, res) => {
       distinct: true,
       col: 'maquina_id',
       where: {
-        estado: 'COMPLETADO'
+        estado: 'CERRADO'
       },
       include: [{
         model: Maquina,
@@ -231,6 +232,182 @@ export const getClienteServicesChart = async (req, res) => {
       payload: data,
     });
 };
+
+// ==================== GET ANALISIS AGUA CHART ====================
+export const getClienteAnalisisChart = async (req, res) => {
+  // Agregaciones específicas para gráfico
+  const cliente_id = req.params.cliente_id;
+  console.log('🚜 Obteniendo gráfico de análisis de agua para cliente:', cliente_id);
+   const result = await MuestraAgua.findOne({
+    attributes: [
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'CERRADO' THEN 1 ELSE 0 END)
+        `),
+        'realizadas',
+      ],
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'EN PROCESO' THEN 1 ELSE 0 END)
+        `),
+        'en_proceso',
+      ],
+      [
+        db.literal(`
+          SUM(CASE 
+            WHEN estado IN ('PENDIENTE', 'VENCIDO') 
+            THEN 1 ELSE 0 END)
+        `),
+        'pendientes',
+      ],
+      [
+        db.literal(`COUNT(*)`),
+        'total',
+      ],
+    ],
+    include: [
+      {
+        model: Pozo,
+        as: 'pozo', // 👈 IMPORTANTE: debe coincidir con la asociación
+        attributes: [],
+        required: true,
+        where: {
+          cliente_id: cliente_id,
+        },
+      },
+    ],
+    raw: true,
+  });
+
+  const data = {
+    data: [
+      { name: 'Realizadas', value: Number(result.realizadas) || 0, color: '#3b82f6' },
+      { name: 'En Proceso', value: Number(result.en_proceso) || 0, color: '#f59e0b' },
+      { name: 'Pendientes', value: Number(result.pendientes) || 0, color: '#ef4444' },
+    ],
+    total: Number(result.total) || 0,
+  };
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
+};
+
+// ==================== GET CALIBRATION CHART ====================
+export const getClienteCalibracionesChart = async (req, res) => {
+  // Agregaciones específicas para gráfico
+  const cliente_id = req.params.cliente_id;
+ 
+  console.log('🚜 Obteniendo gráfico de calibración para cliente:', cliente_id);
+    const result = await Calibracion.findOne({
+    attributes: [
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'CERRADO' THEN 1 ELSE 0 END)
+        `),
+        'realizadas',
+      ],
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'EN PROCESO' THEN 1 ELSE 0 END)
+        `),
+        'en_proceso',
+      ],
+      [
+        db.literal(`
+          SUM(CASE 
+            WHEN estado IN ('PENDIENTE', 'VENCIDO') 
+            THEN 1 ELSE 0 END)
+        `),
+        'pendientes',
+      ],
+      [
+        db.literal(`COUNT(*)`),
+        'total',
+      ],
+    ],
+    include: [
+      {
+        model: Maquina,
+        as: 'maquina',
+        attributes: [],
+        required: true, // 🔥 IMPORTANTE (INNER JOIN real)
+        where: {
+          cliente_id: cliente_id,
+        },
+      },
+    ],
+    raw: true,
+  });
+  
+  const data =  {
+    data: [
+      { name: 'Realizadas', value: Number(result.realizadas) || 0 , color: '#10b981' },
+      { name: 'En Proceso', value: Number(result.en_proceso) || 0 , color: '#f59e0b' },
+      { name: 'Pendientes', value: Number(result.pendientes) || 0 , color: '#ef4444' }
+    ],
+    total: Number(result.total) || 0
+  };
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
+};
+
+
+// ==================== GET JORNADAS CHART ====================
+export const getClienteJornadasChart = async (req, res) => {
+  // Agregaciones específicas para gráfico
+  const cliente_id = req.params.cliente_id;
+  
+  console.log('🚜 Obteniendo gráfico de jornadas para cliente:', cliente_id);
+ const result = await Jornada.findOne({
+    attributes: [
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'CERRADO' THEN 1 ELSE 0 END)
+        `),
+        'realizadas',
+      ],
+      [
+        db.literal(`
+          SUM(CASE WHEN estado = 'EN PROCESO' THEN 1 ELSE 0 END)
+        `),
+        'en_proceso',
+      ],
+      [
+        db.literal(`
+          SUM(CASE 
+            WHEN estado IN ('PENDIENTE', 'VENCIDO') 
+            THEN 1 ELSE 0 END)
+        `),
+        'pendientes',
+      ],
+      [
+        db.literal(`COUNT(*)`),
+        'total',
+      ],
+    ],
+    where: {
+      cliente_id: cliente_id,
+    },
+    raw: true,
+  });
+
+  const data = {
+    data: [
+      { name: 'Realizadas', value: Number(result.realizadas) || 0, color: '#8b5cf6' },
+      { name: 'En Proceso', value: Number(result.en_proceso) || 0, color: '#f59e0b' },
+      { name: 'Pendientes', value: Number(result.pendientes) || 0, color: '#ef4444' },
+    ],
+    total: Number(result.total) || 0,
+  };
+    return res.status(200).json({
+      message: 'Estadísticas del cliente obtenidas correctamente',
+      payload: data,
+    });
+};
+
 
 export const getClienteMachinesChart = async (req, res) => {
   // Agregaciones específicas para gráfico
