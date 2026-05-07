@@ -1,12 +1,13 @@
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, Sequelize } from 'sequelize';
 import Pozo from '../models/pozo.js';
-import Maquina from '../models/maquinas.js';
+import Maquinas from '../models/maquinas.js';
 import MaquinaTipo from '../models/maquina_tipo.js';
 import Calibracion from '../models/calibraciones.js';
 import Jornada from '../models/jornada.js';
 import MuestraAgua from '../models/muestra_agua.js';
 import Alertas, { ENTIDAD_TIPOS } from '../models/alertas.js';
 import Clientes from '../models/clientes.js';
+import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
 
 export const getUserServices = async (req, res) => {
@@ -18,7 +19,7 @@ export const getUserServices = async (req, res) => {
         Calibracion.count({
           include: [
             {
-              model: Maquina,
+              model: Maquinas,
               as: 'maquina',
               where: {
                 cliente_id: {
@@ -88,7 +89,7 @@ export const getUserMachine = async (req, res) => {
         },
       }),
 
-      Maquina.count({
+      Maquinas.count({
         where: {
           cliente_id: {
             [Op.in]: clientes_ids,
@@ -116,7 +117,7 @@ export const getUserMachine = async (req, res) => {
     });
   }
 };
-
+/* 
 export const allServicesToClients = async (req, res) => {
   try {
     const { clientes_ids } = req.body;
@@ -137,7 +138,7 @@ export const allServicesToClients = async (req, res) => {
           ],
         },
         {
-          model: Maquina,
+          model: Maquinas,
           as: 'maquinas',
           include: [
             {
@@ -161,6 +162,516 @@ export const allServicesToClients = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: 'Error al obtener servicios',
+      error: error.message,
+    });
+  }
+}; */
+
+export const allServicesToClients = async (req, res) => {
+  try {
+    const { id: userId, rol } = req.user;
+
+    let clientesIds = [];
+
+    // ───────────────────────────────
+    // 1️⃣ Permisos
+    // ───────────────────────────────
+
+    if (rol === 'Administrador') {
+      const clientes = await Clientes.findAll({
+        attributes: ['id'],
+        raw: true,
+      });
+
+      clientesIds = clientes.map((c) => c.id);
+    } else if (rol === 'Ingeniero') {
+      const relaciones = await ClienteIngenieros.findAll({
+        where: { user_id: userId },
+        attributes: ['cliente_id'],
+        raw: true,
+      });
+
+      clientesIds = relaciones.map((r) => r.cliente_id);
+    } else {
+      return res.status(403).json({
+        message: 'No tienes permisos',
+      });
+    }
+
+    if (clientesIds.length === 0) {
+      return res.status(200).json({
+        message: 'Sin clientes asignados',
+        data: [],
+      });
+    }
+
+    // ───────────────────────────────
+    // 2️⃣ Datos básicos cliente
+    // ───────────────────────────────
+
+    const clientes = await Clientes.findAll({
+      where: { id: { [Op.in]: clientesIds } },
+      attributes: [
+        'id',
+        'razon_social',
+        'cuil_cuit',
+        'telefono',
+        'direccion_fiscal',
+        'ciudad',
+        'provincia',
+        'litros_estimados',
+      ],
+      raw: true,
+    });
+
+    const clientesMap = {};
+
+    clientes.forEach((c) => {
+      clientesMap[c.id] = {
+        id: c.id,
+        razon_social: c.razon_social,
+        cuit: c.cuil_cuit,
+        telefono: c.telefono,
+        direccion: c.direccion_fiscal,
+        ciudad: c.ciudad,
+        provincia: c.provincia,
+        litros_estimados: c.litros_estimados,
+        Maquinas: {
+          totalMaquinas: 0,
+          totalCalibraciones: 0,
+          calibracionesPendientes: 0,
+          calibracionesCerradas: 0,
+          calibracionesProceso: 0,
+        },
+        Pozos: {
+          totalPozos: 0,
+          totalMuestras: 0,
+          muestrasPendientes: 0,
+          muestrasCerradas: 0,
+          muestrasProceso: 0,
+        },
+        Jornadas: {
+          totalJornadas: 0,
+          jornadasPendientes: 0,
+          jornadasCerradas: 0,
+          jornadasProceso: 0,
+        },
+      };
+    });
+
+    // ───────────────────────────────
+    // 3️⃣ MAQUINAS
+    // ───────────────────────────────
+
+    const maquinas = await Maquinas.findAll({
+      attributes: [
+        'cliente_id',
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+      ],
+      where: { cliente_id: { [Op.in]: clientesIds } },
+      group: ['cliente_id'],
+      raw: true,
+    });
+
+    maquinas.forEach((m) => {
+      clientesMap[m.cliente_id].Maquinas.totalMaquinas = Number(m.total);
+    });
+
+    // ───────────────────────────────
+    // 4️⃣ CALIBRACIONES
+    // ───────────────────────────────
+
+    const calibraciones = await Calibracion.findAll({
+      attributes: [
+        [Sequelize.col('maquina.cliente_id'), 'cliente_id'],
+        [Sequelize.fn('COUNT', Sequelize.col('Calibraciones.id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'CERRADO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'cerradas',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'PROCESO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'proceso',
+        ],
+      ],
+      include: [
+        {
+          model: Maquinas,
+          as: 'maquina', // ✅ CORRECTO
+          attributes: [],
+        },
+      ],
+      group: ['maquina.cliente_id'],
+      raw: true,
+    });
+
+    calibraciones.forEach((c) => {
+      console.log('XXXXXXXXXXXXXXX ', c);
+      const clienteId = c.cliente_id;
+      if (clientesMap[clienteId]) {
+        clientesMap[clienteId].Maquinas.totalCalibraciones = Number(c.total);
+        clientesMap[clienteId].Maquinas.calibracionesPendientes = Number(
+          c.pendientes,
+        );
+        clientesMap[clienteId].Maquinas.calibracionesCerradas = Number(
+          c.cerradas,
+        );
+        clientesMap[clienteId].Maquinas.calibracionesProceso = Number(
+          c.proceso,
+        );
+      }
+    });
+
+    // ───────────────────────────────
+    // 5️⃣ POZOS
+    // ───────────────────────────────
+
+    const pozos = await Pozo.findAll({
+      attributes: [
+        'cliente_id',
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+      ],
+      where: { cliente_id: { [Op.in]: clientesIds } },
+      group: ['cliente_id'],
+      raw: true,
+    });
+
+    pozos.forEach((p) => {
+      clientesMap[p.cliente_id].Pozos.totalPozos = Number(p.total);
+    });
+
+    // ───────────────────────────────
+    // 6️⃣ MUESTRAS
+    // ───────────────────────────────
+
+    const muestras = await MuestraAgua.findAll({
+      attributes: [
+        [Sequelize.col('pozo.cliente_id'), 'cliente_id'],
+        [Sequelize.fn('COUNT', Sequelize.col('MuestraAgua.id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'CERRADO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'cerradas',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'PROCESO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'proceso',
+        ],
+      ],
+      include: [
+        {
+          model: Pozo,
+          as: 'pozo',
+          attributes: [],
+        },
+      ],
+      group: ['pozo.cliente_id'],
+      raw: true,
+    });
+
+    muestras.forEach((m) => {
+      const clienteId = m.cliente_id;
+      if (clientesMap[clienteId]) {
+        clientesMap[clienteId].Pozos.totalMuestras = Number(m.total);
+        clientesMap[clienteId].Pozos.muestrasPendientes = Number(m.pendientes);
+        clientesMap[clienteId].Pozos.muestrasCerradas = Number(m.cerradas);
+        clientesMap[clienteId].Pozos.muestrasProceso = Number(m.proceso);
+      }
+    });
+
+    // ───────────────────────────────
+    // 7️⃣ JORNADAS
+    // ───────────────────────────────
+
+    const jornadas = await Jornada.findAll({
+      attributes: [
+        'cliente_id',
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal("CASE WHEN estado = 'CERRADO' THEN 1 ELSE 0 END"),
+          ),
+          'cerradas',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal("CASE WHEN estado = 'PROCESO' THEN 1 ELSE 0 END"),
+          ),
+          'proceso',
+        ],
+      ],
+      where: { cliente_id: { [Op.in]: clientesIds } },
+      group: ['cliente_id'],
+      raw: true,
+    });
+
+    jornadas.forEach((j) => {
+      clientesMap[j.cliente_id].Jornadas.totalJornadas = Number(j.total);
+      clientesMap[j.cliente_id].Jornadas.jornadasPendientes = Number(
+        j.pendientes,
+      );
+      clientesMap[j.cliente_id].Jornadas.jornadasCerradas = Number(j.cerradas);
+      clientesMap[j.cliente_id].Jornadas.jornadasProceso = Number(j.proceso);
+    });
+
+    // ───────────────────────────────
+    // RESPUESTA
+    // ───────────────────────────────
+
+    return res.status(200).json({
+      message: 'Servicios totalizados correctamente',
+      data: Object.values(clientesMap),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Error al obtener servicios',
+      error: error.message,
+    });
+  }
+};
+
+export const getDashboardTotals = async (req, res) => {
+  try {
+    const { id: userId, rol } = req.user;
+
+    let clientesIds = [];
+
+    // ───────────────────────────────
+    // 1️⃣ PERMISOS
+    // ───────────────────────────────
+
+    if (rol === 'Administrador') {
+      const clientes = await Clientes.findAll({
+        attributes: ['id'],
+        raw: true,
+      });
+
+      clientesIds = clientes.map((c) => c.id);
+    } else if (rol === 'Ingeniero') {
+      const relaciones = await ClienteIngenieros.findAll({
+        where: { user_id: userId },
+        attributes: ['cliente_id'],
+        raw: true,
+      });
+
+      clientesIds = relaciones.map((r) => r.cliente_id);
+    } else {
+      return res.status(403).json({
+        message: 'No tienes permisos',
+      });
+    }
+
+    if (clientesIds.length === 0) {
+      return res.status(200).json({
+        message: 'Sin clientes asignados',
+        data: {},
+      });
+    }
+
+    // ───────────────────────────────
+    // 2️⃣ TOTAL CLIENTES
+    // ───────────────────────────────
+
+    const totalClientes = clientesIds.length;
+
+    // ───────────────────────────────
+    // 3️⃣ MAQUINAS
+    // ───────────────────────────────
+
+    const totalMaquinas = await Maquinas.count({
+      where: { cliente_id: clientesIds },
+    });
+
+    // ───────────────────────────────
+    // 4️⃣ CALIBRACIONES
+    // ───────────────────────────────
+
+    const calibraciones = await Calibracion.findAll({
+      attributes: [
+        [Sequelize.fn('COUNT', Sequelize.col('Calibraciones.id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'PROCESO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'proceso',
+        ],
+      ],
+      include: [
+        {
+          model: Maquinas,
+          as: 'maquina',
+          attributes: [],
+          where: { cliente_id: clientesIds },
+        },
+      ],
+      raw: true,
+    });
+
+    // ───────────────────────────────
+    // 5️⃣ POZOS
+    // ───────────────────────────────
+
+    const totalPozos = await Pozo.count({
+      where: { cliente_id: clientesIds },
+    });
+
+    // ───────────────────────────────
+    // 6️⃣ MUESTRAS
+    // ───────────────────────────────
+
+    const muestras = await MuestraAgua.findAll({
+      attributes: [
+        [Sequelize.fn('COUNT', Sequelize.col('MuestraAgua.id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'PROCESO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'proceso',
+        ],
+      ],
+      include: [
+        {
+          model: Pozo,
+          as: 'pozo',
+          attributes: [],
+          where: { cliente_id: clientesIds },
+        },
+      ],
+      raw: true,
+    });
+
+    // ───────────────────────────────
+    // 7️⃣ JORNADAS
+    // ───────────────────────────────
+
+    const jornadas = await Jornada.findAll({
+      attributes: [
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'pendientes',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal("CASE WHEN estado = 'PROCESO' THEN 1 ELSE 0 END"),
+          ),
+          'proceso',
+        ],
+      ],
+      where: { cliente_id: clientesIds },
+      raw: true,
+    });
+
+    // ───────────────────────────────
+    // RESPUESTA FINAL
+    // ───────────────────────────────
+
+    return res.status(200).json({
+      message: 'Dashboard global obtenido correctamente',
+      data: {
+        totalClientes,
+        Maquinas: {
+          totalMaquinas: Number(totalMaquinas),
+          totalCalibraciones: Number(calibraciones[0]?.total || 0),
+          calibracionesPendientes: Number(calibraciones[0]?.pendientes || 0),
+          calibracionesProceso: Number(calibraciones[0]?.proceso || 0),
+        },
+        Pozos: {
+          totalPozos: Number(totalPozos),
+          totalMuestras: Number(muestras[0]?.total || 0),
+          muestrasPendientes: Number(muestras[0]?.pendientes || 0),
+          muestrasProceso: Number(muestras[0]?.proceso || 0),
+        },
+        Jornadas: {
+          totalJornadas: Number(jornadas[0]?.total || 0),
+          jornadasPendientes: Number(jornadas[0]?.pendientes || 0),
+          jornadasProceso: Number(jornadas[0]?.proceso || 0),
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Error al obtener dashboard',
       error: error.message,
     });
   }

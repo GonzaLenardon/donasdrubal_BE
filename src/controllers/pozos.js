@@ -114,3 +114,42 @@ export const multiInformesPozos = async (req, res) => {
   console.log('que llega a multiInformes', req.body);
   res.status(200).json({ mensaje: 'OKiiii ' });
 };
+
+export const delPozo = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 🔎 Contar muestras asociadas
+    const cantidadMuestras = await MuestraAgua.count({
+      where: { pozo_id: id },
+    });
+
+    // ❌ Si existen muestras → no permitir eliminar
+    if (cantidadMuestras > 0) {
+      return res.status(409).json({
+        error: `No se puede eliminar el Pozo porque tiene ${cantidadMuestras} muestra${cantidadMuestras > 1 ? 's' : ''} asociada${cantidadMuestras > 1 ? 's' : ''}.`,
+        muestras: cantidadMuestras,
+      });
+    }
+
+    // ✅ Si no tiene muestras → eliminar
+    const pozoEliminado = await Pozo.destroy({
+      where: { id },
+    });
+
+    if (!pozoEliminado) {
+      return res.status(404).json({
+        error: 'El pozo no existe.',
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Pozo eliminado correctamente.',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};

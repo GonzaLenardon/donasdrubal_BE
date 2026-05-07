@@ -281,6 +281,7 @@ router.get(
 
 router.get('/pozos', pozoController.allPozos);
 router.get('/pozos/:pozo_id', pozoController.getPozo);
+router.delete('/pozos/:id', verifyRole([ROLES.ADMIN]), pozoController.delPozo);
 router.get('/cliente/:cliente_id/pozos', pozoController.pozosCliente);
 router.post('/cliente/:cliente_id/pozos', pozoController.addPozo);
 router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
@@ -310,6 +311,12 @@ router.put(
   muestrasAguaController.openMuestraAgua,
 );
 
+router.delete(
+  '/muestras_agua',
+  verifyRole([ROLES.ADMIN]),
+  muestrasAguaController.delMuestrasAgua,
+);
+
 router.get(
   '/pozos/:pozo_id/muestras_agua',
   muestrasAguaController.getMuestrasAguaPozo,
@@ -337,6 +344,11 @@ router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
 router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
 router.put('/jornadas/close/:id', jornadaController.closeJornada);
 router.put('/jornadas/open/:id', jornadaController.openJornada);
+router.delete(
+  '/jornadas/:id',
+  verifyRole([ROLES.ADMIN]),
+  jornadaController.delJornada,
+);
 
 router.put(
   '/cliente/:cliente_id/jornadas/:jornada_id',
@@ -466,8 +478,10 @@ router.post('/dashboard/user/services', userDashboard.getUserServices);
 
 router.post('/dashboard/user/machines', userDashboard.getUserMachine);
 
-router.post('/dashboard/user/all', userDashboard.allServicesToClients);
+/* router.post('/dashboard/user/all', userDashboard.allServicesToClients); */
 
+router.get('/dashboard/user/all', userDashboard.allServicesToClients);
+router.get('/dashboard/services/all', userDashboard.getDashboardTotals);
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/

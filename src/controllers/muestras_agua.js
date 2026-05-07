@@ -49,6 +49,32 @@ export const addMuestraAgua = async (req, res) => {
   }
 };
 
+export const delMuestrasAgua = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: 'Debe enviar un array de ids',
+      });
+    }
+
+    await MuestraAgua.destroy({
+      where: {
+        id: ids,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Muestras eliminadas exitosamente`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar' });
+  }
+};
+
 export const updateMuestraAgua = async (req, res) => {
   const { muestra_agua_id } = req.params;
 
@@ -104,11 +130,8 @@ export const closeMuestraAgua = async (req, res) => {
   }
 };
 
-
 export const openMuestraAgua = async (req, res) => {
   const { muestra_agua_id } = req.params;
-
-  
 
   try {
     const muetras_agua = await MuestraAgua.findByPk(muestra_agua_id);
