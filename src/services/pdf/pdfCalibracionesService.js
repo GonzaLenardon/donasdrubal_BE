@@ -182,7 +182,7 @@ class pdfCalibracionesService {
           font,
           color: rgb(0.4, 0.4, 0.4)
         });
-        cursorY -= 14
+        cursorY -= 15;
       }
       let lineaY = cursorY - 45;
 
@@ -199,7 +199,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
 
@@ -210,7 +210,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
       }
@@ -225,7 +225,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         if (estado.numero !== '' && estado.numero !== null) {
@@ -235,7 +235,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         if (estado.presenciaORing) {
@@ -245,7 +245,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         lineaY -= 5;
@@ -278,9 +278,9 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 12;
+          lineaY -= 15;
         });
-
+        lineaY -= 4;
       }
 
       // ================= RECOMENDACIONES =================
@@ -294,7 +294,7 @@ class pdfCalibracionesService {
           font: fontBold
         });
 
-        lineaY -= 14;
+        lineaY -= 15;
 
         estado.recomendaciones.forEach((rec, index) => {
           const textoNumerado = `${index + 1}. ${rec.texto}`;
@@ -312,7 +312,7 @@ class pdfCalibracionesService {
               size: 9,
               font
             });
-            lineaY -= 12;
+            lineaY -= 15;
           });
 
           lineaY -= 4;
@@ -542,11 +542,11 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 30;
+        cursorY -= 15;
       });
 
     }
-
+    cursorY -= 4;
     // ================= RECOMENDACIONES PRESION=================
 
     if (datos.recomendaciones_presion) {
@@ -576,7 +576,7 @@ class pdfCalibracionesService {
         });
         cursorY -= 15;
       });
-      cursorY -= 30;
+      cursorY -= 15;
     }
 
     // ================= SEPARADOR =================
@@ -603,7 +603,7 @@ class pdfCalibracionesService {
         font: fontBold
       });
 
-      cursorY -= 10;
+      cursorY -= 15;
 
       const obsLines = pdfUtils.wrapText(
         datos.observaciones_acronex,
@@ -619,7 +619,7 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 10;
+        cursorY -= 15;
       });
       cursorY -= 15;
     }
@@ -635,7 +635,7 @@ class pdfCalibracionesService {
         font: fontBold
       });
 
-      cursorY -= 10;
+      cursorY -= 15;
 
       const obsLines = pdfUtils.wrapText(
         datos.observaciones_generales,
@@ -651,7 +651,7 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 10;
+        cursorY -= 15;
       });
       cursorY -= 15;
     }
@@ -1127,14 +1127,20 @@ class pdfCalibracionesService {
     const estado = comp.data;
     const maxWidth = width - margin * 2 - 40;
     const fontSize = 9;
-    const lineHeight = 12;
+    const lineHeight = 15;
 
     // ===== FILTROS =====
     if (comp.tipo === 'filtro') {
-      if (comp.subtitulo) altura += 14;
-      if (estado.color) altura += 14;
-      if (estado.numero !== '' && estado.numero !== null) altura += 14;
-      if (estado.presenciaORing) altura += 14;
+      if (comp.subtitulo) altura += 15;
+      if (estado.color) altura += 15;
+      if (estado.numero !== '' && estado.numero !== null) altura += 15;
+      if (estado.presenciaORing) altura += 15;
+    }
+    
+    if (comp.tipo === 'bomba') {
+
+      altura += 30; // espacio para subtitulo "Material y Modelo"
+      
     }
 
     // ===== OBSERVACIÓN =====
