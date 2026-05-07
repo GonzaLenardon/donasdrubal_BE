@@ -429,8 +429,8 @@ class pdfCalibracionesService {
     // ================= IMAGEN =================
     let margen_x_img = margin;
     let presure_img_height = 0;
-    if (datos.presion_manometro.nombreArchivo) {
-      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
+    if (datos.presion_unimap.nombreArchivo) {
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -460,8 +460,8 @@ class pdfCalibracionesService {
         margen_x_img += 160 + 20;
       }
     }
-    if (datos.presion_unimap.nombreArchivo) {
-      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
+    if (datos.presion_manometro.nombreArchivo) {
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
