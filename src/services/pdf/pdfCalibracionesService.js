@@ -4,6 +4,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import Calibraciones from '../../models/calibraciones.js';
 import Maquinas from '../../models/maquinas.js';
 import Clientes from '../../models/clientes.js';
@@ -51,8 +52,8 @@ class pdfCalibracionesService {
     if (!calibracion) {
       throw new Error('Calibración no encontrada');
     }
-    this.imagesUrl = path.join(this.imagesUrl, `${calibracion.maquina.cliente.id}`,'maquinas', `${calibracion.maquina_id}`,'calibraciones', `${calibracion.id}`);  
-    this.informesPath = path.join(this.informesPath, `${calibracion.maquina.cliente.id}`,'maquinas', `${calibracion.maquina_id}`,'calibraciones', `${calibracion.id}`);  
+    this.imagesUrl = path.join(this.imagesUrl, `${calibracion.maquina.cliente.id}`, 'maquinas', `${calibracion.maquina_id}`, 'calibraciones', `${calibracion.id}`);
+    this.informesPath = path.join(this.informesPath, `${calibracion.maquina.cliente.id}`, 'maquinas', `${calibracion.maquina_id}`, 'calibraciones', `${calibracion.id}`);
 
     const datos = this.prepararDatosTemplate(calibracion);
     console.log('Ruta imágenes:', this.imagesUrl);
@@ -60,7 +61,7 @@ class pdfCalibracionesService {
     console.log('Calibración encontrada:', calibracion.toJSON());
     console.log('Datos preparados para PDF:', datos);
 
-    
+
 
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -182,7 +183,7 @@ class pdfCalibracionesService {
           font,
           color: rgb(0.4, 0.4, 0.4)
         });
-        cursorY -= 14
+        cursorY -= 15;
       }
       let lineaY = cursorY - 45;
 
@@ -199,7 +200,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
 
@@ -210,7 +211,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
       }
@@ -225,7 +226,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         if (estado.numero !== '' && estado.numero !== null) {
@@ -235,7 +236,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         if (estado.presenciaORing) {
@@ -245,7 +246,7 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 14;
+          lineaY -= 15;
         }
 
         lineaY -= 5;
@@ -278,9 +279,9 @@ class pdfCalibracionesService {
             size: 9,
             font
           });
-          lineaY -= 12;
+          lineaY -= 15;
         });
-
+        lineaY -= 4;
       }
 
       // ================= RECOMENDACIONES =================
@@ -294,7 +295,7 @@ class pdfCalibracionesService {
           font: fontBold
         });
 
-        lineaY -= 14;
+        lineaY -= 15;
 
         estado.recomendaciones.forEach((rec, index) => {
           const textoNumerado = `${index + 1}. ${rec.texto}`;
@@ -312,7 +313,7 @@ class pdfCalibracionesService {
               size: 9,
               font
             });
-            lineaY -= 12;
+            lineaY -= 15;
           });
 
           lineaY -= 4;
@@ -428,8 +429,8 @@ class pdfCalibracionesService {
     // ================= IMAGEN =================
     let margen_x_img = margin;
     let presure_img_height = 0;
-    if (datos.presion_manometro.nombreArchivo) {
-      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
+    if (datos.presion_unimap.nombreArchivo) {
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -459,8 +460,8 @@ class pdfCalibracionesService {
         margen_x_img += 160 + 20;
       }
     }
-    if (datos.presion_unimap.nombreArchivo) {
-      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_unimap.nombreArchivo);
+    if (datos.presion_manometro.nombreArchivo) {
+      const image = await imagesUtils.embedImage(pdfDoc, this.imagesUrl, datos.presion_manometro.nombreArchivo);
       if (image) {
         const img = image.scale(0.25);
         presure_img_height = img.height;
@@ -510,10 +511,7 @@ class pdfCalibracionesService {
 
     }
 
-
     // ========FIN GRAFICA SECCIONES
-
-
 
     // ================= OBSERVACIÓN PRESION=================
 
@@ -542,11 +540,11 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 30;
+        cursorY -= 15;
       });
 
     }
-
+    cursorY -= 4;
     // ================= RECOMENDACIONES PRESION=================
 
     if (datos.recomendaciones_presion) {
@@ -576,7 +574,7 @@ class pdfCalibracionesService {
         });
         cursorY -= 15;
       });
-      cursorY -= 30;
+      cursorY -= 15;
     }
 
     // ================= SEPARADOR =================
@@ -603,7 +601,7 @@ class pdfCalibracionesService {
         font: fontBold
       });
 
-      cursorY -= 10;
+      cursorY -= 15;
 
       const obsLines = pdfUtils.wrapText(
         datos.observaciones_acronex,
@@ -619,7 +617,7 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 10;
+        cursorY -= 15;
       });
       cursorY -= 15;
     }
@@ -635,7 +633,7 @@ class pdfCalibracionesService {
         font: fontBold
       });
 
-      cursorY -= 10;
+      cursorY -= 15;
 
       const obsLines = pdfUtils.wrapText(
         datos.observaciones_generales,
@@ -651,7 +649,7 @@ class pdfCalibracionesService {
           size: 9,
           font
         });
-        cursorY -= 10;
+        cursorY -= 15;
       });
       cursorY -= 15;
     }
@@ -689,7 +687,7 @@ class pdfCalibracionesService {
     //------------ ANEXAR PDF INFORMA PÄSTILLAS -----------------
     // Ruta del PDF que querés anexar
     // datos.estado_pastillas.nombre_archivo = 'estado_pastillas_1773667678179.pdf';
-    if(datos.estado_pastillas.informe_pastillas){ 
+    if (datos.estado_pastillas.informe_pastillas) {
       // const rutaExtra = path.join(this.imagesUrl, datos.estado_pastillas.nombre_archivo);
       const rutaExtra = path.join(this.informesPath, datos.estado_pastillas.informe_pastillas);
       console.log('Ruta del PDF a anexar:', rutaExtra);
@@ -773,7 +771,7 @@ class pdfCalibracionesService {
         width: agrospData.width,
         height: agrospData.height
       });
-//-----------------FIN LOGOS------------------------------------------------------
+      //-----------------FIN LOGOS------------------------------------------------------
 
     }
     cursorY = cursorY - 35;
@@ -796,7 +794,7 @@ class pdfCalibracionesService {
       color: rgb(0, 0, 0)
     });
 
-    page.drawText(`Ing. Responsable: ${datos.ingenieroResponsable  || '-'}`, {
+    page.drawText(`Ing. Responsable: ${datos.ingenieroResponsable || '-'}`, {
       x: margin,
       y: cursorY - 30,
       size: 10,
@@ -841,7 +839,6 @@ class pdfCalibracionesService {
     // });
 
     cursorY = height - headerHeight - 30;
-
     //----------IMAGEN PRINCIPAL ----------------
 
     const imgPrincipalData = await imagesUtils.getImageDimensions(pdfDoc, this.imagesUrl, datos.imagen_portada, 800, 150);
@@ -856,7 +853,6 @@ class pdfCalibracionesService {
     cursorY = cursorY - (imgPrincipalData ? imgPrincipalData.height : 0) - 20;
 
     //-----------------------------------------------
-
     // ================= SEPARADOR =================
 
     cursorY -= 10;
@@ -871,7 +867,6 @@ class pdfCalibracionesService {
 
     cursorY -= 30;
     //-----------------------------------------------    
-
     // ================= INFO MÁQUINA (FICHA TÉCNICA) =================
 
     page.drawText('Ficha Técnica de la Máquina', {
@@ -882,7 +877,6 @@ class pdfCalibracionesService {
     });
 
     cursorY -= 20;
-
     // Fondo
     const boxHeight = 130;
 
@@ -1127,14 +1121,20 @@ class pdfCalibracionesService {
     const estado = comp.data;
     const maxWidth = width - margin * 2 - 40;
     const fontSize = 9;
-    const lineHeight = 12;
+    const lineHeight = 15;
 
     // ===== FILTROS =====
     if (comp.tipo === 'filtro') {
-      if (comp.subtitulo) altura += 14;
-      if (estado.color) altura += 14;
-      if (estado.numero !== '' && estado.numero !== null) altura += 14;
-      if (estado.presenciaORing) altura += 14;
+      if (comp.subtitulo) altura += 15;
+      if (estado.color) altura += 15;
+      if (estado.numero !== '' && estado.numero !== null) altura += 15;
+      if (estado.presenciaORing) altura += 15;
+    }
+
+    if (comp.tipo === 'bomba') {
+
+      altura += 30; // espacio para subtitulo "Material y Modelo"
+
     }
 
     // ===== OBSERVACIÓN =====
@@ -1173,18 +1173,14 @@ class pdfCalibracionesService {
     const sugerenciasFijas = this.getSugerenciasPredeterminadas(comp.titulo);
 
     if (sugerenciasFijas.length > 0) {
-
       altura += 20;
-
       sugerenciasFijas.forEach(texto => {
-
         const lines = pdfUtils.wrapText(
           texto,
           font,
           fontSize,
           maxWidth
         );
-
         altura += lines.length * lineHeight + 5;
       });
     }
@@ -1197,8 +1193,6 @@ class pdfCalibracionesService {
         altura += imgData.height + 10;
       }
     }
-
-
 
     return altura;
   }
@@ -1221,7 +1215,7 @@ class pdfCalibracionesService {
 
       // SOLO PARA PASTILLAS(si no existen quedan vacíos)
       informe_pastillas: estado.nombreArchivoPdf || '',
-    
+
 
       // SOLO PARA FILTROS (si no existen quedan vacíos)
       color: estado.color || '',
@@ -1236,7 +1230,6 @@ class pdfCalibracionesService {
         }))
         : []
     });
-
 
     return {
 
@@ -1333,27 +1326,27 @@ class pdfCalibracionesService {
         : {}
     };
   }
-// async embedImage(pdfDoc, imagesUrl, nombreArchivo) {
+  // async embedImage(pdfDoc, imagesUrl, nombreArchivo) {
 
-//     if (!nombreArchivo) return null;
+  //     if (!nombreArchivo) return null;
 
-//     try {
-//       const ruta = path.join(imagesUrl, nombreArchivo);
+  //     try {
+  //       const ruta = path.join(imagesUrl, nombreArchivo);
 
-//       const imageBytes = await fs.readFile(ruta);
-//       const extension = path.extname(nombreArchivo).toLowerCase();
+  //       const imageBytes = await fs.readFile(ruta);
+  //       const extension = path.extname(nombreArchivo).toLowerCase();
 
-//       if (extension === '.png') {
-//         return await pdfDoc.embedPng(imageBytes);
-//       }
+  //       if (extension === '.png') {
+  //         return await pdfDoc.embedPng(imageBytes);
+  //       }
 
-//       return await pdfDoc.embedJpg(imageBytes);
+  //       return await pdfDoc.embedJpg(imageBytes);
 
-//     } catch (err) {
-//       console.log('No se pudo cargar imagen:', nombreArchivo);
-//       return null;
-//     }
-//   }
+  //     } catch (err) {
+  //       console.log('No se pudo cargar imagen:', nombreArchivo);
+  //       return null;
+  //     }
+  //   }
 
   getSugerenciasPredeterminadas(titulo) {
 
@@ -1388,19 +1381,19 @@ class pdfCalibracionesService {
   }
 
   async generarGraficaSecciones(secciones) {
-
-    if (!Array.isArray(secciones) || secciones.length === 0) {
-      return null;
-    }
+    if (!Array.isArray(secciones) || secciones.length === 0) return null;
 
     const width = 800;
     const height = 400;
 
-
     const chartJSNodeCanvas = new ChartJSNodeCanvas({
       width,
       height,
-      backgroundColour: 'white'
+      backgroundColour: 'white',
+      // 2. Registra el plugin aquí
+      plugins: {
+        modern: [ChartDataLabels]
+      }
     });
 
     const labels = secciones.map(s => s.numero);
@@ -1425,34 +1418,31 @@ class pdfCalibracionesService {
       options: {
         responsive: false,
         plugins: {
-          legend: {
-            display: true
+          // 3. Configura el comportamiento de las etiquetas
+          datalabels: {
+            align: 'top',      // Posición relativa al punto
+            anchor: 'end',     // Anclaje del texto
+            offset: 4,         // Separación en píxeles
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            formatter: (value) => value // Puedes darle formato (ej: value + ' b')
           },
+          legend: { display: true },
           title: {
             display: true,
             text: 'Presión en las secciones',
-            font: {
-              size: 18
-            }
+            font: { size: 18 }
           }
         },
         scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'N° de sección'
-            }
-          },
+          x: { title: { display: true, text: 'N° de sección' } },
           y: {
             min: minimo - 1,
             max: maximo + 1,
-            ticks: {
-              stepSize: 0.2
-            },
-            title: {
-              display: true,
-              text: 'Presión (bares)'
-            },
+            ticks: { stepSize: 0.2 },
+            title: { display: true, text: 'Presión (bares)' },
             beginAtZero: false
           }
         }
@@ -1460,7 +1450,7 @@ class pdfCalibracionesService {
     };
 
     return await chartJSNodeCanvas.renderToBuffer(configuration);
-  }
+}
 
   // async getImageDimensions(pdfDoc, url, nombreArchivo, maxWidth = 200, maxHeight = 150) {
 
