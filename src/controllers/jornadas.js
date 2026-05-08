@@ -68,6 +68,9 @@ export const updateJornada = async (req, res) => {
   );
   try {
     const payload = extractModelFields(Jornada, req.body);
+    if(payload.estado === 'PENDIENTE'){
+      payload.estado = 'EN PROCESO';
+    }
     const jornada = await Jornada.findByPk(jornada_id);
 
     if (!jornada) {
@@ -145,7 +148,7 @@ export const openJornada = async (req, res) => {
       return res.status(404).json({ error: 'Jornada no encontrada' });
     }
 
-    const resp = await jornada.update({ estado: 'PENDIENTE' });
+    const resp = await jornada.update({ estado: 'EN PROCESO' });
 
     return res.status(200).json({
       message: 'Jornada abierta exitosamente',

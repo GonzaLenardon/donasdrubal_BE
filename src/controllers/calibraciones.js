@@ -265,7 +265,9 @@ export const updateCalibraciones = async (req, res) => {
 
     // 3. Extraer campos del modelo
     const payload = extractModelFields(Calibraciones, bodyParsed);
-
+    if(payload.estado === 'PENDIENTE'){
+      payload.estado = 'EN PROCESO';
+    }
     // 4. Log para debugging (remover en producción)
     if (process.env.NODE_ENV === 'development') {
       console.log('📝 Actualizando calibración:', calibracion_id);
@@ -545,7 +547,7 @@ export const openCalibraciones = async (req, res) => {
         message: `Calibración con ID ${id} no encontrada`,
       });
     }
-    await calibracion.update({ estado: 'PENDIENTE' });
+    await calibracion.update({ estado: 'EN PROCESO' });
     return res.status(200).json({
       success: true,
       message: `Calibración con ID ${id} abierto exitosamente`,
