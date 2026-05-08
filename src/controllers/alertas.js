@@ -52,26 +52,27 @@ const controllersAlertas = {
       const clientes = await Clientes.findAll({
         where: { tipo_cliente_id: tipoCliente.id },
         include: [
-        {
-          model: Users,
-          as: 'ingenieros',
-          attributes: ['id', 'nombre', 'email'],
-          required: false, 
-          through: {
-            attributes: ['es_principal'],
-            where: {
-              es_principal: 1
-            }
+          {
+            model: Users,
+            as: 'ingenieros',
+            attributes: ['id', 'nombre', 'email'],
+            required: false,
+            through: {
+              attributes: ['es_principal'],
+              where: {
+                es_principal: 1,
+              },
+            },
           },
-        }],
+        ],
       });
 
       const alertasGeneradas = [];
 
       for (const cliente of clientes) {
         // console.log('Cliente:', cliente);
-        console.log('Ingenieros asociados:', cliente.ingenieros.map(ing => ({ id: ing.id, nombre: ing.nombre, email: ing.email, es_principal: ing.ClienteIngenieros.es_principal })));
-        console.log('Ingeniero principal:', cliente.ingenieros[0]?.id ?? null);
+        /*   console.log('Ingenieros asociados:', cliente.ingenieros.map(ing => ({ id: ing.id, nombre: ing.nombre, email: ing.email, es_principal: ing.ClienteIngenieros.es_principal })));
+        console.log('Ingeniero principal:', cliente.ingenieros[0]?.id ?? null); */
 
         /* =====================================================
           🔧 CALIBRACIONES (por máquina)
@@ -93,30 +94,33 @@ const controllersAlertas = {
             usuario_to_id: cliente.ingenieros[0]?.id ?? cliente.user_id,
             // tipo_servicio_id: tipoServicioCalibracion.id,
             // id_servicio_realizado: calibracion.id,
-            entidad_id: calibracion.id,           // ← AGREGADO
-            entidad_tipo: 'calibracion',              // ← AGREGADO
-            tipo_alerta: 'sin_configurar',    // ← AGREGADO
-            categoria: 'calibraciones',                 // ← AGREGADO
-            titulo: `Calibración programada - ${maquina.nombre || 'Máquina'}`,  // ← AGREGADO
-            mensaje: `Se ha programado una calibración para ${maquina.nombre || 'la máquina'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO
+            entidad_id: calibracion.id, // ← AGREGADO
+            entidad_tipo: 'calibracion', // ← AGREGADO
+            tipo_alerta: 'sin_configurar', // ← AGREGADO
+            categoria: 'calibraciones', // ← AGREGADO
+            titulo: `Calibración programada - ${maquina.nombre || 'Máquina'}`, // ← AGREGADO
+            mensaje: `Se ha programado una calibración para ${maquina.nombre || 'la máquina'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`, // ← AGREGADO
             fecha_vencimiento,
             fecha_alerta,
-            fecha_evento: new Date(),              // ← AGREGADO
+            fecha_evento: new Date(), // ← AGREGADO
             fecha_vencimiento,
             fecha_alerta,
             estado: 'PENDIENTE',
             prioridad: 'NORMAL',
-            requiere_accion: true,                 // ← AGREGADO
-            url_accion: `/clientes/${cliente.id}/calibraciones/${calibracion.id}`,  // ← AGREGADO
-            accion_texto: 'Ver Calibración',       // ← AGREGADO
-            metadata: {                            
+            requiere_accion: true, // ← AGREGADO
+            url_accion: `/clientes/${cliente.id}/calibraciones/${calibracion.id}`, // ← AGREGADO
+            accion_texto: 'Ver Calibración', // ← AGREGADO
+            metadata: {
               cliente_id: cliente.id,
               cliente_nombre: cliente.razon_social,
               maquina_id: maquina.id,
               maquina_nombre: maquina.nombre,
               maquina_tipo: maquina.tipo,
-              dias_alerta_previa: dayjs(fecha_vencimiento).diff(dayjs(fecha_alerta), 'day')
-            }
+              dias_alerta_previa: dayjs(fecha_vencimiento).diff(
+                dayjs(fecha_alerta),
+                'day',
+              ),
+            },
           });
         }
 
@@ -144,12 +148,12 @@ const controllersAlertas = {
             usuario_to_id: cliente.user_id,
             // tipo_servicio_id: tipoServicioMuestra.id,
             // entidad_id: muestra.id,                // ← AGREGADO
-            entidad_id: muestra.id,              // ← AGREGADO
-            entidad_tipo: 'muestra_agua',        // ← AGREGADO
-            tipo_alerta: 'servicio_sin_configurar',      // ← AGREGADO
-            categoria: 'muestras_agua',                  // ← AGREGADO
-            titulo: `Muestra de agua pendiente - ${pozo.nombre || 'Pozo'}`,  // ← AGREGADO
-            mensaje: `Se ha programado un análisis de agua para ${pozo.nombre || 'el pozo'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO            
+            entidad_id: muestra.id, // ← AGREGADO
+            entidad_tipo: 'muestra_agua', // ← AGREGADO
+            tipo_alerta: 'servicio_sin_configurar', // ← AGREGADO
+            categoria: 'muestras_agua', // ← AGREGADO
+            titulo: `Muestra de agua pendiente - ${pozo.nombre || 'Pozo'}`, // ← AGREGADO
+            mensaje: `Se ha programado un análisis de agua para ${pozo.nombre || 'el pozo'} del cliente ${cliente.razon_social}. Fecha límite: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`, // ← AGREGADO
             fecha_vencimiento,
             fecha_alerta,
             fecha_evento: new Date(),
@@ -163,18 +167,21 @@ const controllersAlertas = {
               cliente_nombre: cliente.razon_social,
               pozo_id: pozo.id,
               pozo_nombre: pozo.nombre,
-              dias_alerta_previa: dayjs(fecha_vencimiento).diff(dayjs(fecha_alerta), 'day')
-            }
+              dias_alerta_previa: dayjs(fecha_vencimiento).diff(
+                dayjs(fecha_alerta),
+                'day',
+              ),
+            },
           });
         }
 
         // await Alertas.bulkCreate(alertasGeneradas);
-        
-        // alertasGeneradas.length = 0;        
+
+        // alertasGeneradas.length = 0;
 
         /* =====================================================
           JORNADAS DE CAPACITACIÓN (1 por cliente)
-        ====================================================== */        
+        ====================================================== */
 
         for (let index = 0; index < 2; index++) {
           const newJornada = await Jornada.create({
@@ -187,12 +194,12 @@ const controllersAlertas = {
             usuario_to_id: cliente.user_id,
             // tipo_servicio_id: tipoServicioJornada.id,
             // entidad_id: newJornada.id,             // ← AGREGADO
-            entidad_id: newJornada.id,              // ← AGREGADO
-            entidad_tipo: 'jornada',              // ← AGREGADO
-            tipo_alerta: 'servicio_sin_configurar',     // ← AGREGADO
-            categoria: 'jornada',                  // ← AGREGADO
-            titulo: `Jornada de capacitación programada`,  // ← AGREGADO
-            mensaje: `Se ha programado una jornada de capacitación para el cliente ${cliente.razon_social}. Fecha: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`,  // ← AGREGADO            
+            entidad_id: newJornada.id, // ← AGREGADO
+            entidad_tipo: 'jornada', // ← AGREGADO
+            tipo_alerta: 'servicio_sin_configurar', // ← AGREGADO
+            categoria: 'jornada', // ← AGREGADO
+            titulo: `Jornada de capacitación programada`, // ← AGREGADO
+            mensaje: `Se ha programado una jornada de capacitación para el cliente ${cliente.razon_social}. Fecha: ${dayjs(fecha_vencimiento).format('DD/MM/YYYY')}`, // ← AGREGADO
             fecha_vencimiento,
             fecha_alerta,
             fecha_evento: new Date(),
@@ -204,15 +211,16 @@ const controllersAlertas = {
             metadata: {
               cliente_id: cliente.id,
               cliente_nombre: cliente.razon_social,
-              dias_alerta_previa: dayjs(fecha_vencimiento).diff(dayjs(fecha_alerta), 'day')
-            }
+              dias_alerta_previa: dayjs(fecha_vencimiento).diff(
+                dayjs(fecha_alerta),
+                'day',
+              ),
+            },
           });
         }
         await Alertas.bulkCreate(alertasGeneradas);
-        alertasGeneradas.length = 0;  
-
+        alertasGeneradas.length = 0;
       }
-
 
       return res.status(200).json({
         message: 'Servicios y alertas generados correctamente',
@@ -255,7 +263,7 @@ const controllersAlertas = {
         message: 'Error al actualizar Alerta de Servicios',
       });
     }
-  },  
+  },
   getAll: async (req, res) => {
     try {
       const alertas = await Alertas.findAll();
@@ -268,14 +276,14 @@ const controllersAlertas = {
     }
   },
   getByUserFromId: async (req, res) => {
-    const {from_user_id} = req.params;
+    const { from_user_id } = req.params;
     console.log('from_user_id', from_user_id);
     console.log('parametros', req.params);
     try {
       const alertas = await Alertas.findAll({
         where: {
-          usuario_from_id: from_user_id
-        }
+          usuario_from_id: from_user_id,
+        },
       });
       return res.status(200).json(alertas);
     } catch (error) {
@@ -284,14 +292,14 @@ const controllersAlertas = {
         .status(500)
         .json({ message: 'Error al obtener Alertas Enviadas' });
     }
-  },  
+  },
   getByUserToId: async (req, res) => {
-    const {to_user_id} = req.params;
+    const { to_user_id } = req.params;
     try {
       const alertas = await Alertas.findAll({
         where: {
-          usuario_to_id: to_user_id
-        }
+          usuario_to_id: to_user_id,
+        },
       });
       return res.status(200).json(alertas);
     } catch (error) {
@@ -300,7 +308,7 @@ const controllersAlertas = {
         .status(500)
         .json({ message: 'Error al obtener Alertas Recibidas' });
     }
-  },    
+  },
 };
 
 export default controllersAlertas;

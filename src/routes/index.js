@@ -455,7 +455,10 @@ router.delete(
   RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
 
-router.get('/cliente/:cliente_id/stats', clientDashboardController.getClienteStats);
+router.get(
+  '/cliente/:cliente_id/stats',
+  clientDashboardController.getClienteStats,
+);
 
 router.get(
   '/cliente/:cliente_id/analisis-chart',
@@ -493,8 +496,11 @@ router.post('/dashboard/user/machines', userDashboard.getUserMachine);
 
 /* router.post('/dashboard/user/all', userDashboard.allServicesToClients); */
 
-router.get('/dashboard/user/all', userDashboard.allServicesToClients);
-router.get('/dashboard/services/all', userDashboard.getDashboardTotals);
+router.get(
+  '/dashboard/user/servicesToClients',
+  userDashboard.allServicesToClients,
+);
+router.get('/dashboard/services/totales', userDashboard.getDashboardTotals);
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
