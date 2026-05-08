@@ -273,6 +273,11 @@ export const allServicesToClients = async (req, res) => {
       raw: true,
     });
 
+    console.log(
+      '..............................................................................................',
+    );
+    console.log('maq', maquinas);
+
     maquinas.forEach((m) => {
       clientesMap[m.cliente_id].Maquinas.totalMaquinas = Number(m.total);
     });
@@ -303,11 +308,12 @@ export const allServicesToClients = async (req, res) => {
           ),
           'cerradas',
         ],
+
         [
           Sequelize.fn(
             'SUM',
             Sequelize.literal(
-              "CASE WHEN Calibraciones.estado = 'PROCESO' THEN 1 ELSE 0 END",
+              "CASE WHEN Calibraciones.estado = 'EN PROCESO' THEN 1 ELSE 0 END",
             ),
           ),
           'proceso',
@@ -325,7 +331,7 @@ export const allServicesToClients = async (req, res) => {
     });
 
     calibraciones.forEach((c) => {
-      console.log('XXXXXXXXXXXXXXX ', c);
+      console.log('Calibraciones ... ', c);
       const clienteId = c.cliente_id;
       if (clientesMap[clienteId]) {
         clientesMap[clienteId].Maquinas.totalCalibraciones = Number(c.total);
@@ -389,7 +395,7 @@ export const allServicesToClients = async (req, res) => {
           Sequelize.fn(
             'SUM',
             Sequelize.literal(
-              "CASE WHEN MuestraAgua.estado = 'PROCESO' THEN 1 ELSE 0 END",
+              "CASE WHEN MuestraAgua.estado = 'EN PROCESO' THEN 1 ELSE 0 END",
             ),
           ),
           'proceso',
@@ -443,7 +449,9 @@ export const allServicesToClients = async (req, res) => {
         [
           Sequelize.fn(
             'SUM',
-            Sequelize.literal("CASE WHEN estado = 'PROCESO' THEN 1 ELSE 0 END"),
+            Sequelize.literal(
+              "CASE WHEN estado = 'EN PROCESO' THEN 1 ELSE 0 END",
+            ),
           ),
           'proceso',
         ],
@@ -486,7 +494,7 @@ export const getDashboardTotals = async (req, res) => {
     let clientesIds = [];
 
     // ───────────────────────────────
-    // 1️⃣ PERMISOS
+    // 1️⃣ FILTRO POR ROL
     // ───────────────────────────────
 
     if (rol === 'Administrador') {
@@ -494,7 +502,6 @@ export const getDashboardTotals = async (req, res) => {
         attributes: ['id'],
         raw: true,
       });
-
       clientesIds = clientes.map((c) => c.id);
     } else if (rol === 'Ingeniero') {
       const relaciones = await ClienteIngenieros.findAll({
@@ -502,15 +509,12 @@ export const getDashboardTotals = async (req, res) => {
         attributes: ['cliente_id'],
         raw: true,
       });
-
       clientesIds = relaciones.map((r) => r.cliente_id);
     } else {
-      return res.status(403).json({
-        message: 'No tienes permisos',
-      });
+      return res.status(403).json({ message: 'No tienes permisos' });
     }
 
-    if (clientesIds.length === 0) {
+    if (!clientesIds.length) {
       return res.status(200).json({
         message: 'Sin clientes asignados',
         data: {},
@@ -518,7 +522,7 @@ export const getDashboardTotals = async (req, res) => {
     }
 
     // ───────────────────────────────
-    // 2️⃣ TOTAL CLIENTES
+    // 2️⃣ CLIENTES
     // ───────────────────────────────
 
     const totalClientes = clientesIds.length;
@@ -551,10 +555,19 @@ export const getDashboardTotals = async (req, res) => {
           Sequelize.fn(
             'SUM',
             Sequelize.literal(
-              "CASE WHEN Calibraciones.estado = 'PROCESO' THEN 1 ELSE 0 END",
+              "CASE WHEN Calibraciones.estado = 'EN PROCESO' THEN 1 ELSE 0 END",
             ),
           ),
           'proceso',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Calibraciones.estado = 'CERRADO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'cerradas',
         ],
       ],
       include: [
@@ -596,10 +609,19 @@ export const getDashboardTotals = async (req, res) => {
           Sequelize.fn(
             'SUM',
             Sequelize.literal(
-              "CASE WHEN MuestraAgua.estado = 'PROCESO' THEN 1 ELSE 0 END",
+              "CASE WHEN MuestraAgua.estado = 'EN PROCESO' THEN 1 ELSE 0 END",
             ),
           ),
           'proceso',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN MuestraAgua.estado = 'CERRADO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'cerradas',
         ],
       ],
       include: [
@@ -619,12 +641,12 @@ export const getDashboardTotals = async (req, res) => {
 
     const jornadas = await Jornada.findAll({
       attributes: [
-        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+        [Sequelize.fn('COUNT', Sequelize.col('Jornada.id')), 'total'],
         [
           Sequelize.fn(
             'SUM',
             Sequelize.literal(
-              "CASE WHEN estado = 'PENDIENTE' THEN 1 ELSE 0 END",
+              "CASE WHEN Jornada.estado = 'PENDIENTE' THEN 1 ELSE 0 END",
             ),
           ),
           'pendientes',
@@ -632,9 +654,20 @@ export const getDashboardTotals = async (req, res) => {
         [
           Sequelize.fn(
             'SUM',
-            Sequelize.literal("CASE WHEN estado = 'PROCESO' THEN 1 ELSE 0 END"),
+            Sequelize.literal(
+              "CASE WHEN Jornada.estado = 'EN PROCESO' THEN 1 ELSE 0 END",
+            ),
           ),
           'proceso',
+        ],
+        [
+          Sequelize.fn(
+            'SUM',
+            Sequelize.literal(
+              "CASE WHEN Jornada.estado = 'CERRADO' THEN 1 ELSE 0 END",
+            ),
+          ),
+          'cerradas',
         ],
       ],
       where: { cliente_id: clientesIds },
@@ -642,29 +675,35 @@ export const getDashboardTotals = async (req, res) => {
     });
 
     // ───────────────────────────────
-    // RESPUESTA FINAL
+    // 8️⃣ RESPUESTA FINAL
     // ───────────────────────────────
 
     return res.status(200).json({
       message: 'Dashboard global obtenido correctamente',
       data: {
         totalClientes,
+
         Maquinas: {
           totalMaquinas: Number(totalMaquinas),
           totalCalibraciones: Number(calibraciones[0]?.total || 0),
-          calibracionesPendientes: Number(calibraciones[0]?.pendientes || 0),
-          calibracionesProceso: Number(calibraciones[0]?.proceso || 0),
+          pendientes: Number(calibraciones[0]?.pendientes || 0),
+          proceso: Number(calibraciones[0]?.proceso || 0),
+          cerradas: Number(calibraciones[0]?.cerradas || 0),
         },
+
         Pozos: {
           totalPozos: Number(totalPozos),
           totalMuestras: Number(muestras[0]?.total || 0),
-          muestrasPendientes: Number(muestras[0]?.pendientes || 0),
-          muestrasProceso: Number(muestras[0]?.proceso || 0),
+          pendientes: Number(muestras[0]?.pendientes || 0),
+          proceso: Number(muestras[0]?.proceso || 0),
+          cerradas: Number(muestras[0]?.cerradas || 0),
         },
+
         Jornadas: {
           totalJornadas: Number(jornadas[0]?.total || 0),
-          jornadasPendientes: Number(jornadas[0]?.pendientes || 0),
-          jornadasProceso: Number(jornadas[0]?.proceso || 0),
+          pendientes: Number(jornadas[0]?.pendientes || 0),
+          proceso: Number(jornadas[0]?.proceso || 0),
+          cerradas: Number(jornadas[0]?.cerradas || 0),
         },
       },
     });
