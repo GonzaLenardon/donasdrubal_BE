@@ -82,6 +82,9 @@ export const updateMuestraAgua = async (req, res) => {
 
   try {
     const payload = extractModelFields(MuestraAgua, req.body);
+    if(payload.estado === 'PENDIENTE'){
+      payload.estado = 'EN PROCESO';
+    }
 
     const muetras_agua = await MuestraAgua.findByPk(muestra_agua_id);
 
@@ -140,7 +143,7 @@ export const openMuestraAgua = async (req, res) => {
       return res.status(404).json({ error: 'Muestra Agua no encontrada' });
     }
 
-    const resp = await muetras_agua.update({ estado: 'PENDIENTE' });
+    const resp = await muetras_agua.update({ estado: 'EN PROCESO' });
 
     return res.status(200).json({
       success: true,
