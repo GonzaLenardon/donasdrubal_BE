@@ -251,19 +251,32 @@ const controllersAlertas = {
     }
   },
   update: async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
+  const { id } = req.params;
+  const { estado, fecha_alerta, fecha_leida } = req.body;
 
-    try {
-      const alerta = await Alertas.update(data, { where: { id } });
-      return res.status(200).json(alerta);
-    } catch (error) {
-      console.error('Error al actualizar Alerta de Servicios:', error);
-      return res.status(500).json({
-        message: 'Error al actualizar Alerta de Servicios',
-      });
+  try {
+    const alerta = await Alertas.findByPk(id);
+
+    if (!alerta) {
+      return res.status(404).json({ message: 'Alerta no encontrada' });
     }
-  },
+
+    await alerta.update({
+      ...(estado !== undefined && { estado }),
+      ...(fecha_alerta !== undefined && { fecha_alerta }),
+      ...(fecha_leida !== undefined && { fecha_leida }),
+    });
+
+    return res.status(200).json(alerta);
+  } catch (error) {
+    console.error('Error al actualizar Alerta de Servicios:', error);
+    return res.status(500).json({
+      message: 'Error al actualizar Alerta de Servicios',
+      error: error.message,
+      details: error.errors,
+    });
+  }
+},
   getAll: async (req, res) => {
     try {
       const alertas = await Alertas.findAll();
