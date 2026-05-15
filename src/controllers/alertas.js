@@ -1,4 +1,5 @@
 //controllers/alertas.js
+import { extractModelFields } from '../utils/model/payload.js';
 import {
   Clientes,
   Users,
@@ -251,32 +252,55 @@ const controllersAlertas = {
     }
   },
   update: async (req, res) => {
-  const { id } = req.params;
-  const { estado, fecha_alerta, fecha_leida } = req.body;
+    const { alerta_id } = req.params;
+  
+    console.log(
+      'Actualizar Alerta - ID:',
+      alerta_id,
+    );
+    try {
+      const payload = extractModelFields(Alertas, req.body);
 
-  try {
-    const alerta = await Alertas.findByPk(id);
-
-    if (!alerta) {
-      return res.status(404).json({ message: 'Alerta no encontrada' });
+      const alerta = await Alertas.findByPk(alerta_id);
+  
+      if (!alerta) {
+        return res.status(404).json({ error: 'Alerta no encontrada' });
+      }
+      console.log('updateAlerta controller: payload->', payload);
+      const resp = await alerta.update(payload);
+  
+      return res.status(200).json({
+        message: 'Alerta actualizada exitosamente',
+        data: resp,
+      });
+    } catch (error) {
+      console.log('Error al actualizar Alerta:', error);
+      return res.status(500).json({
+        error: 'Error al actualizar Alerta',
+        details: error.message,
+      });
     }
+  },
+  deleteAlerta: async (req, res) => {
+    const { alerta_id } = req.params;
+    try {
+      const alerta = await Alertas.findByPk(alerta_id);
+      if (!alerta) {
+        return res.status(404).json({ error: 'Alerta no encontrada' });
+      }
 
-    await alerta.update({
-      ...(estado !== undefined && { estado }),
-      ...(fecha_alerta !== undefined && { fecha_alerta }),
-      ...(fecha_leida !== undefined && { fecha_leida }),
-    });
-
-    return res.status(200).json(alerta);
-  } catch (error) {
-    console.error('Error al actualizar Alerta de Servicios:', error);
-    return res.status(500).json({
-      message: 'Error al actualizar Alerta de Servicios',
-      error: error.message,
-      details: error.errors,
-    });
-  }
-},
+      await alerta.destroy();
+      return res.status(200).json({
+        message: 'Alerta eliminada exitosamente',
+      });
+    } catch (error) {
+      console.log('Error al eliminar Alerta:', error);
+      return res.status(500).json({
+        error: 'Error en el servidor',
+        details: error.message,
+      });
+    }
+  },
   getAll: async (req, res) => {
     try {
       const alertas = await Alertas.findAll();
