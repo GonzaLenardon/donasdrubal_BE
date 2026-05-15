@@ -133,6 +133,7 @@ Alertas.init(
       validate: {
         isIn: [
           [
+            'sin_configurar', 
             // Servicios
             'servicio_vencido',
             'servicio_proximo',
