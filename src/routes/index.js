@@ -370,9 +370,10 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 // ========================================
 // RUTAS PROTEGIDAS - ALERTAS SERVICIOS
 // ========================================
-
+  
 router.post('/alertas', controllersAlertas.add);
-router.put('/alertas/:id', controllersAlertas.update);
+router.put('/alertas/:alerta_id', controllersAlertas.update);
+router.delete('/alertas/:alerta_id',  controllersAlertas.deleteAlerta,);
 router.post('/alertaservicios', controllersAlertas.addAllService);
 router.get('/alertas/to_user/:to_user_id', controllersAlertas.getByUserToId);
 router.get(
