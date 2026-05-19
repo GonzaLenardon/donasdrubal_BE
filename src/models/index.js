@@ -17,6 +17,8 @@ import TipoClientes from './tipoClientes.js';
 import Alertas from './alertas.js';
 import TipoServicios from './tiposServicios.js';
 
+import Notas from './Notas.js';
+
 // ============================================================================
 // ASOCIACIONES USERS - ROLES - PERMISSIONS
 // ============================================================================
@@ -328,4 +330,5 @@ export {
   TipoClientes,
   TipoServicios,
   Alertas,
+  Notas,
 };

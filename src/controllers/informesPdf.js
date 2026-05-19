@@ -1,6 +1,6 @@
 import pdfMuestraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 
-const Informes = {
+const InformesPdf = {
   muestraAgua: async (req, res) => {
     try {
       const muestra_id = parseInt(req.params.muestra_id, 10);
@@ -12,7 +12,6 @@ const Informes = {
       }
       const informe = new pdfMuestraAguaService();
       const { pdfBytes, filename } =
-      
         await informe.generarInformeMuestraAgua(muestra_id);
 
       res.setHeader('Content-Type', 'application/pdf');
@@ -51,12 +50,11 @@ const Informes = {
 
       const informe = new pdfMuestraAguaService();
 
-      const { pdfBytes, filename } =
-        await informe.generarInformeCalidadAgua(
-          cliente_id,
-          pozos_ids,
-          conclusion,
-        );
+      const { pdfBytes, filename } = await informe.generarInformeCalidadAgua(
+        cliente_id,
+        pozos_ids,
+        conclusion,
+      );
 
       res.setHeader('Content-Type', 'application/pdf');
 
@@ -77,4 +75,4 @@ const Informes = {
   },
 };
 
-export default Informes;
+export default InformesPdf;

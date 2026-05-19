@@ -78,7 +78,8 @@ import * as userDashboard from '../controllers/userDashboard.js';
 
 import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
-import Informes from '../controllers/informes.js';
+import InformesPdf from '../controllers/informesPdf.js';
+import * as notas from '../controllers/notas.js';
 
 const router = express.Router();
 
@@ -370,10 +371,10 @@ router.post('/tiposervicios', controllersTipoServicios.add);
 // ========================================
 // RUTAS PROTEGIDAS - ALERTAS SERVICIOS
 // ========================================
-  
+
 router.post('/alertas', controllersAlertas.add);
 router.put('/alertas/:alerta_id', controllersAlertas.update);
-router.delete('/alertas/:alerta_id',  controllersAlertas.deleteAlerta,);
+router.delete('/alertas/:alerta_id', controllersAlertas.deleteAlerta);
 router.post('/alertaservicios', controllersAlertas.addAllService);
 router.get('/alertas/to_user/:to_user_id', controllersAlertas.getByUserToId);
 router.get(
@@ -395,9 +396,9 @@ router.post(
   muestrasAguaController.previssualizarPdf,
 );
 
-router.post('/informes/pozos', Informes.muestraPozos);
+router.post('/informes/pozos', InformesPdf.muestraPozos);
 
-router.get('/informes/muestra/:muestra_id', Informes.muestraAgua);
+router.get('/informes/muestra/:muestra_id', InformesPdf.muestraAgua);
 
 // =============================================================
 // RUTAS PROTEGIDAS - GENERACION INFORMES PDF CALIBRACIONES
@@ -502,6 +503,12 @@ router.get(
   userDashboard.allServicesToClients,
 );
 router.get('/dashboard/services/totales', userDashboard.getDashboardTotals);
+
+router.get('/clientes/:cliente_id/notas', notas.allNotas);
+router.post('/clientes/:cliente_id/notas', notas.addNotas);
+router.delete('/clientes/:cliente_id/notas/:id', notas.deleteNota);
+router.put(`/clientes/:cliente_id/notas/:id`, notas.updateNota);
+
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
