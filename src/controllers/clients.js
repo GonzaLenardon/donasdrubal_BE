@@ -8,6 +8,7 @@ import TipoClientes from '../models/tipoClientes.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
 import Clientes from '../models/clientes.js';
+import { Op } from 'sequelize';
 
 // const bcrypt = require('bcrypt');
 
@@ -47,6 +48,30 @@ const addClient = async (req, res) => {
 
     await ClienteIngenieros.bulkCreate(relacionesIngenieros);
 
+
+    // ✅ Crear usuario asociado al cliente
+    const usuarioCliente = await Users.create(
+      {
+        nombre: nuevoCliente?.razon_social || 'Cliente sin nombre',
+        email: nuevoCliente?.email || 'sinmail@donasdrubal.local',
+        password: '123456', // Contraseña estándar
+        telefono: nuevoCliente?.telefono || '0', // Teléfono por defecto
+      },
+
+    );
+    const roles = await Roles.findOne({
+      where: { nombre: { [Op.like]: '%Cliente%' } },
+    });
+    const role_id = roles ? roles.id : 3; // ID del rol "Cliente" (ajustar según tu base de datos)
+    // Crear relación user_roles
+    await UserRoles.create(
+      {
+        user_id: usuarioCliente.id, //new user_id
+        role_id: role_id,
+      },
+    );
+    await nuevoCliente.update({ user_id: usuarioCliente.id });
+    
     // Cargar cliente con ingenieros
     const clienteCompleto = await Clientes.findByPk(nuevoCliente.id, {
       include: [
