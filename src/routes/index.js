@@ -508,6 +508,7 @@ router.get('/clientes/:cliente_id/notas', notas.allNotas);
 router.post('/clientes/:cliente_id/notas', notas.addNotas);
 router.delete('/clientes/:cliente_id/notas/:id', notas.deleteNota);
 router.put(`/clientes/:cliente_id/notas/:id`, notas.updateNota);
+router.get('/user/:usuario_id/notas', notas.allNotasUser);
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE

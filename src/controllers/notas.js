@@ -110,3 +110,30 @@ export const allNotas = async (req, res) => {
     });
   }
 };
+
+export const allNotasUser = async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    const notas = await Notas.findAll({
+      where: { usuario_id },
+      include: [
+        {
+          model: Clientes,
+          as: 'cliente',
+          attributes: ['id', 'razon_social'],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      message: 'Notas obtenidas exitosamente',
+      data: notas,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+};
