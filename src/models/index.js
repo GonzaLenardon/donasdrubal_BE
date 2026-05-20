@@ -262,6 +262,20 @@ Calibraciones.hasMany(Alertas, {
 });
 
 // ===============================================
+// ASOCIACIONES Clientes - Notas
+// ===============================================
+
+Notas.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+});
+
+Clientes.hasMany(Notas, {
+  foreignKey: 'cliente_id',
+  as: 'notasCliente',
+});
+
+// ===============================================
 // ASOCIACIONES Alertas  <==> MUESTRAS DE AGUA
 // ===============================================
 
