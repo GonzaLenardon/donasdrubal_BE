@@ -81,6 +81,8 @@ import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
 
+import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
+
 const router = express.Router();
 
 // ========================================
@@ -509,6 +511,8 @@ router.post('/clientes/:cliente_id/notas', notas.addNotas);
 router.delete('/clientes/:cliente_id/notas/:id', notas.deleteNota);
 router.put(`/clientes/:cliente_id/notas/:id`, notas.updateNota);
 router.get('/user/:usuario_id/notas', notas.allNotasUser);
+
+router.get('/informes/resumen', resumenSemanalPdf.reporteSemanal);
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
