@@ -168,7 +168,7 @@ Alertas.init(
       comment: 'Categoría general para agrupar',
       validate: {
         isIn: [
-          ['clientes', 'maquinas', 'pozos', 'jornadas', 'servicios', 'muestras_agua', 'sistema', 'tarea', 'alertas', 'notificaciones', 'otros'],
+          ['clientes', 'maquinas', 'pozos', 'servicios', 'muestras_agua', 'calibraciones', 'jornadas', 'sistema', 'tarea', 'alertas', 'notificaciones', 'otros'],
         ],
       },
     },
