@@ -411,7 +411,8 @@ class PdfResumenService {
 
     return {
       pdfBytes,
-      filename: `resumen_semanal_${Date.now()}.pdf`,
+      /*    filename: `resumen_semanal_${Date.now()}.pdf`, */
+      filename: `resumen_semanal_${reporteData.periodo}.pdf`,
     };
   }
 }

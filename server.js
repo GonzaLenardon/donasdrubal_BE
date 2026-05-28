@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import morgan from 'morgan';
+import iniciarResumenSemanalCron from './src/cron/resumenSemanalCron.js';
 
 dotenv.config();
 
@@ -61,6 +62,11 @@ const startServer = async () => {
     // 🔹 Luego sincronizar modelos (sin borrar da    // await db.sync({ force: false });
     await db.sync({ alter: false }); // Ajusta tablas sin borrar datos
     console.log('📦 Base de datos sincronizada.');
+
+    // ✅ INICIAR CRON
+    iniciarResumenSemanalCron();
+
+    console.log('🕒 Cron resumen semanal iniciado.');
 
     // 🔹 Iniciar servidor Express
     app.listen(PORT, () => {
