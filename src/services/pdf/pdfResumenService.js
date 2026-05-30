@@ -360,6 +360,10 @@ class PdfResumenService {
 
     const { width, height } = page.getSize();
 
+    const periodoFilename = reporteData.periodo
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '_');
+
     // HEADER
     this.drawHeader({
       page,
@@ -411,8 +415,7 @@ class PdfResumenService {
 
     return {
       pdfBytes,
-      /*    filename: `resumen_semanal_${Date.now()}.pdf`, */
-      filename: `resumen_semanal_${reporteData.periodo}.pdf`,
+      filename: `resumen_semanal_${periodoFilename}.pdf`,
     };
   }
 }

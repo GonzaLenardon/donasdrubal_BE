@@ -17,7 +17,7 @@ import TipoClientes from './tipoClientes.js';
 import Alertas from './alertas.js';
 import TipoServicios from './tiposServicios.js';
 
-import Notas from './Notas.js';
+import Notas from './notas.js';
 
 // ============================================================================
 // ASOCIACIONES USERS - ROLES - PERMISSIONS
