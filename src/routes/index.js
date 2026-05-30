@@ -82,6 +82,7 @@ import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
+import iniciarResumenSemanalCron from '../cron/resumenSemanalCron.js';
 
 const router = express.Router();
 
@@ -95,6 +96,8 @@ router.get('/', (req, res) => {
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
     version: '3.1.0',
   });
+
+  iniciarResumenSemanalCron();
 });
 
 router.post('/login', login);
@@ -512,7 +515,11 @@ router.delete('/clientes/:cliente_id/notas/:id', notas.deleteNota);
 router.put(`/clientes/:cliente_id/notas/:id`, notas.updateNota);
 router.get('/user/:usuario_id/notas', notas.allNotasUser);
 
+// Modo automático / cron — GET con ?semana= opcional
 router.get('/informes/resumen', resumenSemanalPdf.reporteSemanal);
+
+// Modo manual / form — POST con body { fechaInicio, fechaFin }
+router.post('/informes/resumen/rango', resumenSemanalPdf.reportePorRango);
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
