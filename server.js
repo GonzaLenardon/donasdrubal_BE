@@ -64,9 +64,8 @@ const startServer = async () => {
     console.log('📦 Base de datos sincronizada.');
 
     // ✅ INICIAR CRON
-    iniciarResumenSemanalCron();
-
-    console.log('🕒 Cron resumen semanal iniciado.');
+    /*  iniciarResumenSemanalCron();
+    console.log('🕒 Cron resumen semanal iniciado.'); */
 
     // 🔹 Iniciar servidor Express
     app.listen(PORT, () => {
