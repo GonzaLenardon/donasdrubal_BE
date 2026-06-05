@@ -108,7 +108,12 @@ class PdfResumenService {
   drawClienteCard({ page, cliente, y, width, font, boldFont, icons }) {
     const cardX = 40;
     const cardWidth = width - 80;
-    const cardHeight = 155;
+
+    const cantidadIngenieros = cliente.ingenieros.length || 1;
+
+    const extraIngenieros = Math.max(0, cantidadIngenieros - 2);
+
+    const cardHeight = 155 + extraIngenieros * 16;
 
     // ─────────────────────────────────────
     // CARD
@@ -174,20 +179,19 @@ class PdfResumenService {
     });
 
     // ─────────────────────────────────────
-    // LINEA VERTICAL
+    // DIVISION CENTRAL
     // ─────────────────────────────────────
-    page.drawLine({
-      start: { x: cardX + 240, y: y - 92 },
-      end: { x: cardX + 240, y: y - 45 },
-      thickness: 1,
-      color: rgb(0.8, 0.8, 0.8),
-    });
+
+    const dividerX = cardX + cardWidth / 2;
+
+    const ingenierosX = dividerX + 25;
 
     // ─────────────────────────────────────
     // ICONO INGENIERO
     // ─────────────────────────────────────
+
     page.drawImage(icons.ingeniero, {
-      x: cardX + 270,
+      x: ingenierosX,
       y: y - 60,
       width: 15,
       height: 15,
@@ -196,8 +200,9 @@ class PdfResumenService {
     // ─────────────────────────────────────
     // TITULO INGENIEROS
     // ─────────────────────────────────────
+
     page.drawText('Ingenieros asignados:', {
-      x: cardX + 295,
+      x: ingenierosX + 25,
       y: y - 55,
       size: 10,
       font: boldFont,
@@ -206,13 +211,14 @@ class PdfResumenService {
     // ─────────────────────────────────────
     // LISTA INGENIEROS
     // ─────────────────────────────────────
+
     let ingY = y - 78;
 
     cliente.ingenieros.forEach((ing) => {
       page.drawText(
         `• ${ing.nombre}${ing.es_principal ? ' (Principal)' : ''}`,
         {
-          x: cardX + 300,
+          x: ingenierosX + 25,
           y: ingY,
           size: 10,
           font,
@@ -223,9 +229,35 @@ class PdfResumenService {
     });
 
     // ─────────────────────────────────────
-    // LINEA SEPARADORA
+    // CALCULAR DONDE TERMINA EL ULTIMO
+    // INGENIERO PARA UBICAR LA LINEA
     // ─────────────────────────────────────
-    const separatorY = y - 98;
+
+    const ultimaLineaIngenieroY =
+      cantidadIngenieros > 0 ? y - 78 - (cantidadIngenieros - 1) * 16 : y - 78;
+
+    // ─────────────────────────────────────
+    // LINEA HORIZONTAL
+    // ─────────────────────────────────────
+
+    const separatorY = ultimaLineaIngenieroY - 12;
+
+    // ─────────────────────────────────────
+    // LINEA VERTICAL CENTRAL
+    // ─────────────────────────────────────
+
+    page.drawLine({
+      start: {
+        x: dividerX,
+        y: separatorY + 6,
+      },
+      end: {
+        x: dividerX,
+        y: y - 45,
+      },
+      thickness: 1,
+      color: rgb(0.8, 0.8, 0.8),
+    });
 
     page.drawLine({
       start: { x: cardX + 20, y: separatorY },
@@ -237,6 +269,9 @@ class PdfResumenService {
     // ─────────────────────────────────────
     // METRICAS
     // ─────────────────────────────────────
+
+    const metricsTopY = separatorY - 10;
+
     const metrics = [
       {
         icon: icons.maquinas,
@@ -273,26 +308,31 @@ class PdfResumenService {
       // ─────────────────────────────
       // LINEAS VERTICALES
       // ─────────────────────────────
+
       if (index !== 0) {
         page.drawLine({
-          start: { x: startX, y: y - 142 },
-          end: { x: startX, y: y - 108 },
+          start: {
+            x: startX,
+            y: metricsTopY - 34,
+          },
+          end: {
+            x: startX,
+            y: metricsTopY,
+          },
           thickness: 1,
           color: rgb(0.85, 0.85, 0.85),
         });
       }
 
-      // ─────────────────────────────
-      // CENTRO COLUMNA
-      // ─────────────────────────────
       const centerX = startX + metricWidth / 2;
 
       // ─────────────────────────────
       // ICONO
       // ─────────────────────────────
+
       page.drawImage(metric.icon, {
         x: centerX - 42,
-        y: y - 126,
+        y: metricsTopY - 18,
         width: 16,
         height: 16,
       });
@@ -300,11 +340,12 @@ class PdfResumenService {
       // ─────────────────────────────
       // LABEL
       // ─────────────────────────────
+
       const labelWidth = font.widthOfTextAtSize(metric.label, 9);
 
       page.drawText(metric.label, {
         x: centerX - labelWidth / 2 + 10,
-        y: y - 118,
+        y: metricsTopY - 10,
         size: 9,
         font,
       });
@@ -312,13 +353,14 @@ class PdfResumenService {
       // ─────────────────────────────
       // VALOR
       // ─────────────────────────────
+
       const value = String(metric.value);
 
       const valueWidth = boldFont.widthOfTextAtSize(value, 12);
 
       page.drawText(value, {
         x: centerX - valueWidth / 2,
-        y: y - 136,
+        y: metricsTopY - 28,
         size: 12,
         font: boldFont,
         color: rgb(0, 0.35, 0.1),
@@ -328,7 +370,7 @@ class PdfResumenService {
     // ─────────────────────────────────────
     // RETORNO FINAL
     // ─────────────────────────────────────
-    return y - 185;
+    return y - (cardHeight + 30);
   }
 
   // =========================================================
@@ -359,6 +401,10 @@ class PdfResumenService {
     let page = pdfDoc.addPage([842, 595]);
 
     const { width, height } = page.getSize();
+
+    const periodoFilename = reporteData.periodo
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '_');
 
     // HEADER
     this.drawHeader({
@@ -411,7 +457,7 @@ class PdfResumenService {
 
     return {
       pdfBytes,
-      filename: `resumen_semanal_${Date.now()}.pdf`,
+      filename: `resumen_semanal_${periodoFilename}.pdf`,
     };
   }
 }
