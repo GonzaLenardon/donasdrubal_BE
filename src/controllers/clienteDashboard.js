@@ -425,7 +425,7 @@ export const getClienteMachinesChart = async (req, res) => {
     });
 };
 
-export const getClienteUpcomingServices = async (req, res) => {
+export const getClienteUpcomingAlerts = async (req, res) => {
   try {
     const { cliente_id } = req.params;
 
@@ -623,6 +623,143 @@ console.log('IDs de jornadas:', jornadaIds);
   }
 };
 
+const estadosServiciosPendientes = ['PENDIENTE', 'EN PROCESO', 'VENCIDO'];
+
+const normalizarFechaServicio = (fecha) => {
+  if (!fecha) return null;
+  return fecha instanceof Date ? fecha.toISOString() : fecha;
+};
+
+const ordenarPorFechaServicio = (a, b) => {
+  if (!a.date && !b.date) return 0;
+  if (!a.date) return 1;
+  if (!b.date) return -1;
+  return new Date(a.date) - new Date(b.date);
+};
+
+export const getClienteUpcomingServices = async (req, res) => {
+  try {
+    const { cliente_id } = req.params;
+
+    if (!cliente_id) {
+      return res.status(400).json({
+        message: 'cliente_id requerido',
+        payload: null
+      });
+    }
+
+    const [calibraciones, muestrasAgua, jornadas] = await Promise.all([
+      Calibracion.findAll({
+        where: {
+          estado: {
+            [Op.in]: estadosServiciosPendientes
+          }
+        },
+        include: [{
+          model: Maquina,
+          as: 'maquina',
+          required: true,
+          where: { cliente_id },
+          include: [{
+            model: MaquinaTipo,
+            as: 'tipo'
+          }]
+        }],
+        order: [['fecha', 'ASC']]
+      }),
+
+      MuestraAgua.findAll({
+        where: {
+          estado: {
+            [Op.in]: estadosServiciosPendientes
+          }
+        },
+        include: [{
+          model: Pozo,
+          as: 'pozo',
+          required: true,
+          where: { cliente_id },
+          attributes: ['id', 'nombre', 'establecimiento', 'cliente_id']
+        }],
+        order: [['fecha_muestra', 'ASC']]
+      }),
+
+      Jornada.findAll({
+        where: {
+          cliente_id,
+          estado: {
+            [Op.in]: estadosServiciosPendientes
+          }
+        },
+        order: [['fecha_jornada', 'ASC']]
+      })
+    ]);
+
+    const data = {
+      calibracion: calibraciones.map((calibracion) => {
+        const maquina = calibracion.maquina;
+        const tipoMaquina = maquina?.tipo;
+        const descripcionMaquina = [
+          tipoMaquina?.tipo,
+          tipoMaquina?.marca,
+          tipoMaquina?.modelo
+        ].filter(Boolean).join(' ');
+
+        return {
+          id: calibracion.id,
+          title: descripcionMaquina
+            ? `Calibracion - ${descripcionMaquina}`
+            : 'Calibracion pendiente',
+          subtitle: maquina?.responsable
+            ? `Responsable: ${maquina.responsable}`
+            : 'Maquina sin responsable asignado',
+          date: normalizarFechaServicio(calibracion.fecha),
+          status: calibracion.estado,
+          icon: 'calibracion',
+          url: `cliente/${cliente_id}/detalles/maquinas/${calibracion.maquina_id}/calibraciones`
+        };
+      }).sort(ordenarPorFechaServicio),
+
+      muestras_agua: muestrasAgua.map((muestra) => ({
+        id: muestra.id,
+        title: muestra.pozo?.nombre
+          ? `Muestra de agua - ${muestra.pozo.nombre}`
+          : 'Muestra de agua pendiente',
+        subtitle: muestra.pozo?.establecimiento || 'Pozo sin establecimiento asignado',
+        date: normalizarFechaServicio(muestra.fecha_muestra),
+        status: muestra.estado,
+        icon: 'muestra_agua',
+        url: `cliente/${cliente_id}/detalles/pozos/${muestra.pozo_id}/muestras`
+      })).sort(ordenarPorFechaServicio),
+
+      jornadas: jornadas.map((jornada) => ({
+        id: jornada.id,
+        title: jornada.motivo || 'Jornada pendiente',
+        subtitle: jornada.observaciones || 'Jornada programada',
+        date: normalizarFechaServicio(jornada.fecha_jornada),
+        status: jornada.estado,
+        icon: 'jornada',
+        url: `cliente/${cliente_id}/detalles/jornadas/${jornada.id}`
+      })).sort(ordenarPorFechaServicio),
+
+      otros: []
+    };
+
+    return res.status(200).json({
+      message: 'Servicios pendientes obtenidos correctamente',
+      payload: data
+    });
+
+  } catch (error) {
+    console.error('Error en getClienteUpcomingServices:', error);
+    return res.status(500).json({
+      message: 'Error al obtener servicios pendientes',
+      payload: null,
+      error: error.message
+    });
+  }
+};
+
 export const getClienteUpcomingServicesMock = async (req, res) => {
   // Queries de servicios próximos
 const data = {
@@ -633,7 +770,8 @@ const data = {
         tipo: 'Calibración anual programada',
         fecha: '2024-07-25',
         estado: 'Confirmado',
-        tipoMaquina: 'Autopropulsada'
+        tipoMaquina: 'Autopropulsada',
+        url: `cliente/${req.params.clienteId}/detalles/maquinas/${req.params.maquinaId}/calibraciones`
       },
       {
         id: 2,
@@ -641,7 +779,8 @@ const data = {
         tipo: 'Recalibración por cambio de picos',
         fecha: '2024-08-02',
         estado: 'Pendiente',
-        tipoMaquina: 'Arrastre'
+        tipoMaquina: 'Arrastre',
+        url: `cliente/${req.params.clienteId}/detalles/maquinas/${req.params.maquinaId}/calibraciones`
       },
       {
         id: 3,
@@ -649,25 +788,19 @@ const data = {
         tipo: 'Calibración de presión',
         fecha: '2024-06-15',
         estado: 'Realizado',
-        tipoMaquina: 'Mochila'
+        tipoMaquina: 'Mochila',
+        url: `cliente/${req.params.clienteId}/detalles/maquinas/${req.params.maquinaId}/calibraciones`
       }
     ],
-    otros: [
+    Pozos: [
       {
         id: 4,
         nombre: 'Pozo Norte - Lote 42',
         tipo: 'Análisis fisicoquímico completo',
         fecha: '2024-07-28',
         estado: 'Confirmado',
-        categoria: 'analisis'
-      },
-      {
-        id: 5,
-        nombre: 'Jornada: Aplicación Eficiente',
-        tipo: 'Capacitación de 8 operarios',
-        fecha: '2024-08-05',
-        estado: 'Pendiente',
-        categoria: 'capacitacion'
+        categoria: 'analisis',
+        url: `cliente/${req.params.clienteId}/detalles/pozos/${req.params.pozoId}/muestras`
       },
       {
         id: 6,
@@ -675,9 +808,21 @@ const data = {
         tipo: 'Análisis de pH y dureza',
         fecha: '2024-06-10',
         estado: 'Realizado',
-        categoria: 'analisis'
+        categoria: 'analisis',
+        url: `cliente/${req.params.clienteId}/detalles/pozos/${req.params.pozoId}/muestras`
+      }      
+    ],
+    Jornadas: [
+      {
+        id: 7,
+        nombre: 'Jornada: Aplicación Eficiente',
+        tipo: 'Capacitación de 8 operarios',
+        fecha: '2024-08-05',
+        estado: 'Pendiente',
+        categoria: 'capacitacion',
+        url: `cliente/${req.params.clienteId}/detalles/jornadas/${req.params.jornadaId}`
       }
-    ]
+    ] 
   };  
     return res.status(200).json({
       message: 'Estadísticas del cliente obtenidas correctamente',
