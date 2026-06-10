@@ -174,7 +174,7 @@ export const allServicesToClients = async (req, res) => {
     let clientesIds = [];
 
     // ───────────────────────────────
-    // 1️⃣ Permisos
+    // 1️⃣ Permisos 
     // ───────────────────────────────
 
     if (rol === 'Administrador') {
@@ -208,56 +208,90 @@ export const allServicesToClients = async (req, res) => {
     // ───────────────────────────────
     // 2️⃣ Datos básicos cliente
     // ───────────────────────────────
-
-    const clientes = await Clientes.findAll({
-      where: { id: { [Op.in]: clientesIds } },
-      attributes: [
-        'id',
-        'razon_social',
-        'cuil_cuit',
-        'telefono',
-        'direccion_fiscal',
-        'ciudad',
-        'provincia',
-        'litros_estimados',
-      ],
-      raw: true,
-    });
+const clientes = await Clientes.findAll({
+  where: {
+    id: {
+      [Op.in]: clientesIds,
+    },
+  },
+  attributes: [
+    'id',
+    'razon_social',
+    'cuil_cuit',
+    'telefono',
+    'direccion_fiscal',
+    'ciudad',
+    'provincia',
+    'litros_estimados',
+  ],
+  include: [
+    {
+      model: Users,
+      as: 'ingenieros',
+      attributes: ['id', 'nombre', 'email'],
+      through: {
+        attributes: ['es_principal'],
+      },
+    },
+  ],
+});
+    // const clientes = await Clientes.findAll({
+    //   where: { id: { [Op.in]: clientesIds } },
+    //   attributes: [
+    //     'id',
+    //     'razon_social',
+    //     'cuil_cuit',
+    //     'telefono',
+    //     'direccion_fiscal',
+    //     'ciudad',
+    //     'provincia',
+    //     'litros_estimados',
+    //   ],
+    //   raw: true,
+    // });
 
     const clientesMap = {};
 
-    clientes.forEach((c) => {
-      clientesMap[c.id] = {
-        id: c.id,
-        razon_social: c.razon_social,
-        cuit: c.cuil_cuit,
-        telefono: c.telefono,
-        direccion: c.direccion_fiscal,
-        ciudad: c.ciudad,
-        provincia: c.provincia,
-        litros_estimados: c.litros_estimados,
-        Maquinas: {
-          totalMaquinas: 0,
-          totalCalibraciones: 0,
-          calibracionesPendientes: 0,
-          calibracionesCerradas: 0,
-          calibracionesProceso: 0,
-        },
-        Pozos: {
-          totalPozos: 0,
-          totalMuestras: 0,
-          muestrasPendientes: 0,
-          muestrasCerradas: 0,
-          muestrasProceso: 0,
-        },
-        Jornadas: {
-          totalJornadas: 0,
-          jornadasPendientes: 0,
-          jornadasCerradas: 0,
-          jornadasProceso: 0,
-        },
-      };
-    });
+clientes.forEach((cliente) => {
+  clientesMap[cliente.id] = {
+    id: cliente.id,
+    razon_social: cliente.razon_social,
+    cuit: cliente.cuil_cuit,
+    telefono: cliente.telefono,
+    direccion: cliente.direccion_fiscal,
+    ciudad: cliente.ciudad,
+    provincia: cliente.provincia,
+    litros_estimados: cliente.litros_estimados,
+
+    ingenieros: cliente.ingenieros.map((i) => ({
+      id: i.id,
+      nombre: i.nombre,
+      email: i.email,
+      es_principal: i.ClienteIngenieros?.es_principal ?? false,
+    })),
+
+    Maquinas: {
+      totalMaquinas: 0,
+      totalCalibraciones: 0,
+      calibracionesPendientes: 0,
+      calibracionesCerradas: 0,
+      calibracionesProceso: 0,
+    },
+    Pozos: {
+      totalPozos: 0,
+      totalMuestras: 0,
+      muestrasPendientes: 0,
+      muestrasCerradas: 0,
+      muestrasProceso: 0,
+    },
+    Jornadas: {
+      totalJornadas: 0,
+      jornadasPendientes: 0,
+      jornadasCerradas: 0,
+      jornadasProceso: 0,
+    },
+  };
+});
 
     // ───────────────────────────────
     // 3️⃣ MAQUINAS
