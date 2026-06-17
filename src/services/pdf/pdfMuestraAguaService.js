@@ -538,7 +538,7 @@ getPathInforme(pathInforme, nombreArchivo) {
       'Sal.',
       'CE',
       'F. Iónica',
-      'Dosis',
+      'Dosis Hard',
     ];
     const columnRatios = [0.05, 0.25, 0.08, 0.1, 0.12, 0.1, 0.08, 0.12, 0.1];
 
@@ -733,7 +733,7 @@ cursorY = durezaResult.cursorY - 40;
       ['Salinidad (mg/l)', String(muestra.salinidad ?? '-')],
       ['Conductividad (dS/cm)', String(muestra.conductividad ?? '-')],
       ['Fuerza Iónica', String(muestra.fuerza_ionica ?? '-')],
-      ['Dosis', String(muestra.dosis ?? '-')],
+      ['Dosis Hard', String(muestra.dosis ?? '-')],
     ];
 
     let result = this.drawTable({
