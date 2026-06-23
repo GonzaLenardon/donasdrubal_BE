@@ -5,16 +5,18 @@ import { Op } from 'sequelize';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek.js';
 
-import Clientes from '../../models/clientes.js';
-import Users from '../../models/users.js';
-import ClienteIngenieros from '../../models/clientesIngenieros.js';
-import Maquinas from '../../models/maquinas.js';
-import Calibraciones from '../../models/calibraciones.js';
-import Pozo from '../../models/pozo.js';
-import MuestraAgua from '../../models/muestra_agua.js';
-import Jornada from '../../models/jornada.js';
-import Alertas from '../../models/alertas.js';
-import Notas from '../../models/notas.js';
+import {
+  Clientes,
+  Users,
+  ClienteIngenieros,
+  Maquinas,
+  Calibraciones,
+  Pozo,
+  MuestraAgua,
+  Jornada,
+  Alertas,
+  Notas,
+} from '../../models/index.js';
 
 dayjs.extend(isoWeek);
 
