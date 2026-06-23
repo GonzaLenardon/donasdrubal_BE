@@ -1,0 +1,283 @@
+{
+  "ok": true,
+  "periodo": "01/06/2026 – 06/06/2026",
+  "total_clientes": 9,
+  "data": [
+    {
+      "cliente_id": 4,
+      "razon_social": "AGROPECUARIA SUR",
+      "email": "importado_4_agropecuaria_sur@donasdrubal.local",
+      "telefono": "1",
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": false
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        },
+        {
+          "id": 9,
+          "nombre": "JUAN CRUZ IGLESIAS",
+          "email": "juancruz.iglesias@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 10,
+          "nombre": "RODRIGO VISDOMINE",
+          "email": "rodrigo.visdomine@donasdrubal.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 1,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 11,
+      "razon_social": "COOP EL PROGRESO",
+      "email": "importado_11_coop_el_progreso@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 2,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 13,
+      "razon_social": "ENTRE RIOS SA las cabezas",
+      "email": "importado_13_entre_rios_sa_las_cabezas@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 2,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 85,
+      "razon_social": "LA CABAÑA",
+      "email": "importado_85_la_caba_a@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        }
+      ],
+      "resumen": {
+        "calibraciones": 0,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 1
+      }
+    },
+    {
+      "cliente_id": 17,
+      "razon_social": "LA GANADERA",
+      "email": "importado_17_la_ganadera@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 0,
+        "muestras_agua": 1,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 35,
+      "razon_social": "MENDIZABAL JUAN",
+      "email": "importado_35_mendizabal_juan@donasdrubal.local",
+      "telefono": "1",
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        },
+        {
+          "id": 13,
+          "nombre": "FRANCISCO CANTEROS",
+          "email": "francanteros.fc@gmail.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 1,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 62,
+      "razon_social": "PATRICIA VIAÑA",
+      "email": "importado_62_patricia_via_a@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 5,
+          "nombre": "DAVID PEIRETTI",
+          "email": "david.peiretti@donasdrubal.com",
+          "es_principal": false
+        },
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        }
+      ],
+      "resumen": {
+        "calibraciones": 1,
+        "muestras_agua": 0,
+        "jornadas": 1,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 114,
+      "razon_social": "RAÍCES AGROPECUARIAS",
+      "email": "santimartino94@gmail.com",
+      "telefono": "00",
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        }
+      ],
+      "resumen": {
+        "calibraciones": 0,
+        "muestras_agua": 1,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 0
+      }
+    },
+    {
+      "cliente_id": 30,
+      "razon_social": "SAN FERNANDO",
+      "email": "importado_30_san_fernando@donasdrubal.local",
+      "telefono": null,
+      "ingenieros": [
+        {
+          "id": 6,
+          "nombre": "MATIAS DOMINGORENA",
+          "email": "matias.domingorena@donasdrubal.com",
+          "es_principal": true
+        },
+        {
+          "id": 8,
+          "nombre": "LUCAS SACKS",
+          "email": "lucas.sacks@donasdrubal.com",
+          "es_principal": false
+        }
+      ],
+      "resumen": {
+        "calibraciones": 1,
+        "muestras_agua": 0,
+        "jornadas": 0,
+        "alertas": {
+          "total": 0,
+          "por_categoria": {}
+        },
+        "comentarios_observaciones": 1
+      }
+    }
+  ]
+}
