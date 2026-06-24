@@ -16,29 +16,31 @@ class EmailService {
     });
   }
 
-  async enviarResumenSemanal({ pdfBytes, filename, reporteData }) {
+  async enviarResumenSemanal({
+    pdfBytes,
+    filename,
+    reporteData,
+    subject,
+    html,
+  }) {
     // ✅ VERIFICA CONEXIÓN SMTP
     await this.transporter.verify();
 
     console.log('✅ SMTP conectado correctamente');
 
-    // ✅ ENVIO EMAIL
     await this.transporter.sendMail({
       from: `"Don Asdrúbal" <${process.env.SMTP_USER}>`,
-
-      /*  to: process.env.RESUMEN_SEMANAL_EMAILS, */
       to: process.env.RESUMEN_SEMANAL_EMAILS.split(','),
+      subject: subject || `Resumen semanal ${reporteData.periodo}`,
+      html:
+        html ||
+        `
+          <h2>Resumen semanal</h2>
 
-      subject: `Resumen semanal ${reporteData.periodo}`,
-
-      html: `
-        <h2>Resumen semanal</h2>
-
-        <p>
-          Se adjunta el resumen semanal automático.
-        </p>
-      `,
-
+          <p>
+            Se adjunta el resumen semanal automático.
+          </p>
+        `,
       attachments: [
         {
           filename,

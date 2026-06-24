@@ -1,6 +1,6 @@
 // controllers/resumenSemanalPdf.js
 
-import PdfResumenService from '../services/pdf/pdfResumenService.js';
+import PdfResumenService from '../services/pdf/OldpdfResumenService.js';
 import ReporteSemanalService from '../services/reportes/reporteSemanalService.js';
 
 // ─────────────────────────────────────────────────────────────

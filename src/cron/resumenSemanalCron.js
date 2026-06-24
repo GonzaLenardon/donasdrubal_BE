@@ -3,7 +3,7 @@
 import cron from 'node-cron';
 
 import ReporteSemanalService from '../services/reportes/reporteSemanalService.js';
-import PdfResumenService from '../services/pdf/pdfResumenService.js';
+import PdfResumenService from '../services/pdf/OldpdfResumenService.js';
 import EmailService from '../services/email/emailService.js';
 
 const iniciarResumenSemanalCron = () => {

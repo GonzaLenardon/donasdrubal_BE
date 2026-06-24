@@ -82,7 +82,10 @@ import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
+import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
 import iniciarResumenSemanalCron from '../cron/resumenSemanalCron.js';
+import { ejecutarResumenSemanal } from '../jobs/enviarResumenSemanal.js';
+import { ejecutarResumenCrm } from '../jobs/enviarResumenCrm.js';
 
 const router = express.Router();
 
@@ -96,12 +99,16 @@ router.get('/', (req, res) => {
     mensaje: '¡Hola DON ASDRUBAL! 🚀',
     version: '3.1.0',
   });
-
-  iniciarResumenSemanalCron();
 });
 
 router.post('/login', login);
 router.post('/user', addUser);
+
+router.get('/informes/resumen', ejecutarResumenSemanal); // Endpoint para cron externo
+
+router.get('/informes/resumennew', ejecutarResumenCrm); // Endpoint para cron externo
+
+router.get('/informes/resumen-crm/send', ejecutarResumenCrm); // Endpoint para enviar Resumen CRM por email
 
 /**
  * @route   GET /api/calibraciones/:id/preview-pdf
@@ -516,10 +523,15 @@ router.put(`/clientes/:cliente_id/notas/:id`, notas.updateNota);
 router.get('/user/:usuario_id/notas', notas.allNotasUser);
 
 // Modo automático / cron — GET con ?semana= opcional
-router.get('/informes/resumen', resumenSemanalPdf.reporteSemanal);
 
 // Modo manual / form — POST con body { fechaInicio, fechaFin }
-router.post('/informes/resumen/rango', resumenSemanalPdf.reportePorRango);
+/* router.post('/informes/resumen/rango', resumenSemanalPdf.reportePorRango); */
+
+router.post('/informes/resumen/rango', resumenCrmPdf.reportePorRango);
+
+/* router.get('/informes/resumen-crm', resumenCrmPdf.reporteCrm); */
+
+/* router.post('/informes/resumen-crm/rango', resumenCrmPdf.reportePorRango); */
 
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
