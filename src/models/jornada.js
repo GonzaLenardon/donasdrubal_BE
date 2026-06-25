@@ -41,6 +41,11 @@ Jornada.init(
       },
     },
 
+    responsable_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
     deletedAt: {
       allowNull: true,
       type: DataTypes.DATE,

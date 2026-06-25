@@ -1,5 +1,5 @@
 import { extractModelFields } from '../utils/model/payload.js';
-import Jornada from '../models/jornada.js';
+import { Jornada, Clientes, Users } from '../models/index.js';
 
 export const allJornadas = async (req, res) => {
   console.log('allJornadas controller');
@@ -68,7 +68,7 @@ export const updateJornada = async (req, res) => {
   );
   try {
     const payload = extractModelFields(Jornada, req.body);
-    if(payload.estado === 'PENDIENTE'){
+    if (payload.estado === 'PENDIENTE') {
       payload.estado = 'EN PROCESO';
     }
     const jornada = await Jornada.findByPk(jornada_id);
@@ -92,7 +92,7 @@ export const updateJornada = async (req, res) => {
   }
 };
 
-export const jornadasCliente = async (req, res) => {
+/* export const jornadasCliente = async (req, res) => {
   const cliente_id = req.params.cliente_id;
   console.log('jornadasCliente Controllerr: cliente_id->', cliente_id);
 
@@ -103,6 +103,45 @@ export const jornadasCliente = async (req, res) => {
 
     return res.status(200).json({
       message: 'Jornada de cliente_id' + cliente_id + ' encontrados',
+      data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+}; */
+
+export const jornadasCliente = async (req, res) => {
+  const { cliente_id } = req.params;
+
+  try {
+    const resp = await Jornada.findAll({
+      where: { cliente_id },
+      include: [
+        {
+          model: Clientes,
+          as: 'cliente',
+          attributes: ['id'],
+          include: [
+            {
+              model: Users,
+              as: 'ingenieros',
+              attributes: ['id', 'nombre'],
+              through: {
+                attributes: [], // opcional
+              },
+            },
+          ],
+        },
+
+        { model: Users, as: 'responsable', attributes: ['nombre'] },
+      ],
+    });
+
+    return res.status(200).json({
+      message: `Jornadas del cliente ${cliente_id} encontradas`,
       data: resp,
     });
   } catch (error) {
