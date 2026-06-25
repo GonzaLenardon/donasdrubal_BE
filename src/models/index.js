@@ -276,6 +276,30 @@ Clientes.hasMany(Notas, {
 });
 
 // ===============================================
+// ASOCIACIONES  USERS => MuestraAgua / Jornadas
+// ===============================================
+
+MuestraAgua.belongsTo(Users, {
+  foreignKey: 'responsable_id',
+  as: 'responsable',
+});
+
+Jornada.belongsTo(Users, {
+  foreignKey: 'responsable_id',
+  as: 'responsable',
+});
+
+Users.hasMany(MuestraAgua, {
+  foreignKey: 'responsable_id',
+  as: 'muestrasResponsables',
+});
+
+Users.hasMany(Jornada, {
+  foreignKey: 'responsable_id',
+  as: 'jornadasResponsables',
+});
+
+// ===============================================
 // ASOCIACIONES Alertas  <==> MUESTRAS DE AGUA
 // ===============================================
 
