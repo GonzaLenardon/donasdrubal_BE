@@ -64,6 +64,10 @@ MuestraAgua.init(
       allowNull: true,
       defaultValue: null,
     },
+    responsable_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
 
     deletedAt: {
       allowNull: true,
