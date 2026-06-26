@@ -16,6 +16,15 @@ import dayjs from 'dayjs';
 import { allMuestrasAgua } from './muestras_agua.js';
 import { Op } from 'sequelize';
 import { allIngenieros } from './users.js';
+import EmailService from '../services/email/emailService.js';
+
+const enviarEmailAlerta = async (alerta) => {
+  await EmailService.enviarNotificacionAlerta(alerta);
+  await alerta.update({
+    notificado_email: true,
+    fecha_email: new Date(),
+  });
+};
 
 const controllersAlertas = {
   addAllService: async (req, res) => {
@@ -69,6 +78,9 @@ const controllersAlertas = {
       });
 
       const alertasGeneradas = [];
+      let totalAlertasGeneradas = 0;
+      let emailsEnviados = 0;
+      let emailsFallidos = 0;
 
       for (const cliente of clientes) {
         // console.log('Cliente:', cliente);
@@ -219,13 +231,34 @@ const controllersAlertas = {
             },
           });
         }
-        await Alertas.bulkCreate(alertasGeneradas);
+        const alertasCreadas = await Alertas.bulkCreate(alertasGeneradas);
+        totalAlertasGeneradas += alertasCreadas.length;
+
+        const resultadosEmail = await Promise.allSettled(
+          alertasCreadas.map((alerta) => enviarEmailAlerta(alerta)),
+        );
+
+        emailsEnviados += resultadosEmail.filter(
+          (resultado) => resultado.status === 'fulfilled',
+        ).length;
+        emailsFallidos += resultadosEmail.filter(
+          (resultado) => resultado.status === 'rejected',
+        ).length;
+
+        resultadosEmail
+          .filter((resultado) => resultado.status === 'rejected')
+          .forEach((resultado) => {
+            console.error('Error al enviar email de alerta:', resultado.reason);
+          });
+
         alertasGeneradas.length = 0;
       }
 
       return res.status(200).json({
         message: 'Servicios y alertas generados correctamente',
-        total: alertasGeneradas.length,
+        total: totalAlertasGeneradas,
+        emailsEnviados,
+        emailsFallidos,
       });
     } catch (error) {
       console.error(error);
@@ -242,8 +275,22 @@ const controllersAlertas = {
       console.log('data', data);
 
       const alerta = await Alertas.create(data);
+      let emailEnviado = true;
+      let emailError = null;
 
-      return res.status(201).json(alerta);
+      try {
+        await enviarEmailAlerta(alerta);
+      } catch (error) {
+        emailEnviado = false;
+        emailError = error.message;
+        console.error('Error al enviar email de alerta:', error);
+      }
+
+      return res.status(201).json({
+        ...alerta.toJSON(),
+        emailEnviado,
+        emailError,
+      });
     } catch (error) {
       console.error('Error al crear Alerta de Servicios:', error);
       return res.status(500).json({
