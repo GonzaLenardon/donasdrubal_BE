@@ -12,7 +12,8 @@
     "generate:alertas": "node src/scripts/genAlertasServices.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "testmail": "node src/scripts/testEmail.js",
-    "resumen-semanal": "node src/jobs/enviarResumenSemanal.js"
+    "resumen-semanal": "node src/jobs/enviarResumenSemanal.js",
+    "update:responsables": "node src/scripts/updateResponsablesMuestrasJornadas.js"
   },
   "keywords": [],
   "author": "",
