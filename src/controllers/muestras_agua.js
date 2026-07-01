@@ -1,7 +1,6 @@
 import { extractModelFields } from '../utils/model/payload.js';
-import Clientes from '../models/clientes.js';
-import Pozo from '../models/pozo.js';
-import MuestraAgua from '../models/muestra_agua.js';
+
+import { Users, MuestraAgua, Pozo, Clientes } from '../models/index.js';
 import pdfAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import path from 'path';
 
@@ -82,7 +81,7 @@ export const updateMuestraAgua = async (req, res) => {
 
   try {
     const payload = extractModelFields(MuestraAgua, req.body);
-    if(payload.estado === 'PENDIENTE'){
+    if (payload.estado === 'PENDIENTE') {
       payload.estado = 'EN PROCESO';
     }
 
@@ -241,10 +240,21 @@ export const getMuestrasAguaPozoCliente = async (req, res) => {
           model: Clientes,
           as: 'cliente',
           attributes: ['id', 'razon_social', 'telefono'],
+          include: [
+            { model: Users, as: 'ingenieros', through: { attributes: [] } },
+          ],
         },
+
         {
           model: MuestraAgua,
           as: 'muestrasAgua',
+          include: [
+            {
+              model: Users,
+              as: 'responsable',
+              attributes: ['id', 'nombre'],
+            },
+          ],
         },
       ],
     });
