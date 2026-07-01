@@ -149,6 +149,7 @@ Alertas.init(
             'jornada_programada',
             'jornada_cancelada',
             // Cliente
+            'cliente_creado',
             'cliente_inactivo',
             'documentacion_vencida',
             // Sistema

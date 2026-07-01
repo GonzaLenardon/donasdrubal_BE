@@ -26,6 +26,28 @@ const enviarEmailAlerta = async (alerta) => {
   });
 };
 
+export const crearAlerta = async (data, { enviarEmail = true } = {}) => {
+  const alerta = await Alertas.create(data);
+  let emailEnviado = false;
+  let emailError = null;
+
+  if (enviarEmail) {
+    try {
+      await enviarEmailAlerta(alerta);
+      emailEnviado = true;
+    } catch (error) {
+      emailError = error.message;
+      console.error('Error al enviar email de alerta:', error);
+    }
+  }
+
+  return {
+    alerta,
+    emailEnviado,
+    emailError,
+  };
+};
+
 const controllersAlertas = {
   addAllService: async (req, res) => {
     const { fecha_vencimiento, fecha_alerta } = req.body;
@@ -274,17 +296,7 @@ const controllersAlertas = {
       const data = req.body;
       console.log('data', data);
 
-      const alerta = await Alertas.create(data);
-      let emailEnviado = true;
-      let emailError = null;
-
-      try {
-        await enviarEmailAlerta(alerta);
-      } catch (error) {
-        emailEnviado = false;
-        emailError = error.message;
-        console.error('Error al enviar email de alerta:', error);
-      }
+      const { alerta, emailEnviado, emailError } = await crearAlerta(data);
 
       return res.status(201).json({
         ...alerta.toJSON(),

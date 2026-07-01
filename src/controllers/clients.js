@@ -9,8 +9,50 @@ import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
 import Clientes from '../models/clientes.js';
 import { Op } from 'sequelize';
+import { crearAlerta } from './alertas.js';
 
 // const bcrypt = require('bcrypt');
+
+const getIngenieroPrincipalId = (ingenieros) => {
+  const ingenieroPrincipal =
+    ingenieros.find((ing) => ing.es_principal) ?? ingenieros[0];
+
+  return parseInt(ingenieroPrincipal.user_id, 10);
+};
+
+const buildAlertaClienteCreado = ({
+  cliente,
+  ingenieroPrincipalId,
+  usuarioFromId,
+}) => {
+  const now = new Date();
+
+  return {
+    usuario_from_id: usuarioFromId ?? 0,
+    usuario_to_id: ingenieroPrincipalId,
+    entidad_tipo: 'cliente',
+    entidad_id: cliente.id,
+    tipo_alerta: 'cliente_creado',
+    categoria: 'clientes',
+    estado: 'PENDIENTE',
+    prioridad: 'NORMAL',
+    titulo: 'Alta de cliente',
+    mensaje: `Se dio de alta el cliente ${cliente.razon_social}.`,
+    fecha_alerta: now,
+    fecha_evento: now,
+    fecha_vencimiento: null,
+    requiere_accion: true,
+    accion_texto: 'Ver cliente',
+    url_accion: `/clientes/${cliente.id}`,
+    observaciones: null,
+    metadata: {
+      cliente_id: cliente.id,
+      cliente_nombre: cliente.razon_social,
+      ingeniero_principal_id: ingenieroPrincipalId,
+      creado_por: usuarioFromId ?? 0,
+    },
+  };
+};
 
 const addClient = async (req, res) => {
   console.log('📝 Crear cliente - Body:', req.body);
@@ -35,6 +77,8 @@ const addClient = async (req, res) => {
         });
       }
     }
+
+    const ingenieroPrincipalId = getIngenieroPrincipalId(ingenieros);
 
     // Crear cliente
     const nuevoCliente = await Clientes.create(clienteData);
@@ -71,6 +115,18 @@ const addClient = async (req, res) => {
       },
     );
     await nuevoCliente.update({ user_id: usuarioCliente.id });
+
+    const alertaClienteCreado = buildAlertaClienteCreado({
+      cliente: nuevoCliente,
+      ingenieroPrincipalId,
+      usuarioFromId: req.user?.id,
+    });
+
+    const {
+      alerta: alertaCreada,
+      emailEnviado,
+      emailError,
+    } = await crearAlerta(alertaClienteCreado);
     
     // Cargar cliente con ingenieros
     const clienteCompleto = await Clientes.findByPk(nuevoCliente.id, {
@@ -95,6 +151,11 @@ const addClient = async (req, res) => {
       ok: true,
       mensaje: 'Cliente creado exitosamente',
       cliente: clienteCompleto,
+      alerta: {
+        id: alertaCreada.id,
+        emailEnviado,
+        emailError,
+      },
     });
   } catch (error) {
     console.error('❌ Error al crear cliente:', error);
