@@ -928,8 +928,8 @@ class PdfResumenCrmService {
       reporteData.indicadores.calibraciones.actual +
       reporteData.indicadores.muestras.actual +
       reporteData.indicadores.jornadas.actual +
-      reporteData.indicadores.notas.actual +
-      reporteData.indicadores.alertas.actual;
+      reporteData.indicadores.notas.actual; /* +
+      reporteData.indicadores.alertas.actual; */
 
     const kpis = [
       {
@@ -958,11 +958,11 @@ class PdfResumenCrmService {
         data: reporteData.indicadores.jornadas,
       },
       { icon: 'notas', titulo: 'Notas', data: reporteData.indicadores.notas },
-      {
+      /*  {
         icon: 'alertas',
         titulo: 'Alertas',
         data: reporteData.indicadores.alertas,
-      },
+      }, */
       {
         icon: 'total',
         titulo: 'Total actividades',
@@ -1056,9 +1056,14 @@ class PdfResumenCrmService {
       ...reporteData.ingenieros_mas_activos.map((i) => i.actual),
       1,
     );
+
     const ingenierosRows = reporteData.ingenieros_mas_activos.map((ing) => ({
       Ingeniero: ing.ingeniero,
-      Actividades: ing.actual,
+      Cal: ing.calibraciones,
+      Mue: ing.muestras,
+      Jor: ing.jornadas,
+      Notas: ing.notas,
+      Total: ing.actual,
     }));
 
     rightY = this.drawTable({
@@ -1066,9 +1071,9 @@ class PdfResumenCrmService {
       x: rightX,
       y: rightY,
       width: colWidth,
-      headers: ['Ingeniero', 'Actividades'],
+      headers: ['Ingeniero', 'Cal.', 'Mue.', 'Jor.', 'Notas', 'Total'],
       rows: ingenierosRows,
-      columnWidths: [colWidth - 130, 130],
+      columnWidths: [colWidth - 220, 38, 38, 38, 38, 68],
       font,
       boldFont,
       withBar: true,
@@ -1133,7 +1138,7 @@ class PdfResumenCrmService {
       x: rightX,
       y: rightY,
       width: colWidth,
-      title: 'Clientes sin actividad',
+      title: 'Clientes "A" sin actividad',
       boldFont,
     });
     rightY -= 22;

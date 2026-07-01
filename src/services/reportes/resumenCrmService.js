@@ -101,13 +101,25 @@ class ResumenCrmService {
         }),
 
         MuestraAgua.findAll({
-          attributes: ['id', 'pozo_id', 'createdAt', 'updatedAt'],
+          attributes: [
+            'id',
+            'pozo_id',
+            'responsable_id',
+            'createdAt',
+            'updatedAt',
+          ], // ✅ agregado
           where: rangoWhere,
           raw: true,
         }),
 
         Jornada.findAll({
-          attributes: ['id', 'cliente_id', 'createdAt', 'updatedAt'],
+          attributes: [
+            'id',
+            'cliente_id',
+            'responsable_id',
+            'createdAt',
+            'updatedAt',
+          ], // ✅ agregado
           where: rangoWhere,
           raw: true,
         }),
@@ -287,13 +299,26 @@ class ResumenCrmService {
       }
     });
 
+    // ACTUAL - Muestras
     actividadActual.muestras.forEach((item) => {
       const clienteId = pozosPorId[item.pozo_id];
       if (clienteId) clientesActual.add(clienteId);
+
+      if (item.responsable_id) {
+        // ✅ agregado
+        ingenierosActual.add(item.responsable_id);
+        incrementarIngeniero(actividadIngenieroActual, item.responsable_id);
+      }
     });
 
     actividadActual.jornadas.forEach((item) => {
       if (item.cliente_id) clientesActual.add(item.cliente_id);
+
+      if (item.responsable_id) {
+        // ✅ agregado
+        ingenierosActual.add(item.responsable_id);
+        incrementarIngeniero(actividadIngenieroActual, item.responsable_id);
+      }
     });
 
     actividadActual.notas.forEach((item) => {
@@ -319,10 +344,23 @@ class ResumenCrmService {
     actividadAnterior.muestras.forEach((item) => {
       const clienteId = pozosPorId[item.pozo_id];
       if (clienteId) clientesAnterior.add(clienteId);
+
+      if (item.responsable_id) {
+        // ✅ agregado
+        ingenierosAnterior.add(item.responsable_id);
+        incrementarIngeniero(actividadIngenieroAnterior, item.responsable_id);
+      }
     });
 
+    // ANTERIOR - Jornadas
     actividadAnterior.jornadas.forEach((item) => {
       if (item.cliente_id) clientesAnterior.add(item.cliente_id);
+
+      if (item.responsable_id) {
+        // ✅ agregado
+        ingenierosAnterior.add(item.responsable_id);
+        incrementarIngeniero(actividadIngenieroAnterior, item.responsable_id);
+      }
     });
 
     actividadAnterior.notas.forEach((item) => {
@@ -411,7 +449,6 @@ class ResumenCrmService {
       }
 
       const item = actividadClientes.get(clienteId);
-
       item[tipo] += 1;
       item.total += 1;
     };
@@ -421,10 +458,12 @@ class ResumenCrmService {
     });
 
     actividadActual.muestras.forEach((item) => {
+      // ✅ solo incrementarCliente
       incrementarCliente(pozosPorId[item.pozo_id], 'muestras');
     });
 
     actividadActual.jornadas.forEach((item) => {
+      // ✅ solo incrementarCliente
       incrementarCliente(item.cliente_id, 'jornadas');
     });
 
@@ -474,6 +513,9 @@ class ResumenCrmService {
 
     const todosLosClientes = await Clientes.findAll({
       attributes: ['id', 'razon_social'],
+      where: {
+        tipo_cliente_id: 1, // ✅ solo clientes tipo A
+      },
       raw: true,
     });
 
@@ -618,7 +660,46 @@ class ResumenCrmService {
         })
       : [];
 
-    const rankingIngenieros = [...actividadIngenieroActual.entries()]
+    // =======================================
+    // ACTIVIDAD DETALLADA POR INGENIERO
+    // =======================================
+
+    const actividadDetalleIngeniero = new Map();
+
+    const incrementarDetalleIngeniero = (ingenieroId, tipo) => {
+      if (!ingenieroId) return;
+
+      if (!actividadDetalleIngeniero.has(ingenieroId)) {
+        actividadDetalleIngeniero.set(ingenieroId, {
+          ingeniero_id: ingenieroId,
+          calibraciones: 0,
+          muestras: 0,
+          jornadas: 0,
+          notas: 0,
+        });
+      }
+
+      const item = actividadDetalleIngeniero.get(ingenieroId);
+      item[tipo] += 1;
+    };
+
+    actividadActual.calibraciones.forEach((item) => {
+      incrementarDetalleIngeniero(item.responsable_id, 'calibraciones');
+    });
+
+    actividadActual.muestras.forEach((item) => {
+      incrementarDetalleIngeniero(item.responsable_id, 'muestras');
+    });
+
+    actividadActual.jornadas.forEach((item) => {
+      incrementarDetalleIngeniero(item.responsable_id, 'jornadas');
+    });
+
+    actividadActual.notas.forEach((item) => {
+      incrementarDetalleIngeniero(item.usuario_id, 'notas');
+    });
+
+    /*     const rankingIngenieros = [...actividadIngenieroActual.entries()]
       .map(([ingenieroId, actual]) => {
         const anterior = actividadIngenieroAnterior.get(ingenieroId) || 0;
         const usuario = ingenierosData.find((u) => u.id === ingenieroId);
@@ -626,6 +707,32 @@ class ResumenCrmService {
         return {
           ingeniero_id: ingenieroId,
           ingeniero: usuario?.nombre || 'Sin nombre',
+          actual,
+          anterior,
+          variacion: this.calcularVariacion(actual, anterior),
+        };
+      })
+      .sort((a, b) => b.actual - a.actual)
+      .slice(0, 5); */
+
+    const rankingIngenieros = [...actividadIngenieroActual.entries()]
+      .map(([ingenieroId, actual]) => {
+        const anterior = actividadIngenieroAnterior.get(ingenieroId) || 0;
+        const usuario = ingenierosData.find((u) => u.id === ingenieroId);
+        const detalle = actividadDetalleIngeniero.get(ingenieroId) || {
+          calibraciones: 0,
+          muestras: 0,
+          jornadas: 0,
+          notas: 0,
+        };
+
+        return {
+          ingeniero_id: ingenieroId,
+          ingeniero: usuario?.nombre || 'Sin nombre',
+          calibraciones: detalle.calibraciones,
+          muestras: detalle.muestras,
+          jornadas: detalle.jornadas,
+          notas: detalle.notas,
           actual,
           anterior,
           variacion: this.calcularVariacion(actual, anterior),
