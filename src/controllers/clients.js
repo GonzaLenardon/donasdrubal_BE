@@ -1,5 +1,5 @@
+import crypto from 'crypto'; 
 import { ROLES } from '../config/constants/roles.js';
-
 import Roles from '../models/roles.js';
 import UserRoles from '../models/user_roles.js';
 import { createUser } from '../services/model/userService.js';
@@ -11,25 +11,19 @@ import Clientes from '../models/clientes.js';
 import { Op } from 'sequelize';
 import { crearAlerta } from './alertas.js';
 
+
 // const bcrypt = require('bcrypt');
-
-const getIngenieroPrincipalId = (ingenieros) => {
-  const ingenieroPrincipal =
-    ingenieros.find((ing) => ing.es_principal) ?? ingenieros[0];
-
-  return parseInt(ingenieroPrincipal.user_id, 10);
-};
 
 const buildAlertaClienteCreado = ({
   cliente,
-  ingenieroPrincipalId,
+  ingenieroId,
   usuarioFromId,
 }) => {
   const now = new Date();
 
   return {
     usuario_from_id: usuarioFromId ?? 0,
-    usuario_to_id: ingenieroPrincipalId,
+    usuario_to_id: ingenieroId,
     entidad_tipo: 'cliente',
     entidad_id: cliente.id,
     tipo_alerta: 'cliente_creado',
@@ -48,7 +42,7 @@ const buildAlertaClienteCreado = ({
     metadata: {
       cliente_id: cliente.id,
       cliente_nombre: cliente.razon_social,
-      ingeniero_principal_id: ingenieroPrincipalId,
+      ingeniero_id: ingenieroId,
       creado_por: usuarioFromId ?? 0,
     },
   };
@@ -78,8 +72,6 @@ const addClient = async (req, res) => {
       }
     }
 
-    const ingenieroPrincipalId = getIngenieroPrincipalId(ingenieros);
-
     // Crear cliente
     const nuevoCliente = await Clientes.create(clienteData);
 
@@ -94,11 +86,12 @@ const addClient = async (req, res) => {
 
 
     // ✅ Crear usuario asociado al cliente
+    const passwordAleatorio = crypto.randomBytes(6).toString('hex'); 
     const usuarioCliente = await Users.create(
       {
         nombre: nuevoCliente?.razon_social || 'Cliente sin nombre',
         email: nuevoCliente?.email || 'sinmail@donasdrubal.local',
-        password: '123456', // Contraseña estándar
+        password: nuevoCliente?.password || passwordAleatorio, // Contraseña aleatoria
         telefono: nuevoCliente?.telefono || '0', // Teléfono por defecto
       },
 
@@ -116,18 +109,25 @@ const addClient = async (req, res) => {
     );
     await nuevoCliente.update({ user_id: usuarioCliente.id });
 
-    const alertaClienteCreado = buildAlertaClienteCreado({
-      cliente: nuevoCliente,
-      ingenieroPrincipalId,
-      usuarioFromId: req.user?.id,
+    const alertasPromises = ingenieros.map(async (ingeniero) => {
+      const ingenieroId = parseInt(ingeniero.user_id, 10);
+      const alertaClienteCreado = buildAlertaClienteCreado({
+        cliente: nuevoCliente,
+        ingenieroId,
+        usuarioFromId: req.user?.id,
+      });
+
+      return crearAlerta(alertaClienteCreado);
     });
 
-    const {
-      alerta: alertaCreada,
+    const alertasResultados = await Promise.all(alertasPromises);
+    const alertas = alertasResultados.map(({ alerta, emailEnviado, emailError }) => ({
+      id: alerta.id,
+      usuario_to_id: alerta.usuario_to_id,
       emailEnviado,
       emailError,
-    } = await crearAlerta(alertaClienteCreado);
-    
+    }));
+
     // Cargar cliente con ingenieros
     const clienteCompleto = await Clientes.findByPk(nuevoCliente.id, {
       include: [
@@ -151,11 +151,7 @@ const addClient = async (req, res) => {
       ok: true,
       mensaje: 'Cliente creado exitosamente',
       cliente: clienteCompleto,
-      alerta: {
-        id: alertaCreada.id,
-        emailEnviado,
-        emailError,
-      },
+      alertas,
     });
   } catch (error) {
     console.error('❌ Error al crear cliente:', error);
