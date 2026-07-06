@@ -6,6 +6,7 @@ import {
   Clientes,
   Users,
   Maquinas,
+  MaquinaTipo,
   Calibraciones,
   Pozo,
   MuestraAgua,
@@ -81,6 +82,140 @@ class ResumenCrmService {
       anterior,
       variacion: this.calcularVariacion(actual, anterior),
     };
+  }
+
+  // ============================================================
+  // NUEVO: Detalle de actividad por ingeniero (Hoja 2 del PDF)
+  // Se arma en memoria a partir de actividadActual, sin queries extra.
+  // ============================================================
+  construirDetalleActividadIngenieros({
+    actividadActual,
+    maquinasPorId,
+    pozosPorId,
+    maquinasInfoPorId,
+    pozosInfoPorId,
+    ingenierosData,
+    clientesData,
+  }) {
+    const resolverIngeniero = (id) => {
+      const usuario = ingenierosData.find((u) => u.id === id);
+      return usuario?.nombre || 'Sin asignar';
+    };
+
+    const resolverCliente = (id) => {
+      const cliente = clientesData.find((c) => c.id === id);
+      return cliente?.razon_social || 'Cliente desconocido';
+    };
+
+    const resolverEstado = (item) => {
+      const creado = dayjs(item.createdAt);
+      const actualizado = dayjs(item.updatedAt);
+      const diffSegundos = Math.abs(actualizado.diff(creado, 'second'));
+      return diffSegundos <= 1 ? 'Creado' : 'Modificado';
+    };
+
+    // Máquina: no tenemos un nombre propio útil, así que mostramos
+    // tipo_maquina + ID para que quede unívocamente identificable.
+    const resolverDetalleMaquina = (maquinaId) => {
+      const info = maquinasInfoPorId[maquinaId];
+
+      if (!info) return '-';
+
+      return `${info.marca || 'Sin Marca'} - ${info.modelo || 'Sin Modelo'}`;
+    };
+
+    // Pozo: nombre + establecimiento, salteando cualquiera que venga vacío.
+    const resolverDetallePozo = (pozoId) => {
+      const info = pozosInfoPorId[pozoId];
+      if (!info) return '-';
+      const partes = [info.nombre, info.establecimiento].filter(Boolean);
+      return partes.length ? partes.join(' - ') : '-';
+    };
+
+    const filas = [];
+
+    actividadActual.calibraciones.forEach((item) => {
+      filas.push({
+        ingeniero: resolverIngeniero(item.responsable_id),
+        cliente: resolverCliente(maquinasPorId[item.maquina_id]),
+        servicio: 'Calibración',
+        detalle: resolverDetalleMaquina(item.maquina_id),
+        fecha: item.updatedAt || item.createdAt,
+        estado: resolverEstado(item),
+      });
+    });
+
+    actividadActual.muestras.forEach((item) => {
+      filas.push({
+        ingeniero: resolverIngeniero(item.responsable_id),
+        cliente: resolverCliente(pozosPorId[item.pozo_id]),
+        servicio: 'Muestra de agua',
+        detalle: resolverDetallePozo(item.pozo_id),
+        fecha: item.updatedAt || item.createdAt,
+        estado: resolverEstado(item),
+      });
+    });
+
+    actividadActual.jornadas.forEach((item) => {
+      filas.push({
+        ingeniero: resolverIngeniero(item.responsable_id),
+        cliente: resolverCliente(item.cliente_id),
+        servicio: 'Jornada',
+        detalle: '-', // Jornada no referencia máquina ni pozo
+        fecha: item.updatedAt || item.createdAt,
+        estado: resolverEstado(item),
+      });
+    });
+
+    return filas
+      .sort((a, b) => {
+        const cmpIngeniero = a.ingeniero.localeCompare(b.ingeniero, 'es');
+        if (cmpIngeniero !== 0) return cmpIngeniero;
+        return dayjs(b.fecha).diff(dayjs(a.fecha));
+      })
+      .map((fila) => ({
+        ...fila,
+        fecha: dayjs(fila.fecha).format('DD/MM/YYYY HH:mm'),
+      }));
+  }
+
+  // ============================================================
+  // NUEVO: Clientes tipo A / prioridad alta (Hoja 3 del PDF)
+  // Reutiliza el mapa ultimaActividadPorCliente ya calculado en
+  // generarResumenV2 (histórico completo, no solo el período).
+  // ============================================================
+  async obtenerClientesPrioridadAlta(ultimaActividadPorCliente) {
+    const clientesPrioridad = await Clientes.findAll({
+      where: {
+        tipo_cliente_id: 1,
+        categoria: 'alto',
+      },
+      attributes: ['id', 'razon_social', 'categoria'],
+      raw: true,
+    });
+
+    return clientesPrioridad
+      .map((cliente) => {
+        const ultima = ultimaActividadPorCliente.get(cliente.id);
+
+        return {
+          cliente_id: cliente.id,
+          cliente: cliente.razon_social,
+          categoria: cliente.categoria,
+          ultima_actividad: ultima
+            ? ultima.format('DD/MM/YYYY')
+            : 'Sin registro',
+          dias_inactivo: ultima ? dayjs().diff(ultima, 'day') : null,
+          sin_historial: !ultima,
+        };
+      })
+      .sort((a, b) => {
+        // Sin historial (nunca tuvo servicio) = máxima prioridad, va primero
+        if (a.dias_inactivo === null && b.dias_inactivo === null) return 0;
+        if (a.dias_inactivo === null) return -1;
+        if (b.dias_inactivo === null) return 1;
+        return b.dias_inactivo - a.dias_inactivo;
+      });
   }
 
   async obtenerActividadPeriodo(inicio, fin) {
@@ -241,12 +376,15 @@ class ResumenCrmService {
     );
 
     const maquinas = await Maquinas.findAll({
-      attributes: ['id', 'cliente_id'],
+      attributes: ['id', 'cliente_id', 'tipo_maquina'],
+      include: [
+        { model: MaquinaTipo, as: 'tipo', attributes: ['marca', 'modelo'] },
+      ], // ✅ ampliado
       raw: true,
     });
 
     const pozos = await Pozo.findAll({
-      attributes: ['id', 'cliente_id'],
+      attributes: ['id', 'cliente_id', 'nombre', 'establecimiento'], // ✅ ampliado
       raw: true,
     });
 
@@ -255,8 +393,25 @@ class ResumenCrmService {
       return acc;
     }, {});
 
+    const maquinasInfoPorId = maquinas.reduce((acc, item) => {
+      acc[item.id] = {
+        tipo_maquina: item.tipo_maquina,
+        marca: item['tipo.marca'],
+        modelo: item['tipo.modelo'],
+      };
+      return acc;
+    }, {});
+
     const pozosPorId = pozos.reduce((acc, item) => {
       acc[item.id] = item.cliente_id;
+      return acc;
+    }, {});
+
+    const pozosInfoPorId = pozos.reduce((acc, item) => {
+      acc[item.id] = {
+        nombre: item.nombre,
+        establecimiento: item.establecimiento,
+      };
       return acc;
     }, {});
 
@@ -270,9 +425,6 @@ class ResumenCrmService {
     const clientesActual = new Set();
     const clientesAnterior = new Set();
 
-    // =======================================
-    // INGENIEROS ACTIVOS (Definir primero)
-    // =======================================
     const ingenierosActual = new Set();
     const ingenierosAnterior = new Set();
 
@@ -288,7 +440,6 @@ class ResumenCrmService {
     // CLIENTES ACTIVOS
     // ============================
 
-    // Actual
     actividadActual.calibraciones.forEach((item) => {
       const clienteId = maquinasPorId[item.maquina_id];
       if (clienteId) clientesActual.add(clienteId);
@@ -299,13 +450,11 @@ class ResumenCrmService {
       }
     });
 
-    // ACTUAL - Muestras
     actividadActual.muestras.forEach((item) => {
       const clienteId = pozosPorId[item.pozo_id];
       if (clienteId) clientesActual.add(clienteId);
 
       if (item.responsable_id) {
-        // ✅ agregado
         ingenierosActual.add(item.responsable_id);
         incrementarIngeniero(actividadIngenieroActual, item.responsable_id);
       }
@@ -315,7 +464,6 @@ class ResumenCrmService {
       if (item.cliente_id) clientesActual.add(item.cliente_id);
 
       if (item.responsable_id) {
-        // ✅ agregado
         ingenierosActual.add(item.responsable_id);
         incrementarIngeniero(actividadIngenieroActual, item.responsable_id);
       }
@@ -330,7 +478,6 @@ class ResumenCrmService {
       }
     });
 
-    // Anterior
     actividadAnterior.calibraciones.forEach((item) => {
       const clienteId = maquinasPorId[item.maquina_id];
       if (clienteId) clientesAnterior.add(clienteId);
@@ -346,18 +493,15 @@ class ResumenCrmService {
       if (clienteId) clientesAnterior.add(clienteId);
 
       if (item.responsable_id) {
-        // ✅ agregado
         ingenierosAnterior.add(item.responsable_id);
         incrementarIngeniero(actividadIngenieroAnterior, item.responsable_id);
       }
     });
 
-    // ANTERIOR - Jornadas
     actividadAnterior.jornadas.forEach((item) => {
       if (item.cliente_id) clientesAnterior.add(item.cliente_id);
 
       if (item.responsable_id) {
-        // ✅ agregado
         ingenierosAnterior.add(item.responsable_id);
         incrementarIngeniero(actividadIngenieroAnterior, item.responsable_id);
       }
@@ -458,12 +602,10 @@ class ResumenCrmService {
     });
 
     actividadActual.muestras.forEach((item) => {
-      // ✅ solo incrementarCliente
       incrementarCliente(pozosPorId[item.pozo_id], 'muestras');
     });
 
     actividadActual.jornadas.forEach((item) => {
-      // ✅ solo incrementarCliente
       incrementarCliente(item.cliente_id, 'jornadas');
     });
 
@@ -511,13 +653,9 @@ class ResumenCrmService {
       .sort((a, b) => a.total - b.total)
       .slice(0, 5);
 
-    const todosLosClientes = await Clientes.findAll({
-      attributes: ['id', 'razon_social'],
-      where: {
-        tipo_cliente_id: 1, // ✅ solo clientes tipo A
-      },
-      raw: true,
-    });
+    // =======================================
+    // ÚLTIMA ACTIVIDAD POR CLIENTE (histórico completo)
+    // =======================================
 
     const ultimaActividadPorCliente = new Map();
 
@@ -580,31 +718,21 @@ class ResumenCrmService {
       );
     });
 
-    const clientesInactivos = todosLosClientes
-      .map((cliente) => {
-        const ultima = ultimaActividadPorCliente.get(cliente.id);
+    // =======================================
+    // CLIENTES TIPO A / PRIORIDAD ALTA
+    // (única fuente de verdad: dashboard usa el top 5, la hoja del PDF
+    // usa la lista completa — ✅ movido acá, ya con el Map completo)
+    // =======================================
 
-        if (!ultima) {
-          return {
-            cliente_id: cliente.id,
-            cliente: cliente.razon_social,
-            ultima_actividad: null,
-            dias_inactivo: null,
-            sin_historial: true,
-          };
-        }
+    const clientesPrioridadAlta = await this.obtenerClientesPrioridadAlta(
+      ultimaActividadPorCliente,
+    );
 
-        return {
-          cliente_id: cliente.id,
-          cliente: cliente.razon_social,
-          ultima_actividad: ultima.format('YYYY-MM-DD'),
-          dias_inactivo: dayjs().diff(ultima, 'day'),
-          sin_historial: false,
-        };
-      })
-      .filter((item) => item.dias_inactivo > 30)
-      .sort((a, b) => b.dias_inactivo - a.dias_inactivo)
-      .slice(0, 5);
+    const clientesInactivos = clientesPrioridadAlta.slice(0, 5);
+
+    const totalClientesPrioridadInactivos = clientesPrioridadAlta.filter(
+      (c) => c.sin_historial || c.dias_inactivo > 30,
+    ).length;
 
     const actividadPorTipo = [
       {
@@ -699,22 +827,6 @@ class ResumenCrmService {
       incrementarDetalleIngeniero(item.usuario_id, 'notas');
     });
 
-    /*     const rankingIngenieros = [...actividadIngenieroActual.entries()]
-      .map(([ingenieroId, actual]) => {
-        const anterior = actividadIngenieroAnterior.get(ingenieroId) || 0;
-        const usuario = ingenierosData.find((u) => u.id === ingenieroId);
-
-        return {
-          ingeniero_id: ingenieroId,
-          ingeniero: usuario?.nombre || 'Sin nombre',
-          actual,
-          anterior,
-          variacion: this.calcularVariacion(actual, anterior),
-        };
-      })
-      .sort((a, b) => b.actual - a.actual)
-      .slice(0, 5); */
-
     const rankingIngenieros = [...actividadIngenieroActual.entries()]
       .map(([ingenieroId, actual]) => {
         const anterior = actividadIngenieroAnterior.get(ingenieroId) || 0;
@@ -755,8 +867,20 @@ class ResumenCrmService {
       ingeniero_top: rankingIngenieros[0]?.ingeniero || '-',
       ingeniero_top_total: rankingIngenieros[0]?.actual || 0,
 
-      total_clientes_inactivos: clientesInactivos.length,
+      total_clientes_inactivos: totalClientesPrioridadInactivos,
     };
+
+    const detalleActividadIngenieros = this.construirDetalleActividadIngenieros(
+      {
+        actividadActual,
+        maquinasPorId,
+        pozosPorId,
+        maquinasInfoPorId, // ✅ nuevo
+        pozosInfoPorId, // ✅ nuevo
+        ingenierosData,
+        clientesData,
+      },
+    );
 
     return {
       ok: true,
@@ -775,6 +899,9 @@ class ResumenCrmService {
       ingenieros_mas_activos: rankingIngenieros,
 
       resumen_ejecutivo: resumenEjecutivo,
+
+      detalle_actividad_ingenieros: detalleActividadIngenieros,
+      clientes_prioridad_alta: clientesPrioridadAlta,
     };
   }
 }
