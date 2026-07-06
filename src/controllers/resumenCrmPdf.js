@@ -5,8 +5,6 @@ async function generarPdf(params) {
   const reporteService = new ResumenCrmService();
   const reporteData = await reporteService.generarResumenV2(params);
 
-  console.log('mmmmmmmmmmmmmm', reporteData);
-
   const pdfService = new PdfResumenCrmService();
   const { pdfBytes, filename } =
     await pdfService.generarReporteCrm(reporteData);

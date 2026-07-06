@@ -38,6 +38,155 @@ class PdfResumenCrmService {
     this.assetsPath = path.join(process.cwd(), 'src', 'assets', 'images');
   }
 
+  /**
+   * Tabla con paginación automática: agrega tantas páginas como haga
+   * falta (con header/footer propios en cada una) para volcar todas
+   * las filas. Soporta agrupamiento opcional (ej: por ingeniero), con
+   * subtítulo de grupo repetido si el grupo se corta entre páginas.
+   */
+  drawTablaPaginada(
+    pdfDoc,
+    {
+      titulo,
+      columnas,
+      columnWidths,
+      filas,
+      campoAgrupador = null,
+      font,
+      boldFont,
+      logo,
+      periodo,
+      fechaInforme,
+      notaPie = null,
+    },
+  ) {
+    const { pageWidth, pageHeight, margin } = LAYOUT;
+    const usableWidth = pageWidth - margin * 2;
+    const rowHeight = 16;
+    const contentTop = pageHeight - 92;
+    const contentBottom = 55;
+
+    let page = null;
+    let currentY = 0;
+    let grupoActual = null;
+
+    const nuevaPagina = (subtitulo) => {
+      if (page) this.drawFooter({ page, width: pageWidth });
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      this.drawHeader({
+        page,
+        width: pageWidth,
+        height: pageHeight,
+        periodo,
+        fechaInforme,
+        logo,
+        font,
+        boldFont,
+      });
+      this.drawSectionTitle({
+        page,
+        x: margin,
+        y: contentTop,
+        width: usableWidth,
+        title: subtitulo || titulo,
+        boldFont,
+      });
+      currentY = contentTop - 26;
+    };
+
+    const dibujarEncabezados = () => {
+      page.drawRectangle({
+        x: margin,
+        y: currentY - 4,
+        width: usableWidth,
+        height: 16,
+        color: COLOR.primary,
+      });
+      columnas.forEach((col, i) => {
+        const colX =
+          margin + columnWidths.slice(0, i).reduce((a, b) => a + b, 0);
+        page.drawText(col.toUpperCase(), {
+          x: colX + 4,
+          y: currentY,
+          size: 8,
+          font: boldFont,
+          color: COLOR.white,
+        });
+      });
+      currentY -= rowHeight;
+    };
+
+    const dibujarGrupo = (nombreGrupo, continuacion = false) => {
+      page.drawRectangle({
+        x: margin,
+        y: currentY - 2,
+        width: usableWidth,
+        height: 14,
+        color: COLOR.primarySoft,
+      });
+      page.drawText(
+        `${nombreGrupo.toUpperCase()}${continuacion ? ' (CONT.)' : ''}`,
+        {
+          x: margin + 4,
+          y: currentY + 1,
+          size: 8.5,
+          font: boldFont,
+          color: COLOR.primary,
+        },
+      );
+      currentY -= 18;
+      dibujarEncabezados();
+    };
+
+    const hayEspacio = (necesario) => currentY - necesario >= contentBottom;
+
+    nuevaPagina(titulo);
+    if (!campoAgrupador) dibujarEncabezados();
+
+    filas.forEach((fila) => {
+      if (campoAgrupador && fila[campoAgrupador] !== grupoActual) {
+        if (!hayEspacio(rowHeight * 3)) nuevaPagina(`${titulo} (continuación)`);
+        grupoActual = fila[campoAgrupador];
+        dibujarGrupo(grupoActual);
+      } else if (!hayEspacio(rowHeight)) {
+        nuevaPagina(`${titulo} (continuación)`);
+        campoAgrupador ? dibujarGrupo(grupoActual, true) : dibujarEncabezados();
+      }
+
+      const valoresVisibles = campoAgrupador
+        ? Object.entries(fila)
+            .filter(([key]) => key !== campoAgrupador)
+            .map(([, v]) => v)
+        : Object.values(fila);
+
+      valoresVisibles.forEach((valor, i) => {
+        const colX =
+          margin + columnWidths.slice(0, i).reduce((a, b) => a + b, 0);
+        page.drawText(String(valor), {
+          x: colX + 4,
+          y: currentY,
+          size: 8,
+          font,
+          color: COLOR.text,
+        });
+      });
+
+      currentY -= rowHeight;
+    });
+
+    if (notaPie) {
+      page.drawText(notaPie, {
+        x: margin,
+        y: currentY - 6,
+        size: 7,
+        font,
+        color: COLOR.textMuted,
+      });
+    }
+
+    this.drawFooter({ page, width: pageWidth });
+  }
+
   // =====================================================
   // CARGA DE RECURSOS
   // =====================================================
@@ -1143,17 +1292,15 @@ class PdfResumenCrmService {
     });
     rightY -= 22;
 
-    const inactivosOrdenados = [...reporteData.clientes_inactivos]
-      .sort((a, b) => b.dias_inactivo - a.dias_inactivo)
-      .slice(0, 5);
+    const inactivosOrdenados = reporteData.clientes_inactivos; // ya viene ordenado y limitado a 5
 
     const maxDiasInactivo = Math.max(
-      ...inactivosOrdenados.map((c) => c.dias_inactivo),
+      ...inactivosOrdenados.map((c) => c.dias_inactivo || 0),
       1,
     );
     const inactivosRows = inactivosOrdenados.map((c) => ({
       Cliente: c.cliente,
-      'Días sin actividad': c.dias_inactivo,
+      'Días sin actividad': c.dias_inactivo ?? 'Sin registro',
     }));
 
     rightY = this.drawTable({
@@ -1216,6 +1363,50 @@ class PdfResumenCrmService {
     });
 
     this.drawFooter({ page, width });
+
+    // -----------------------------------------------
+    // PÁGINA 2: Detalle de actividad por ingeniero
+    // -----------------------------------------------
+    if (reporteData.detalle_actividad_ingenieros?.length) {
+      console.log('desde PDF', reporteData.detalle_actividad_ingenieros);
+      this.drawTablaPaginada(pdfDoc, {
+        titulo: 'Detalle de actividad por ingeniero',
+        columnas: ['Cliente', 'Servicio', 'Detalle', 'Fecha', 'Estado'],
+        columnWidths: [260, 90, 200, 110, 110],
+        filas: reporteData.detalle_actividad_ingenieros,
+        campoAgrupador: 'ingeniero',
+        font,
+        boldFont,
+        logo,
+        periodo: reporteData.periodo,
+        fechaInforme,
+      });
+    }
+
+    // -----------------------------------------------
+    // PÁGINA 3: Clientes tipo A – prioridad alta
+    // -----------------------------------------------
+    if (reporteData.clientes_prioridad_alta?.length) {
+      const filasPrioridad = reporteData.clientes_prioridad_alta.map((c) => ({
+        Cliente: c.cliente,
+        'Última actividad': c.ultima_actividad,
+        'Días sin servicio': c.dias_inactivo ?? 'Sin registro',
+      }));
+
+      this.drawTablaPaginada(pdfDoc, {
+        titulo: 'Clientes tipo A – prioridad alta',
+        columnas: ['Cliente', 'Última actividad', 'Días sin servicio'],
+        columnWidths: [LAYOUT.pageWidth - LAYOUT.margin * 2 - 260, 130, 130],
+        filas: filasPrioridad,
+        font,
+        boldFont,
+        logo,
+        periodo: reporteData.periodo,
+        fechaInforme,
+        notaPie:
+          'Ordenado por días sin servicio (los clientes sin historial figuran primero).',
+      });
+    }
 
     const pdfBytes = await pdfDoc.save();
 
