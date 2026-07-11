@@ -36,14 +36,18 @@ class ResumenCrmService {
     return { inicio, fin, label };
   } */
 
-  buildWeekRange(semana) {
-    const ref = semana ? dayjs(semana) : dayjs();
+  buildWeekRange(semana, semanaAnterior = false) {
+    let ref = semana ? dayjs(semana) : dayjs();
 
-    // isoWeekday: Lu=1, Ma=2, Mi=3, Ju=4, Vi=5, Sá=6, Do=7
+    // Si se pide explícitamente la semana anterior (caso: cron corriendo
+    // un sábado a la mañana, cuando "hoy" ya es el inicio de la semana
+    // siguiente), retrocedemos 1 día antes de calcular. Con eso, un
+    // sábado 11/07 pasa a comportarse como si fuera viernes 10/07.
+    if (semanaAnterior) {
+      ref = ref.subtract(1, 'day');
+    }
+
     const diaSemana = ref.isoWeekday();
-
-    // Días transcurridos desde el sábado de esta semana
-    // Sá=0, Do=1, Lu=2, Ma=3, Mi=4, Ju=5, Vi=6
     const diasDesdeSabado =
       diaSemana === 6 ? 0 : diaSemana === 7 ? 1 : diaSemana + 1;
 
@@ -363,12 +367,12 @@ class ResumenCrmService {
   }
 
   async generarResumenV2(params = {}) {
-    const { semana, fechaInicio, fechaFin } = params;
+    const { semana, fechaInicio, fechaFin, semanaAnterior } = params;
 
     const { inicio, fin, label } =
       fechaInicio && fechaFin
         ? this.buildCustomRange(fechaInicio, fechaFin)
-        : this.buildWeekRange(semana);
+        : this.buildWeekRange(semana, semanaAnterior);
 
     const { inicioAnterior, finAnterior } = this.getPeriodoAnterior(
       inicio,
