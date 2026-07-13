@@ -186,6 +186,7 @@ const allUsers = async (req, res) => {
 
   try {
     const resp = await Users.findAll({
+      attributes: ['id', 'nombre', 'email', 'telefono'],
       include: {
         model: Roles,
         as: 'roles',

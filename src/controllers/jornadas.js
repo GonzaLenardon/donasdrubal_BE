@@ -113,12 +113,14 @@ export const updateJornada = async (req, res) => {
   }
 }; */
 
-export const jornadasCliente = async (req, res) => {
+/* export const jornadasCliente = async (req, res) => {
   const { cliente_id } = req.params;
 
   try {
     const resp = await Jornada.findAll({
       where: { cliente_id },
+ 
+ 
       include: [
         {
           model: Clientes,
@@ -136,13 +138,59 @@ export const jornadasCliente = async (req, res) => {
           ],
         },
 
+
         { model: Users, as: 'responsable', attributes: ['nombre'] },
+
       ],
     });
 
     return res.status(200).json({
       message: `Jornadas del cliente ${cliente_id} encontradas`,
       data: resp,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Error en el servidor',
+      details: error.message,
+    });
+  }
+}; */
+
+export const jornadasCliente = async (req, res) => {
+  const { cliente_id } = req.params;
+
+  try {
+    const [jornadas, cliente] = await Promise.all([
+      Jornada.findAll({
+        where: { cliente_id },
+        include: [
+          {
+            model: Users,
+            as: 'responsable',
+            attributes: ['id', 'nombre'],
+          },
+        ],
+      }),
+
+      Clientes.findByPk(cliente_id, {
+        attributes: ['id', 'razon_social'],
+        include: [
+          {
+            model: Users,
+            as: 'ingenieros',
+            attributes: ['id', 'nombre'],
+            through: { attributes: [] },
+          },
+        ],
+      }),
+    ]);
+
+    return res.status(200).json({
+      message: `Jornadas del cliente ${cliente_id} encontradas`,
+      data: {
+        ingenieros: cliente?.ingenieros || [],
+        jornadas,
+      },
     });
   } catch (error) {
     return res.status(500).json({
