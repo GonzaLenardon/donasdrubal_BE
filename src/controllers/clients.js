@@ -37,7 +37,7 @@ const buildAlertaClienteCreado = ({
     fecha_vencimiento: null,
     requiere_accion: true,
     accion_texto: 'Ver cliente',
-    url_accion: `/clientes/${cliente.id}`,
+    url_accion: `/clientes/${cliente.id}/dashboard`,
     observaciones: null,
     metadata: {
       cliente_id: cliente.id,
@@ -108,7 +108,7 @@ const addClient = async (req, res) => {
       },
     );
     await nuevoCliente.update({ user_id: usuarioCliente.id });
-
+// Enviar alertas a los ingenieros
     const alertasPromises = ingenieros.map(async (ingeniero) => {
       const ingenieroId = parseInt(ingeniero.user_id, 10);
       const alertaClienteCreado = buildAlertaClienteCreado({

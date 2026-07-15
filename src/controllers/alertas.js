@@ -143,7 +143,7 @@ const controllersAlertas = {
             estado: 'PENDIENTE',
             prioridad: 'NORMAL',
             requiere_accion: true, // ← AGREGADO
-            url_accion: `/clientes/${cliente.id}/calibraciones/${calibracion.id}`, // ← AGREGADO
+            url_accion: `/clientes/${cliente.id}/maquinas/${maquina.id}/calibraciones`, // ← AGREGADO
             accion_texto: 'Ver Calibración', // ← AGREGADO
             metadata: {
               cliente_id: cliente.id,
@@ -195,7 +195,7 @@ const controllersAlertas = {
             estado: 'ACTIVA',
             prioridad: 'NORMAL',
             requiere_accion: true,
-            url_accion: `/clientes/${cliente.id}/muestras/${muestra.id}`,
+            url_accion: `/clientes/${cliente.id}/pozos/${pozo.id}/muestras`,
             accion_texto: 'Ver Muestra',
             metadata: {
               cliente_id: cliente.id,
@@ -241,7 +241,7 @@ const controllersAlertas = {
             estado: 'ACTIVA',
             prioridad: 'NORMAL',
             requiere_accion: true,
-            url_accion: `/clientes/${cliente.id}/jornadas/${newJornada.id}`,
+            url_accion: `/clientes/${cliente.id}/jornadas`,
             accion_texto: 'Ver Jornada',
             metadata: {
               cliente_id: cliente.id,
@@ -293,10 +293,10 @@ const controllersAlertas = {
 
   add: async (req, res) => {
     try {
-      const data = req.body;
-      console.log('data', data);
+      const payload = extractModelFields(Alertas, req.body);
+      console.log('addAlerta controller: payload->', payload);
 
-      const { alerta, emailEnviado, emailError } = await crearAlerta(data);
+      const { alerta, emailEnviado, emailError } = await crearAlerta(payload);
 
       return res.status(201).json({
         ...alerta.toJSON(),
