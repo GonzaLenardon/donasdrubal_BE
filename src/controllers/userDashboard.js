@@ -9,6 +9,7 @@ import Alertas, { ENTIDAD_TIPOS } from '../models/alertas.js';
 import Clientes from '../models/clientes.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
+import TipoClientes from '../models/tipoClientes.js';
 
 export const getUserServices = async (req, res) => {
   try {
@@ -223,6 +224,7 @@ const clientes = await Clientes.findAll({
     'ciudad',
     'provincia',
     'litros_estimados',
+    'tipo_cliente_id',
   ],
   include: [
     {
@@ -233,6 +235,12 @@ const clientes = await Clientes.findAll({
         attributes: ['es_principal'],
       },
     },
+    {
+      model: TipoClientes,
+      as: 'tipoCliente',
+      attributes: ['id', 'tipoClientes'], // campo que identifica A/B/C
+      required: false,
+    },    
   ],
 });
     // const clientes = await Clientes.findAll({
@@ -262,7 +270,13 @@ clientes.forEach((cliente) => {
     ciudad: cliente.ciudad,
     provincia: cliente.provincia,
     litros_estimados: cliente.litros_estimados,
-
+    tipo_cliente_id: cliente.tipo_cliente_id,
+    tipo_cliente: cliente.tipoCliente
+      ? {
+          id: cliente.tipoCliente.id,
+          nombre: cliente.tipoCliente.tipoClientes,
+        }
+      : null,
     ingenieros: cliente.ingenieros.map((i) => ({
       id: i.id,
       nombre: i.nombre,
