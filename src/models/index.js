@@ -260,7 +260,19 @@ Calibraciones.hasMany(Alertas, {
   },
   as: 'alertas',
 });
+//================================================
+// ASOCIAcion NOTAS - USERS 
+// ===============================================
 
+Notas.belongsTo(Users, {
+  foreignKey: 'usuario_id',
+  as: 'usuario',
+});
+
+Users.hasMany(Notas, {
+  foreignKey: 'usuario_id',
+  as: 'notas',
+});
 // ===============================================
 // ASOCIACIONES Clientes - Notas
 // ===============================================
