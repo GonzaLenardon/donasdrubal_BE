@@ -98,7 +98,17 @@ export const allNotas = async (req, res) => {
   console.log('jejejeje ', cliente_id);
 
   try {
-    const notas = await Notas.findAll({ where: { cliente_id } });
+    // const notas = await Notas.findAll({ where: { cliente_id } });
+    const notas = await Notas.findAll({
+      where: { cliente_id },
+      include: [
+        {
+          model: Users,
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'email', 'telefono'],
+        },
+      ],
+    });
     return res.status(200).json({
       message: 'Notas obtenidas exitosamente',
       data: notas,
