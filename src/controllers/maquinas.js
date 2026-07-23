@@ -94,7 +94,17 @@ export const maquinasCliente = async (req, res) => {
   try {
     const resp = await Maquinas.findAll({
       where: { cliente_id },
-      include: [{ model: MaquinaTipo, as: 'tipo' }],
+      include: [
+        { model: MaquinaTipo, as: 'tipo' },
+        {
+          model: Calibraciones,
+          as: 'calibracionesmaquina',
+          attributes: ['estado', 'createdAt'],
+          separate: true,
+          limit: 1,
+          order: [['createdAt', 'DESC']],
+        },
+      ],
     });
 
     return res.status(200).json({
