@@ -147,10 +147,10 @@ router.get('/user/:user_id/roles', getUserRoles);
 // RUTAS PROTEGIDAS - CLIENTES
 // ========================================
 
-router.post('/cliente', verifyRole([ROLES.ADMIN]), addClient);
-router.get('/cliente', allClientes);
-router.put('/cliente/:cliente_id', upCliente);
-router.get('/cliente/:cliente_id', getCliente);
+router.post('/clientes', verifyRole([ROLES.ADMIN]), addClient);
+router.get('/clientes', allClientes);
+router.put('/clientes/:cliente_id', upCliente);
+router.get('/clientes/:cliente_id', getCliente);
 
 // ========================================
 // RUTAS PROTEGIDAS - MÁQUINAS
@@ -159,10 +159,10 @@ router.get('/cliente/:cliente_id', getCliente);
 router.get('/maquinas', allMaquinas);
 router.delete('/maquinas/:id', verifyRole([ROLES.ADMIN]), delMaquina);
 
-/* router.get('/cliente/:cliente_id/maquinas', maquinasUser); */
-router.get('/cliente/:cliente_id/maquinas/', maquinasCliente);
-router.post('/cliente/:cliente_id/maquinas', addMaquina);
-router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
+/* router.get('/clientes/:cliente_id/maquinas', maquinasUser); */
+router.get('/clientes/:cliente_id/maquinas/', maquinasCliente);
+router.post('/clientes/:cliente_id/maquinas', addMaquina);
+router.put('/clientes/:cliente_id/maquinas/:maquina_id', updateMaquina);
 
 // ========================================
 // RUTAS PROTEGIDAS - CALIBRACIONES
@@ -170,7 +170,7 @@ router.put('/cliente/:cliente_id/maquinas/:maquina_id', updateMaquina);
 
 router.post('/calibraciones', calibracionController.addCalibraciones);
 router.get(
-  '/cliente/:cliente_id/maquinas/:maquina_id/calibraciones/',
+  '/clientes/:cliente_id/maquinas/:maquina_id/calibraciones/',
   calibracionController.calibracionesMaquinas,
 );
 router.put(
@@ -295,9 +295,9 @@ router.get(
 router.get('/pozos', pozoController.allPozos);
 router.get('/pozos/:pozo_id', pozoController.getPozo);
 router.delete('/pozos/:id', verifyRole([ROLES.ADMIN]), pozoController.delPozo);
-router.get('/cliente/:cliente_id/pozos', pozoController.pozosCliente);
-router.post('/cliente/:cliente_id/pozos', pozoController.addPozo);
-router.put('/cliente/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
+router.get('/clientes/:cliente_id/pozos', pozoController.pozosCliente);
+router.post('/clientes/:cliente_id/pozos', pozoController.addPozo);
+router.put('/clientes/:cliente_id/pozos/:pozo_id', pozoController.updatePozo);
 
 // ========================================
 // RUTAS PROTEGIDAS - MUESTRAS AGUA
@@ -339,11 +339,11 @@ router.get(
   muestrasAguaController.getMuestraAguaPozo,
 );
 router.get(
-  '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua',
+  '/clientes/:cliente_id/pozos/:pozo_id/muestras_agua',
   muestrasAguaController.getMuestrasAguaPozoCliente,
 );
 router.get(
-  '/cliente/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
+  '/clientes/:cliente_id/pozos/:pozo_id/muestras_agua/:muestra_agua_id',
   muestrasAguaController.getMuestraAguaPozoCliente,
 );
 
@@ -353,8 +353,8 @@ router.get(
 
 router.get('/jornadas', jornadaController.allJornadas);
 router.get('/jornadas/:jornada_id', jornadaController.getJornada);
-router.get('/cliente/:cliente_id/jornadas', jornadaController.jornadasCliente);
-router.post('/cliente/:cliente_id/jornadas', jornadaController.addJornada);
+router.get('/clientes/:cliente_id/jornadas', jornadaController.jornadasCliente);
+router.post('/clientes/:cliente_id/jornadas', jornadaController.addJornada);
 router.put('/jornadas/close/:id', jornadaController.closeJornada);
 router.put('/jornadas/open/:id', jornadaController.openJornada);
 router.delete(
@@ -364,7 +364,7 @@ router.delete(
 );
 
 router.put(
-  '/cliente/:cliente_id/jornadas/:jornada_id',
+  '/clientes/:cliente_id/jornadas/:jornada_id',
   jornadaController.updateJornada,
 );
 
@@ -466,39 +466,39 @@ router.delete(
 );
 
 /*=========================================
-  RUTAS PROTEGIDAS - DASHBOARD CLIENTE
+  RUTAS PROTEGIDAS - DASHBOARD clientes
 =========================================*/
 
 router.get(
-  '/cliente/:cliente_id/stats',
+  '/clientes/:cliente_id/stats',
   clientDashboardController.getClienteStats,
 );
 
 router.get(
-  '/cliente/:cliente_id/analisis-chart',
+  '/clientes/:cliente_id/analisis-chart',
   clientDashboardController.getClienteAnalisisChart,
 );
 router.get(
-  '/cliente/:cliente_id/calibraciones-chart',
+  '/clientes/:cliente_id/calibraciones-chart',
   clientDashboardController.getClienteCalibracionesChart,
 );
 router.get(
-  '/cliente/:cliente_id/jornadas-chart',
+  '/clientes/:cliente_id/jornadas-chart',
   clientDashboardController.getClienteJornadasChart,
 );
 
 router.get(
-  '/cliente/:cliente_id/services-chart',
+  '/clientes/:cliente_id/services-chart',
   clientDashboardController.getClienteServicesChart,
 );
 
 router.get(
-  '/cliente/:cliente_id/machines-chart',
+  '/clientes/:cliente_id/machines-chart',
   clientDashboardController.getClienteMachinesChart,
 );
 
 router.get(
-  '/cliente/:cliente_id/upcoming-services',
+  '/clientes/:cliente_id/upcoming-services',
   clientDashboardController.getClienteUpcomingServices,
 );
 
