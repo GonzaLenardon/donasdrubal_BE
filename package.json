@@ -9,10 +9,7 @@
     "dev": "nodemon src/server.js",
     "import:clients": "node src/scripts/importClientesFromCsv.js",
     "create:client-users": "node src/scripts/createUsersForClientesSinUsuario.js",
-    "generate:alertas": "node src/scripts/genAlertasServices.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "testmail": "node src/scripts/testEmail.js",
-    "resumen-semanal": "node src/jobs/enviarResumenSemanal.js",
     "db:migrate": "npx sequelize-cli db:migrate",
     "update:responsables": "node src/scripts/updateResponsablesMuestrasJornadas.js"
   },
