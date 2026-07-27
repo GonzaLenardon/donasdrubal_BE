@@ -9,15 +9,9 @@ const createUploader = (configBuilder) => {
       try {
         const config = configBuilder(req);
 
-        const {
-          clienteId,
-          tipo,
-          entidadId,
-          subTipo,
-          recursoId,
-        } = config;
+        const { clienteId, tipo, entidadId, subTipo, recursoId } = config;
 
-        if (!clienteId || !tipo || !entidadId || !subTipo || !recursoId) {
+        if (!clienteId || !tipo || !entidadId) {
           throw new Error('Faltan parámetros para construir el path');
         }
 
@@ -41,7 +35,6 @@ const createUploader = (configBuilder) => {
         // const ext = path.extname(file.originalname);
         const fileName = req.body?.nombreArchivo;
         cb(null, fileName);
-
       } catch (err) {
         cb(err);
       }
@@ -62,7 +55,7 @@ const createUploader = (configBuilder) => {
       cb(new Error('Tipo de archivo no permitido'), false);
     }
   };
-  
+
   return multer({
     storage,
     limits: {
@@ -70,6 +63,6 @@ const createUploader = (configBuilder) => {
     },
     fileFilter,
   });
-}
+};
 
 export default createUploader;

@@ -66,6 +66,7 @@ import { allTipoClientes } from '../controllers/tipoClientes.js';
 
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
 import { uploadMuestrasAgua } from '../middlewares/uploadMuestras.js';
+import { uploadJornadas } from '../middlewares/uploadMuestras.js';
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
@@ -211,6 +212,8 @@ router.post(
   uploadMuestrasAgua.single('file'),
   uploadArchivo,
 );
+
+router.post('/jornadas/upload', uploadJornadas.single('file'), uploadArchivo);
 
 // ========================================
 // RUTAS PROTEGIDAS - ROLES (Solo Admin)
