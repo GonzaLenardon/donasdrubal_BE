@@ -1,6 +1,5 @@
 import { extractModelFields } from '../utils/model/payload.js';
-import Pozo from '../models/pozo.js';
-import MuestraAgua from '../models/muestra_agua.js';
+import { Pozo, MuestraAgua } from '../models/index.js';
 
 export const allPozos = async (req, res) => {
   console.log('allPozos controller');
@@ -96,6 +95,16 @@ export const pozosCliente = async (req, res) => {
   try {
     const resp = await Pozo.findAll({
       where: { cliente_id: cliente_id },
+      include: [
+        {
+          model: MuestraAgua,
+          as: 'muestrasAgua',
+          attributes: ['estado', 'createdAt'],
+          separate: true,
+          limit: 1,
+          order: [['createdAt', 'DESC']],
+        },
+      ],
     });
 
     return res.status(200).json({
