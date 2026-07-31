@@ -11,13 +11,55 @@ import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
 import TipoClientes from '../models/tipoClientes.js';
 
+const getPeriodoServicios = (req) => {
+  const currentYear = new Date().getFullYear();
+  const fechaInicioParam = req.query?.fecha_inicio || req.body?.fecha_inicio;
+  const fechaFinParam = req.query?.fecha_fin || req.body?.fecha_fin;
+
+  const fechaInicio = fechaInicioParam
+    ? new Date(fechaInicioParam)
+    : new Date(currentYear, 3, 1);
+  const fechaFin = fechaFinParam
+    ? new Date(fechaFinParam)
+    : new Date(currentYear + 1, 3, 1);
+
+  if (Number.isNaN(fechaInicio.getTime()) || Number.isNaN(fechaFin.getTime())) {
+    return {
+      error: 'Las fechas deben tener un formato valido, por ejemplo YYYY-MM-DD',
+    };
+  }
+
+  if (fechaInicio >= fechaFin) {
+    return {
+      error: 'fecha_inicio debe ser anterior a fecha_fin',
+    };
+  }
+
+  return {
+    fechaInicio,
+    fechaFin,
+    where: {
+      [Op.gte]: fechaInicio,
+      [Op.lt]: fechaFin,
+    },
+  };
+};
+
 export const getUserServices = async (req, res) => {
   try {
     const { clientes_ids } = req.body;
+    const periodoServicios = getPeriodoServicios(req);
+
+    if (periodoServicios.error) {
+      return res.status(400).json({ message: periodoServicios.error });
+    }
 
     const [totalCalibraciones, totalMuestras, totalJornadas] =
       await Promise.all([
         Calibracion.count({
+          where: {
+            fecha: periodoServicios.where,
+          },
           include: [
             {
               model: Maquinas,
@@ -33,6 +75,9 @@ export const getUserServices = async (req, res) => {
         }),
 
         MuestraAgua.count({
+          where: {
+            fecha_muestra: periodoServicios.where,
+          },
           include: [
             {
               model: Pozo,
@@ -52,6 +97,7 @@ export const getUserServices = async (req, res) => {
             cliente_id: {
               [Op.in]: clientes_ids,
             },
+            fecha_jornada: periodoServicios.where,
           },
         }),
       ]);
@@ -171,6 +217,11 @@ export const allServicesToClients = async (req, res) => {
 export const allServicesToClients = async (req, res) => {
   try {
     const { id: userId, rol } = req.user;
+    const periodoServicios = getPeriodoServicios(req);
+
+    if (periodoServicios.error) {
+      return res.status(400).json({ message: periodoServicios.error });
+    }
 
     let clientesIds = [];
 
@@ -209,40 +260,40 @@ export const allServicesToClients = async (req, res) => {
     // ───────────────────────────────
     // 2️⃣ Datos básicos cliente
     // ───────────────────────────────
-const clientes = await Clientes.findAll({
-  where: {
-    id: {
-      [Op.in]: clientesIds,
-    },
-  },
-  attributes: [
-    'id',
-    'razon_social',
-    'cuil_cuit',
-    'telefono',
-    'direccion_fiscal',
-    'ciudad',
-    'provincia',
-    'litros_estimados',
-    'tipo_cliente_id',
-  ],
-  include: [
-    {
-      model: Users,
-      as: 'ingenieros',
-      attributes: ['id', 'nombre', 'email'],
-      through: {
-        attributes: ['es_principal'],
+    const clientes = await Clientes.findAll({
+      where: {
+        id: {
+          [Op.in]: clientesIds,
+        },
       },
-    },
-    {
-      model: TipoClientes,
-      as: 'tipoCliente',
-      attributes: ['id', 'tipoClientes'], // campo que identifica A/B/C
-      required: false,
-    },    
-  ],
-});
+      attributes: [
+        'id',
+        'razon_social',
+        'cuil_cuit',
+        'telefono',
+        'direccion_fiscal',
+        'ciudad',
+        'provincia',
+        'litros_estimados',
+        'tipo_cliente_id',
+      ],
+      include: [
+        {
+          model: Users,
+          as: 'ingenieros',
+          attributes: ['id', 'nombre', 'email'],
+          through: {
+            attributes: ['es_principal'],
+          },
+        },
+        {
+          model: TipoClientes,
+          as: 'tipoCliente',
+          attributes: ['id', 'tipoClientes'], // campo que identifica A/B/C
+          required: false,
+        },
+      ],
+    });
     // const clientes = await Clientes.findAll({
     //   where: { id: { [Op.in]: clientesIds } },
     //   attributes: [
@@ -260,52 +311,52 @@ const clientes = await Clientes.findAll({
 
     const clientesMap = {};
 
-clientes.forEach((cliente) => {
-  clientesMap[cliente.id] = {
-    id: cliente.id,
-    razon_social: cliente.razon_social,
-    cuit: cliente.cuil_cuit,
-    telefono: cliente.telefono,
-    direccion: cliente.direccion_fiscal,
-    ciudad: cliente.ciudad,
-    provincia: cliente.provincia,
-    litros_estimados: cliente.litros_estimados,
-    tipo_cliente_id: cliente.tipo_cliente_id,
-    tipo_cliente: cliente.tipoCliente
-      ? {
-          id: cliente.tipoCliente.id,
-          nombre: cliente.tipoCliente.tipoClientes,
-        }
-      : null,
-    ingenieros: cliente.ingenieros.map((i) => ({
-      id: i.id,
-      nombre: i.nombre,
-      email: i.email,
-      es_principal: i.ClienteIngenieros?.es_principal ?? false,
-    })),
+    clientes.forEach((cliente) => {
+      clientesMap[cliente.id] = {
+        id: cliente.id,
+        razon_social: cliente.razon_social,
+        cuit: cliente.cuil_cuit,
+        telefono: cliente.telefono,
+        direccion: cliente.direccion_fiscal,
+        ciudad: cliente.ciudad,
+        provincia: cliente.provincia,
+        litros_estimados: cliente.litros_estimados,
+        tipo_cliente_id: cliente.tipo_cliente_id,
+        tipo_cliente: cliente.tipoCliente
+          ? {
+            id: cliente.tipoCliente.id,
+            nombre: cliente.tipoCliente.tipoClientes,
+          }
+          : null,
+        ingenieros: cliente.ingenieros.map((i) => ({
+          id: i.id,
+          nombre: i.nombre,
+          email: i.email,
+          es_principal: i.ClienteIngenieros?.es_principal ?? false,
+        })),
 
-    Maquinas: {
-      totalMaquinas: 0,
-      totalCalibraciones: 0,
-      calibracionesPendientes: 0,
-      calibracionesCerradas: 0,
-      calibracionesProceso: 0,
-    },
-    Pozos: {
-      totalPozos: 0,
-      totalMuestras: 0,
-      muestrasPendientes: 0,
-      muestrasCerradas: 0,
-      muestrasProceso: 0,
-    },
-    Jornadas: {
-      totalJornadas: 0,
-      jornadasPendientes: 0,
-      jornadasCerradas: 0,
-      jornadasProceso: 0,
-    },
-  };
-});
+        Maquinas: {
+          totalMaquinas: 0,
+          totalCalibraciones: 0,
+          calibracionesPendientes: 0,
+          calibracionesCerradas: 0,
+          calibracionesProceso: 0,
+        },
+        Pozos: {
+          totalPozos: 0,
+          totalMuestras: 0,
+          muestrasPendientes: 0,
+          muestrasCerradas: 0,
+          muestrasProceso: 0,
+        },
+        Jornadas: {
+          totalJornadas: 0,
+          jornadasPendientes: 0,
+          jornadasCerradas: 0,
+          jornadasProceso: 0,
+        },
+      };
+    });
 
     // ───────────────────────────────
     // 3️⃣ MAQUINAS
@@ -316,7 +367,10 @@ clientes.forEach((cliente) => {
         'cliente_id',
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
       ],
-      where: { cliente_id: { [Op.in]: clientesIds } },
+      where: {
+        cliente_id: { [Op.in]: clientesIds },
+        // fecha_jornada: periodoServicios.where,
+      },
       group: ['cliente_id'],
       raw: true,
     });
@@ -367,11 +421,19 @@ clientes.forEach((cliente) => {
           'proceso',
         ],
       ],
+      where: {
+        fecha: periodoServicios.where,
+      },
       include: [
         {
           model: Maquinas,
           as: 'maquina', // ✅ CORRECTO
           attributes: [],
+          where: {
+            cliente_id: {
+              [Op.in]: clientesIds,
+            },
+          },
         },
       ],
       group: ['maquina.cliente_id'],
@@ -404,7 +466,10 @@ clientes.forEach((cliente) => {
         'cliente_id',
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
       ],
-      where: { cliente_id: { [Op.in]: clientesIds } },
+      where: {
+        cliente_id: { [Op.in]: clientesIds },
+        // fecha_jornada: periodoServicios.where,
+      },
       group: ['cliente_id'],
       raw: true,
     });
@@ -449,11 +514,19 @@ clientes.forEach((cliente) => {
           'proceso',
         ],
       ],
+      where: {
+        fecha_muestra: periodoServicios.where,
+      },
       include: [
         {
           model: Pozo,
           as: 'pozo',
           attributes: [],
+          where: {
+            cliente_id: {
+              [Op.in]: clientesIds,
+            },
+          },
         },
       ],
       group: ['pozo.cliente_id'],
@@ -538,6 +611,11 @@ clientes.forEach((cliente) => {
 export const getDashboardTotals = async (req, res) => {
   try {
     const { id: userId, rol } = req.user;
+    const periodoServicios = getPeriodoServicios(req);
+
+    if (periodoServicios.error) {
+      return res.status(400).json({ message: periodoServicios.error });
+    }
 
     let clientesIds = [];
 
@@ -618,6 +696,9 @@ export const getDashboardTotals = async (req, res) => {
           'cerradas',
         ],
       ],
+      where: {
+        fecha: periodoServicios.where,
+      },
       include: [
         {
           model: Maquinas,
@@ -672,6 +753,9 @@ export const getDashboardTotals = async (req, res) => {
           'cerradas',
         ],
       ],
+      where: {
+        fecha_muestra: periodoServicios.where,
+      },
       include: [
         {
           model: Pozo,
@@ -718,7 +802,10 @@ export const getDashboardTotals = async (req, res) => {
           'cerradas',
         ],
       ],
-      where: { cliente_id: clientesIds },
+      where: {
+        cliente_id: clientesIds,
+        fecha_jornada: periodoServicios.where,
+      },
       raw: true,
     });
 
