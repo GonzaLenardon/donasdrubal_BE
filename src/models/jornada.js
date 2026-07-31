@@ -45,6 +45,15 @@ Jornada.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    informe: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    informe: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 
     deletedAt: {
       allowNull: true,
