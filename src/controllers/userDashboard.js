@@ -58,7 +58,7 @@ export const getUserServices = async (req, res) => {
       await Promise.all([
         Calibracion.count({
           where: {
-            fecha: periodoServicios.where,
+            createdAt: periodoServicios.where,
           },
           include: [
             {
@@ -76,7 +76,7 @@ export const getUserServices = async (req, res) => {
 
         MuestraAgua.count({
           where: {
-            fecha_muestra: periodoServicios.where,
+            createdAt: periodoServicios.where,
           },
           include: [
             {
@@ -97,7 +97,7 @@ export const getUserServices = async (req, res) => {
             cliente_id: {
               [Op.in]: clientes_ids,
             },
-            fecha_jornada: periodoServicios.where,
+            createdAt: periodoServicios.where,
           },
         }),
       ]);
@@ -422,7 +422,7 @@ export const allServicesToClients = async (req, res) => {
         ],
       ],
       where: {
-        fecha: periodoServicios.where,
+        createdAt: periodoServicios.where,
       },
       include: [
         {
@@ -515,7 +515,7 @@ export const allServicesToClients = async (req, res) => {
         ],
       ],
       where: {
-        fecha_muestra: periodoServicios.where,
+        createdAt: periodoServicios.where,
       },
       include: [
         {
@@ -577,7 +577,12 @@ export const allServicesToClients = async (req, res) => {
           'proceso',
         ],
       ],
-      where: { cliente_id: { [Op.in]: clientesIds } },
+      where: {
+          cliente_id: {
+            [Op.in]: clientesIds,
+          },
+          createdAt: periodoServicios.where,
+        },
       group: ['cliente_id'],
       raw: true,
     });
@@ -697,7 +702,7 @@ export const getDashboardTotals = async (req, res) => {
         ],
       ],
       where: {
-        fecha: periodoServicios.where,
+        createdAt: periodoServicios.where,
       },
       include: [
         {
@@ -754,7 +759,7 @@ export const getDashboardTotals = async (req, res) => {
         ],
       ],
       where: {
-        fecha_muestra: periodoServicios.where,
+        createdAt: periodoServicios.where,
       },
       include: [
         {
@@ -804,7 +809,7 @@ export const getDashboardTotals = async (req, res) => {
       ],
       where: {
         cliente_id: clientesIds,
-        fecha_jornada: periodoServicios.where,
+        createdAt: periodoServicios.where,
       },
       raw: true,
     });
