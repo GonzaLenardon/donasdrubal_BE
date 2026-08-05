@@ -74,6 +74,15 @@ class pdfCalibracionesService {
 
     let cursorY = height - 60;
     const margin = 40;
+    const topContentY = height - 60;
+    const footerSafeY = 70;
+
+    const ensureSpace = (requiredHeight = 15) => {
+      if (cursorY - requiredHeight < footerSafeY) {
+        page = pdfDoc.addPage();
+        cursorY = topContentY;
+      }
+    };
 
     // ===============================
     // HEADER
@@ -131,9 +140,9 @@ class pdfCalibracionesService {
 
       const alturaCard = await this.calcularAlturaCard(comp, font, width, margin, pdfDoc);
 
-      if (cursorY - alturaCard < 60) {
+      if (cursorY - alturaCard < footerSafeY) {
         page = pdfDoc.addPage();
-        cursorY = height - 60;
+        cursorY = topContentY;
       }
 
       // ===== Fondo Card =====
@@ -376,11 +385,16 @@ class pdfCalibracionesService {
 
     // ================= TABLA PRESIONES =================
 
-    const tablaAltura = 100;
+    const tieneImagenesPresion = [
+      datos.presion_unimap?.nombreArchivo,
+      datos.presion_computadora?.nombreArchivo,
+      datos.presion_manometro?.nombreArchivo
+    ].some(Boolean);
+    const tablaAltura = 85 + (tieneImagenesPresion ? 130 : 0);
 
-    if (cursorY - tablaAltura < 60) {
+    if (cursorY - tablaAltura < footerSafeY) {
       page = pdfDoc.addPage();
-      cursorY = height - 60;
+      cursorY = topContentY;
     }
 
     page.drawText('TABLA TÉCNICA DE PRESIONES', {
@@ -483,9 +497,9 @@ class pdfCalibracionesService {
     const seccionesArray = Object.entries(datos.secciones || {})
       .sort((a, b) => Number(a[0]) - Number(b[0]));
 
-    if (cursorY - 240 < 50) {
+    if (cursorY - 240 < footerSafeY) {
       page = pdfDoc.addPage();
-      cursorY = page.getHeight() - 50;
+      cursorY = topContentY;
     }
 
     if (seccionesArray.length > 0) {
@@ -517,6 +531,7 @@ class pdfCalibracionesService {
 
     if (datos.observaciones_presion) {
 
+      ensureSpace(30);
       page.drawText('Observación:', {
         x: margin + 15,
         y: cursorY,
@@ -534,6 +549,7 @@ class pdfCalibracionesService {
       );
 
       obsLines.forEach(line => {
+        ensureSpace(15);
         page.drawText(pdfUtils.sanitizeText(line), {
           x: margin + 25,
           y: cursorY,
@@ -549,6 +565,7 @@ class pdfCalibracionesService {
 
     if (datos.recomendaciones_presion) {
 
+      ensureSpace(30);
       page.drawText('Recomendaciones:', {
         x: margin + 15,
         y: cursorY,
@@ -566,6 +583,7 @@ class pdfCalibracionesService {
       );
 
       obsLines.forEach(line => {
+        ensureSpace(15);
         page.drawText(pdfUtils.sanitizeText(line), {
           x: margin + 25,
           y: cursorY,
@@ -581,6 +599,7 @@ class pdfCalibracionesService {
 
     // cursorY -= 5;
 
+    ensureSpace(16);
     page.drawRectangle({
       x: margin,
       y: cursorY,
@@ -594,6 +613,7 @@ class pdfCalibracionesService {
 
     if (datos.observaciones_acronex) {
 
+      ensureSpace(30);
       page.drawText('Observación ACRONEX:', {
         x: margin + 15,
         y: cursorY,
@@ -611,6 +631,7 @@ class pdfCalibracionesService {
       );
 
       obsLines.forEach(line => {
+        ensureSpace(15);
         page.drawText(pdfUtils.sanitizeText(line), {
           x: margin + 25,
           y: cursorY,
@@ -626,6 +647,7 @@ class pdfCalibracionesService {
 
     if (datos.observaciones_generales) {
 
+      ensureSpace(30);
       page.drawText('Observaciones Generales:', {
         x: margin + 15,
         y: cursorY,
@@ -643,6 +665,7 @@ class pdfCalibracionesService {
       );
 
       obsLines.forEach(line => {
+        ensureSpace(15);
         page.drawText(pdfUtils.sanitizeText(line), {
           x: margin + 25,
           y: cursorY,
@@ -1125,7 +1148,7 @@ class pdfCalibracionesService {
 
     // ===== FILTROS =====
     if (comp.tipo === 'filtro') {
-      if (comp.subtitulo) altura += 15;
+      if (comp.subTitulo) altura += 15;
       if (estado.color) altura += 15;
       if (estado.numero !== '' && estado.numero !== null) altura += 15;
       if (estado.presenciaORing) altura += 15;
@@ -1151,9 +1174,9 @@ class pdfCalibracionesService {
     // ===== RECOMENDACIONES =====
     if (Array.isArray(estado.recomendaciones) && estado.recomendaciones.length > 0) {
 
-      estado.recomendaciones.forEach((r) => {
+      estado.recomendaciones.forEach((r, index) => {
 
-        const texto = r.texto || '';
+        const texto = `${index + 1}. ${r.texto || ''}`;
 
         const lines = pdfUtils.wrapText(
           texto,
@@ -1174,9 +1197,10 @@ class pdfCalibracionesService {
 
     if (sugerenciasFijas.length > 0) {
       altura += 20;
-      sugerenciasFijas.forEach(texto => {
+      sugerenciasFijas.forEach((texto, index) => {
+        const textoNumerado = `${index + 1}. ${texto}`;
         const lines = pdfUtils.wrapText(
-          texto,
+          textoNumerado,
           font,
           fontSize,
           maxWidth
