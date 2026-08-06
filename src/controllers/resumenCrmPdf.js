@@ -40,8 +40,8 @@ const ResumenCrmPdf = {
 
   reportePorRango: async (req, res) => {
     try {
-      console.log('QUE LLEGAR', req.body);
-      const { fechaInicio, fechaFin } = req.body;
+      const payload = req.body || req.query || {};
+      const { fechaInicio, fechaFin, clienteId, ingenieroId } = payload;
 
       if (!fechaInicio || !fechaFin) {
         return res.status(400).json({
@@ -60,6 +60,8 @@ const ResumenCrmPdf = {
       const { pdfBytes, filename } = await generarPdf({
         fechaInicio,
         fechaFin,
+        clienteId,
+        ingenieroId,
       });
       sendPdf(res, pdfBytes, filename);
     } catch (error) {

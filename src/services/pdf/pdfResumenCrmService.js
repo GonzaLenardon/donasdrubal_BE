@@ -1282,51 +1282,54 @@ class PdfResumenCrmService {
     const donutBottom = donutCy - donutR - 12;
 
     // ---- DERECHA: Clientes sin actividad (siempre los 5 más inactivos) ----
-    this.drawSectionTitle({
-      page,
-      x: rightX,
-      y: rightY,
-      width: colWidth,
-      title: 'Clientes "A" sin actividad',
-      boldFont,
-    });
-    rightY -= 22;
-
-    const inactivosOrdenados = reporteData.clientes_inactivos; // ya viene ordenado y limitado a 5
-
-    const maxDiasInactivo = Math.max(
-      ...inactivosOrdenados.map((c) => c.dias_inactivo || 0),
-      1,
-    );
-    const inactivosRows = inactivosOrdenados.map((c) => ({
-      Cliente: c.cliente,
-      'Días sin actividad': c.dias_inactivo ?? 'Sin registro',
-    }));
-
-    rightY = this.drawTable({
-      page,
-      x: rightX,
-      y: rightY,
-      width: colWidth,
-      headers: ['Cliente', 'Días sin actividad'],
-      rows: inactivosRows,
-      columnWidths: [colWidth - 130, 130],
-      font,
-      boldFont,
-      withBar: true,
-      barMax: maxDiasInactivo,
-    });
-
-    page.drawText(
-      'Se muestran los 5 clientes con más días sin actividad registrada.',
-      {
+    // Solo mostrar si NO hay filtros aplicados
+    if (!reporteData.tiene_filtros) {
+      this.drawSectionTitle({
+        page,
         x: rightX,
-        y: rightY - 8,
-        size: 7,
+        y: rightY,
+        width: colWidth,
+        title: 'Clientes "A" sin actividad',
+        boldFont,
+      });
+      rightY -= 22;
+
+      const inactivosOrdenados = reporteData.clientes_inactivos; // ya viene ordenado y limitado a 5
+
+      const maxDiasInactivo = Math.max(
+        ...inactivosOrdenados.map((c) => c.dias_inactivo || 0),
+        1,
+      );
+      const inactivosRows = inactivosOrdenados.map((c) => ({
+        Cliente: c.cliente,
+        'Días sin actividad': c.dias_inactivo ?? 'Sin registro',
+      }));
+
+      rightY = this.drawTable({
+        page,
+        x: rightX,
+        y: rightY,
+        width: colWidth,
+        headers: ['Cliente', 'Días sin actividad'],
+        rows: inactivosRows,
+        columnWidths: [colWidth - 130, 130],
         font,
-        color: COLOR.textMuted,
-      },
-    );
+        boldFont,
+        withBar: true,
+        barMax: maxDiasInactivo,
+      });
+
+      page.drawText(
+        'Se muestran los 5 clientes con más días sin actividad registrada.',
+        {
+          x: rightX,
+          y: rightY - 8,
+          size: 7,
+          font,
+          color: COLOR.textMuted,
+        },
+      );
+    }
 
     // -----------------------------------------------
     // RESUMEN EJECUTIVO (footer del cuerpo)
@@ -1372,7 +1375,7 @@ class PdfResumenCrmService {
       this.drawTablaPaginada(pdfDoc, {
         titulo: 'Detalle de actividad por ingeniero',
         columnas: ['Cliente', 'Servicio', 'Detalle', 'Fecha', 'Estado'],
-        columnWidths: [260, 90, 200, 110, 110],
+        columnWidths: [200, 90, 280, 95, 95],
         filas: reporteData.detalle_actividad_ingenieros,
         campoAgrupador: 'ingeniero',
         font,
@@ -1386,7 +1389,7 @@ class PdfResumenCrmService {
     // -----------------------------------------------
     // PÁGINA 3: Clientes tipo A – prioridad alta
     // -----------------------------------------------
-    if (reporteData.clientes_prioridad_alta?.length) {
+    if (reporteData.clientes_prioridad_alta?.length && !reporteData.tiene_filtros) {
       const filasPrioridad = reporteData.clientes_prioridad_alta.map((c) => ({
         Cliente: c.cliente,
         'Última actividad': c.ultima_actividad,
