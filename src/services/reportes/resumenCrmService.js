@@ -80,6 +80,107 @@ class ResumenCrmService {
     };
   }
 
+  filtrarActividadPorParametros(
+    actividad,
+    filtros = {},
+    { maquinasPorId = {}, pozosPorId = {} } = {},
+  ) {
+    const { clienteId, ingenieroId } = filtros;
+
+    const normalizarId = (valor) => {
+      if (valor === undefined || valor === null || valor === '') {
+        return null;
+      }
+
+      const numero = Number(valor);
+      return Number.isNaN(numero) ? null : numero;
+    };
+
+    const clienteIdNormalizado = normalizarId(clienteId);
+    const ingenieroIdNormalizado = normalizarId(ingenieroId);
+
+    return {
+      calibraciones: (actividad.calibraciones || []).filter((item) => {
+        if (
+          clienteIdNormalizado &&
+          Number(maquinasPorId[item.maquina_id]) !== clienteIdNormalizado
+        ) {
+          return false;
+        }
+
+        if (
+          ingenieroIdNormalizado &&
+          Number(item.responsable_id) !== ingenieroIdNormalizado
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+      muestras: (actividad.muestras || []).filter((item) => {
+        if (
+          clienteIdNormalizado &&
+          Number(pozosPorId[item.pozo_id]) !== clienteIdNormalizado
+        ) {
+          return false;
+        }
+
+        if (
+          ingenieroIdNormalizado &&
+          Number(item.responsable_id) !== ingenieroIdNormalizado
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+      jornadas: (actividad.jornadas || []).filter((item) => {
+        if (
+          clienteIdNormalizado &&
+          Number(item.cliente_id) !== clienteIdNormalizado
+        ) {
+          return false;
+        }
+
+        if (
+          ingenieroIdNormalizado &&
+          Number(item.responsable_id) !== ingenieroIdNormalizado
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+      alertas: (actividad.alertas || []).filter((item) => {
+        if (clienteIdNormalizado) {
+          const clienteAlerta = this._clienteIdDesdeAlerta(item);
+          if (Number(clienteAlerta) !== clienteIdNormalizado) {
+            return false;
+          }
+        }
+
+        return true;
+      }),
+      notas: (actividad.notas || []).filter((item) => {
+        if (
+          clienteIdNormalizado &&
+          Number(item.cliente_id) !== clienteIdNormalizado
+        ) {
+          return false;
+        }
+
+        if (
+          ingenieroIdNormalizado &&
+          Number(item.usuario_id) !== ingenieroIdNormalizado
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+    };
+  }
+
   buildIndicador(actual, anterior) {
     return {
       actual,
@@ -367,7 +468,14 @@ class ResumenCrmService {
   }
 
   async generarResumenV2(params = {}) {
-    const { semana, fechaInicio, fechaFin, semanaAnterior } = params;
+    const {
+      semana,
+      fechaInicio,
+      fechaFin,
+      semanaAnterior,
+      clienteId,
+      ingenieroId,
+    } = params;
 
     const { inicio, fin, label } =
       fechaInicio && fechaFin
@@ -419,11 +527,16 @@ class ResumenCrmService {
       return acc;
     }, {});
 
-    const actividadActual = await this.obtenerActividadPeriodo(inicio, fin);
+    const actividadActual = this.filtrarActividadPorParametros(
+      await this.obtenerActividadPeriodo(inicio, fin),
+      { clienteId, ingenieroId },
+      { maquinasPorId, pozosPorId },
+    );
 
-    const actividadAnterior = await this.obtenerActividadPeriodo(
-      inicioAnterior,
-      finAnterior,
+    const actividadAnterior = this.filtrarActividadPorParametros(
+      await this.obtenerActividadPeriodo(inicioAnterior, finAnterior),
+      { clienteId, ingenieroId },
+      { maquinasPorId, pozosPorId },
     );
 
     const clientesActual = new Set();
@@ -906,6 +1019,7 @@ class ResumenCrmService {
 
       detalle_actividad_ingenieros: detalleActividadIngenieros,
       clientes_prioridad_alta: clientesPrioridadAlta,
+      tiene_filtros: !!(clienteId || ingenieroId),
     };
   }
 }
