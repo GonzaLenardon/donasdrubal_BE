@@ -108,7 +108,8 @@ Clientes.init(
     sequelize: db,
     modelName: 'Clientes',
     tableName: 'clientes',
-    timestamps: false,
+    timestamps: true,
+    paranoid: true,
   },
 );
 
