@@ -50,7 +50,8 @@ Users.init(
     sequelize: db,
     modelName: 'Users',
     tableName: 'users',
-    timestamps: false,
+    timestamps: true,
+    paranoid: true,
   },
 );
 
