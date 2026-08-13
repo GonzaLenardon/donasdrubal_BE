@@ -42,6 +42,7 @@ import {
   allClientes,
   upCliente,
   getCliente,
+  deleteClient,
 } from '../controllers/clients.js';
 import {
   allMaquinas,
@@ -152,6 +153,7 @@ router.post('/clientes', verifyRole([ROLES.ADMIN]), addClient);
 router.get('/clientes', allClientes);
 router.put('/clientes/:cliente_id', upCliente);
 router.get('/clientes/:cliente_id', getCliente);
+router.delete('/clientes/:cliente_id', verifyRole([ROLES.ADMIN]), deleteClient);
 
 // ========================================
 // RUTAS PROTEGIDAS - MÁQUINAS
