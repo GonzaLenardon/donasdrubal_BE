@@ -81,6 +81,14 @@ import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
+import * as productsController from '../controllers/products.js';
+import * as productPresentationsController from '../controllers/productPresentations.js';
+import * as warehousesController from '../controllers/warehouses.js';
+import * as providersController from '../controllers/providers.js';
+import * as purchasesController from '../controllers/purchases.js';
+import * as remitosController from '../controllers/remitos.js';
+import * as warehouseStockController from '../controllers/warehouseStock.js';
+import * as stockMovementsController from '../controllers/stockMovements.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
@@ -539,4 +547,73 @@ router.post('/informes/resumen/rango', resumenCrmPdf.reportePorRango);
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
+
+// ========================================
+// RUTAS PROTEGIDAS - PRODUCTOS
+// ========================================
+
+router.get('/stock/products', productsController.allProducts);
+router.post('/stock/products', productsController.addProduct);
+router.put('/stock/products/:id', productsController.updateProduct);
+router.delete('/stock/products/:id', productsController.deleteProduct);
+
+// ========================================
+// RUTAS PROTEGIDAS - PRESENTACIONES
+// ========================================
+
+router.get('/stock/presentations', productPresentationsController.allPresentations);
+router.post('/stock/presentations', productPresentationsController.addPresentation);
+router.put('/stock/presentations/:id', productPresentationsController.updatePresentation);
+router.delete('/stock/presentations/:id', productPresentationsController.deletePresentation);
+
+// ========================================
+// RUTAS PROTEGIDAS - DEPOSITOS
+// ========================================
+
+router.get('/stock/warehouses', warehousesController.allWarehouses);
+router.post('/stock/warehouses', warehousesController.addWarehouse);
+router.put('/stock/warehouses/:id', warehousesController.updateWarehouse);
+router.delete('/stock/warehouses/:id', warehousesController.deleteWarehouse);
+
+// ========================================
+// RUTAS PROTEGIDAS - PROVEEDORES
+// ========================================
+
+router.get('/stock/providers', providersController.allProviders);
+router.post('/stock/providers', providersController.addProvider);
+router.put('/stock/providers/:id', providersController.updateProvider);
+router.delete('/stock/providers/:id', providersController.deleteProvider);
+
+// ========================================
+// RUTAS PROTEGIDAS - COMPRAS
+// ========================================
+
+router.get('/stock/purchases', purchasesController.allPurchases);
+router.post('/stock/purchases', purchasesController.addPurchase);
+
+// ========================================
+// RUTAS PROTEGIDAS - REMITOS
+// ========================================
+
+router.get('/stock/remitos', remitosController.allRemitos);
+router.get('/stock/remitos/:id', remitosController.getRemitoById);
+router.post('/stock/remitos', remitosController.addRemito);
+router.put('/stock/remitos/:id/dispatch', remitosController.dispatchRemito);
+router.put('/stock/remitos/:id/receive', remitosController.receiveRemito);
+router.put('/stock/remitos/:id/cancel', remitosController.cancelRemito);
+
+// ========================================
+// RUTAS PROTEGIDAS - STOCK POR DEPOSITO
+// ========================================
+
+router.get('/stock/warehouse/:warehouse_id', warehouseStockController.getStockByWarehouse);
+router.get('/stock/all', warehouseStockController.getAllStock);
+
+// ========================================
+// RUTAS PROTEGIDAS - MOVIMIENTOS DE STOCK
+// ========================================
+
+router.get('/stock/movements', stockMovementsController.allMovements);
+router.get('/stock/movements/warehouse/:warehouse_id', stockMovementsController.movementsByWarehouse);
+
 export { router };
