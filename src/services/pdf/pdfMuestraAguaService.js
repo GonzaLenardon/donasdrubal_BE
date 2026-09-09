@@ -215,7 +215,7 @@ class PdfMuestraAguaService {
    * Gestiona saltos de página automáticos correctamente.
    * Retorna { page, cursorY } actualizado.
    */
-  _drawFactoresCalidad({ page, pdfDoc, cursorY, font, fontBold, width }) {
+  async _drawFactoresCalidad({ page, pdfDoc, cursorY, font, fontBold, width }) {
     const { margin } = this;
 
     const _checkPage = (cursor, minSpace = 80) => {
@@ -271,6 +271,36 @@ class PdfMuestraAguaService {
         cursorY = _checkPage(cursorY, 60);
         page.drawText(line, { x: margin + 10, y: cursorY, size: 9, font });
         cursorY -= 12;
+      }
+
+      if (factor.titulo === 'Evaluación demostrativa utilizando agua dura y salada de referencia') {
+        const imageNames = [
+          'calidad_agua_utilizada.png',
+          'ma_cletodim_hard_cletodim.png',
+        ];
+
+        for (const imageName of imageNames) {
+          const imageData = await imagesUtils.getImageDimensions(
+            pdfDoc,
+            path.join(this.assetsUrl, 'images'),
+            imageName,
+            width - margin * 2,
+            600,
+          );
+
+          if (!imageData) continue;
+
+          cursorY = _checkPage(cursorY, imageData.height + 20);
+
+          const imageY = cursorY - imageData.height;
+          page.drawImage(imageData.image, {
+            x: margin + (width - margin * 2 - imageData.width) / 2,
+            y: imageY,
+            width: imageData.width,
+            height: imageData.height,
+          });
+          cursorY = imageY - 12;
+        }
       }
 
       cursorY -= 8;
@@ -672,7 +702,7 @@ class PdfMuestraAguaService {
     cursorY = durezaResult.cursorY - 40;
 
     // ── Factores de calidad ─────────────────────────────────────────────
-    const factoresResult = this._drawFactoresCalidad({
+    const factoresResult = await this._drawFactoresCalidad({
       page,
       pdfDoc,
       cursorY,
@@ -865,7 +895,7 @@ class PdfMuestraAguaService {
     cursorY = durezaResult.cursorY - 40;
 
     // ── Factores de calidad ─────────────────────────────────────────────
-    const factoresResult = this._drawFactoresCalidad({
+    const factoresResult = await this._drawFactoresCalidad({
       page,
       pdfDoc,
       cursorY,
