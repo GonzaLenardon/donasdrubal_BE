@@ -74,51 +74,71 @@ class PdfMuestraAguaService {
     fontBold,
     width,
     conclusion,
+    clienteNombre,
   }) {
     const { margin } = this;
+    const text = conclusion?.trim() ? conclusion : '-';
 
-    const _checkPage = (cursor, minSpace = 100) => {
-      if (cursor < minSpace) {
-        page = pdfDoc.addPage();
-        cursor = page.getHeight() - 60;
-      }
-      return cursor;
-    };
+    const boxWidth = width - margin * 2;
+    const headerHeight = 22;
+    const titleHeight = 20;
+    const lineHeight = 14;
+    const bodyPadding = 10;
+    const lines = pdfUtils.wrapText(text, font, 10, boxWidth - bodyPadding * 2);
+    const boxHeight = headerHeight + titleHeight + bodyPadding * 2 + lines.length * lineHeight;
 
-    // 🔹 espacio antes de la sección
-    cursorY -= 20;
+    if (cursorY - boxHeight < 60) {
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
+    }
 
-    cursorY = _checkPage(cursorY, 120);
+    const boxY = cursorY - boxHeight;
+    const bodyY = boxY;
 
-    // ── Título ─────────────────────────────────────────────
-    page.drawText('Conclusión final del informe', {
+    page.drawRectangle({
       x: margin,
-      y: cursorY,
-      size: 12,
+      y: boxY,
+      width: boxWidth,
+      height: boxHeight,
+      borderWidth: 0.8,
+      borderColor: rgb(0.2, 0.5, 0.2),
+    });
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY - headerHeight,
+      width: boxWidth,
+      height: headerHeight,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+
+    page.drawText(`Cliente: ${clienteNombre ?? '-'}`, {
+      x: margin + bodyPadding,
+      y: cursorY - 15,
+      size: 10,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText('Conclusión del informe', {
+      x: margin + bodyPadding,
+      y: bodyY + boxHeight - headerHeight - 16,
+      size: 11,
       font: fontBold,
     });
 
-    cursorY -= 20;
-
-    // ── Texto ──────────────────────────────────────────────
-    const text = conclusion?.trim() ? conclusion : '-';
-
-    const lines = pdfUtils.wrapText(text, font, 10, width - margin * 2);
-
+    let textY = bodyY + boxHeight - headerHeight - titleHeight - bodyPadding;
     for (const line of lines) {
-      cursorY = _checkPage(cursorY, 60);
-
       page.drawText(line, {
-        x: margin,
-        y: cursorY,
+        x: margin + bodyPadding,
+        y: textY,
         size: 10,
         font,
       });
-
-      cursorY -= 14;
+      textY -= lineHeight;
     }
 
-    cursorY -= 20;
+    cursorY = boxY - 20;
 
     return { page, cursorY };
   }
@@ -142,7 +162,7 @@ class PdfMuestraAguaService {
   _drawTablaReferencia({ page, pdfDoc, cursorY, font, fontBold }) {
     const { margin } = this;
 
-    page.drawText('Tablas de calidad de agua', {
+    page.drawText('Tablas de referencia', {
       x: margin,
       y: cursorY,
       size: 12,
@@ -180,7 +200,7 @@ class PdfMuestraAguaService {
     page.drawText('Clasificación de dureza del agua', {
       x: margin,
       y: cursorY,
-      size: 12,
+      size: 12, 
       font: fontBold,
     });
 
@@ -689,17 +709,32 @@ class PdfMuestraAguaService {
     page = refResult.page;
     cursorY = refResult.cursorY - 30;
 
-    // ── Tabla dureza agua ─────────────────────────────────────────────
-    const durezaResult = this._drawTablaDureza({
+    // // ── Tabla dureza agua ─────────────────────────────────────────────
+    // const durezaResult = this._drawTablaDureza({
+    //   page,
+    //   pdfDoc,
+    //   cursorY,
+    //   font,
+    //   fontBold,
+    // });
+
+    // page = durezaResult.page;
+    // cursorY = durezaResult.cursorY - 40;
+
+    // ── Conclusión ──────────────────────────────────────────────────────
+    const conclusionResult = this._drawConclusion({
       page,
       pdfDoc,
       cursorY,
       font,
       fontBold,
+      width,
+      conclusion,
+      clienteNombre: cliente?.razon_social,
     });
 
-    page = durezaResult.page;
-    cursorY = durezaResult.cursorY - 40;
+    page = conclusionResult.page;
+    cursorY = conclusionResult.cursorY;
 
     // ── Factores de calidad ─────────────────────────────────────────────
     const factoresResult = await this._drawFactoresCalidad({
@@ -713,20 +748,6 @@ class PdfMuestraAguaService {
 
     page = factoresResult.page;
     cursorY = factoresResult.cursorY - 30; // 🔥 CLAVE
-
-    // ── Conclusión ──────────────────────────────────────────────────────
-    const conclusionResult = this._drawConclusion({
-      page,
-      pdfDoc,
-      cursorY,
-      font,
-      fontBold,
-      width,
-      conclusion,
-    });
-
-    page = conclusionResult.page;
-    cursorY = conclusionResult.cursorY;
 
     // ── Footer ──────────────────────────────────────────────────────────
     this._drawFooter({ page, font });
@@ -883,16 +904,16 @@ class PdfMuestraAguaService {
     page = refResult.page;
     cursorY = refResult.cursorY - 30;
 
-    // ── Tabla dureza agua ─────────────────────────────────────────────
-    const durezaResult = this._drawTablaDureza({
-      page,
-      pdfDoc,
-      cursorY,
-      font,
-      fontBold,
-    });
-    page = durezaResult.page;
-    cursorY = durezaResult.cursorY - 40;
+    // // ── Tabla dureza agua ─────────────────────────────────────────────
+    // const durezaResult = this._drawTablaDureza({
+    //   page,
+    //   pdfDoc,
+    //   cursorY,
+    //   font,
+    //   fontBold,
+    // });
+    // page = durezaResult.page;
+    // cursorY = durezaResult.cursorY - 40;
 
     // ── Factores de calidad ─────────────────────────────────────────────
     const factoresResult = await this._drawFactoresCalidad({
