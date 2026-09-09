@@ -326,48 +326,74 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
     const tableWidth = pageWidth - margin * 2;
     const rowHeight = 18;
     const colWidths = columnRatios.map((r) => r * tableWidth);
+    const normalizedHeaders = headers.map((header) => (
+      typeof header === 'string'
+        ? { title: header }
+        : { title: header.title, unit: header.unit }
+    ));
+    const headerHeight = normalizedHeaders.some((header) => header.unit)
+      ? 30
+      : rowHeight;
 
     let cursorY = startY;
 
     // ── Header de la tabla ──────────────────────────────────────────────
+    const headerY = cursorY - headerHeight;
     let x = margin;
 
-    headers.forEach((header, i) => {
+    normalizedHeaders.forEach((header, i) => {
       page.drawRectangle({
         x,
-        y: cursorY,
+        y: headerY,
         width: colWidths[i],
-        height: rowHeight,
+        height: headerHeight,
         color: rgb(0.2, 0.5, 0.2),
       });
 
-      page.drawText(header, {
-        x: x + 4,
-        y: cursorY + 5,
-        size: 8,
+      const titleSize = 8;
+      const titleWidth = fontBold.widthOfTextAtSize(header.title, titleSize);
+
+      page.drawText(header.title, {
+        x: x + (colWidths[i] - titleWidth) / 2,
+        y: headerY + (header.unit ? 17 : 5),
+        size: titleSize,
         font: fontBold,
         color: rgb(1, 1, 1),
       });
 
+      if (header.unit) {
+        const unitSize = 7;
+        const unitWidth = font.widthOfTextAtSize(header.unit, unitSize);
+
+        page.drawText(header.unit, {
+          x: x + (colWidths[i] - unitWidth) / 2,
+          y: headerY + 6,
+          size: unitSize,
+          font,
+          color: rgb(1, 1, 1),
+        });
+      }
+
       x += colWidths[i];
     });
 
-    cursorY -= rowHeight;
+    cursorY -= headerHeight;
 
     // ── Filas ───────────────────────────────────────────────────────────
     for (const row of rows) {
       // Salto de página automático
-      if (cursorY < 80) {
+      if (cursorY - rowHeight < 80) {
         page = pdfDoc.addPage();
         cursorY = pageHeight - 60;
       }
 
+      const rowY = cursorY - rowHeight;
       x = margin;
 
       row.forEach((cell, i) => {
         page.drawRectangle({
           x,
-          y: cursorY,
+          y: rowY,
           width: colWidths[i],
           height: rowHeight,
           borderWidth: 0.5,
@@ -376,7 +402,7 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
 
         page.drawText(pdfUtils.truncate(String(cell), 22), {
           x: x + 4,
-          y: cursorY + 5,
+          y: rowY + 5,
           size: 8,
           font,
         });
@@ -530,15 +556,15 @@ getPathInforme(pathInforme, nombreArchivo) {
 
     // ── Tabla principal ─────────────────────────────────────────────────
     const headers = [
-      'N°',
-      'Pozo',
-      'pH',
-      'Dureza',
-      'Alcal.',
-      'Sal.',
-      'CE',
-      'F. Iónica',
-      'Dosis Hard',
+      { title: 'N°', unit: ' ' },
+      { title: 'Pozo', unit: ' ' },
+      { title: 'pH', unit: '(s/u)' },
+      { title: 'Dureza', unit: '(ppm CaCO3)' },
+      { title: 'Alcal.', unit: '(mg/L)' },
+      { title: 'Sal.', unit: '(mg/L)' },
+      { title: 'CE', unit: '(µS/cm)' },
+      { title: 'F. Iónica', unit: '(mmol/L)' },
+      { title: 'Dosis Hard', unit: '(cc/1.000 L)' },
     ];
     const columnRatios = [0.05, 0.25, 0.08, 0.1, 0.12, 0.1, 0.08, 0.12, 0.1];
 
