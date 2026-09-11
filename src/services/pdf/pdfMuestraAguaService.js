@@ -505,13 +505,13 @@ class PdfMuestraAguaService {
       datosTabla.push([
         String(i + 1),
         p.nombre ?? '-',
-        String(muestra?.ph ?? '-'),
-        String(muestra?.dureza ?? '-'),
-        String(muestra?.alcalinidad ?? '-'),
-        String(muestra?.salinidad ?? '-'),
-        String(muestra?.conductividad ?? '-'),
-        String(muestra?.fuerza_ionica ?? '-'),
-        String(muestra?.dosis ?? '-'),
+        String(muestra?.ph ?? 'N/D'),
+        String(muestra?.dureza ?? 'N/D'),
+        String(muestra?.alcalinidad ?? 'N/D'),
+        String(muestra?.salinidad ?? 'N/D'),
+        String(muestra?.conductividad ?? 'N/D'),
+        String(muestra?.fuerza_ionica ?? 'N/D'),
+        String(muestra?.dosis ?? 'N/D'),
       ]);
 
 
@@ -637,11 +637,11 @@ class PdfMuestraAguaService {
       { title: 'Pozo', unit: ' ' },
       { title: 'pH', unit: '(s/u)' },
       { title: 'Dureza', unit: '(ppm CaCO3)' },
-      { title: 'Alcal.', unit: '(mg/L)' },
-      { title: 'Sal.', unit: '(mg/L)' },
-      { title: 'CE', unit: '(µS/cm)' },
+      { title: 'Alcalinidad', unit: '(mg/L)' },
+      { title: 'Salinidad', unit: '(mg/L)' },
+      { title: 'CE a 25°C', unit: '(µS/cm)' },
       { title: 'F. Iónica', unit: '(mmol/L)' },
-      { title: 'Dosis Hard', unit: '(cc/1.000 L)' },
+      { title: 'Hard', unit: '(cc/1.000 L)' },
     ];
     const columnRatios = [0.05, 0.25, 0.08, 0.1, 0.12, 0.1, 0.08, 0.12, 0.1];
 
