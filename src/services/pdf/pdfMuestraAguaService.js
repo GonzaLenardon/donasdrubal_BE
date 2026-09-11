@@ -112,7 +112,14 @@ class PdfMuestraAguaService {
       color: rgb(0.2, 0.5, 0.2),
     });
 
-    page.drawText(`Cliente: ${clienteNombre ?? '-'}`, {
+    // page.drawText(`Cliente: ${clienteNombre ?? '-'}`, {
+    //   x: margin + bodyPadding,
+    //   y: cursorY - 15,
+    //   size: 10,
+    //   font: fontBold,
+    //   color: rgb(1, 1, 1),
+    // });
+    page.drawText(`Conclusión del informe`, {
       x: margin + bodyPadding,
       y: cursorY - 15,
       size: 10,
@@ -120,14 +127,15 @@ class PdfMuestraAguaService {
       color: rgb(1, 1, 1),
     });
 
-    page.drawText('Conclusión del informe', {
-      x: margin + bodyPadding,
-      y: bodyY + boxHeight - headerHeight - 16,
-      size: 11,
-      font: fontBold,
-    });
+    // page.drawText('Conclusión del informe', {
+    //   x: margin + bodyPadding,
+    //   y: bodyY + boxHeight - headerHeight - 16,
+    //   size: 11,
+    //   font: fontBold,
+    // });
 
-    let textY = bodyY + boxHeight - headerHeight - titleHeight - bodyPadding;
+    // let textY = bodyY + boxHeight - headerHeight - titleHeight - bodyPadding;
+    let textY = bodyY + boxHeight - headerHeight - bodyPadding - 5;
     for (const line of lines) {
       page.drawText(line, {
         x: margin + bodyPadding,
@@ -509,11 +517,15 @@ class PdfMuestraAguaService {
         String(muestra?.dureza ?? 'N/D'),
         String(muestra?.alcalinidad ?? 'N/D'),
         String(muestra?.salinidad ?? 'N/D'),
-        String(muestra?.conductividad ?? 'N/D'),
+        // String(muestra?.conductividad ?? 'N/D'),
         String(muestra?.fuerza_ionica ?? 'N/D'),
-        String(muestra?.dosis ?? 'N/D'),
+        String(muestra.dosis != null && Number(muestra.dosis) >= 400
+        ? String(Math.ceil(Number(muestra.dosis) / 100) * 100)
+        : 'No req. acción'),
       ]);
-
+      // ['Dosis Hard', muestra.dosis != null && Number(muestra.dosis) >= 400
+      //   ? String(Math.ceil(Number(muestra.dosis) / 100) * 100)
+      //   : 'N/D']
 
     });
 
@@ -639,11 +651,11 @@ class PdfMuestraAguaService {
       { title: 'Dureza', unit: '(ppm CaCO3)' },
       { title: 'Alcalinidad', unit: '(mg/L)' },
       { title: 'Salinidad', unit: '(mg/L)' },
-      { title: 'CE a 25°C', unit: '(µS/cm)' },
+      // { title: 'CE a 25°C', unit: '(µS/cm)' },
       { title: 'F. Iónica', unit: '(mmol/L)' },
       { title: 'Hard', unit: '(cc/1.000 L)' },
     ];
-    const columnRatios = [0.05, 0.25, 0.08, 0.1, 0.12, 0.1, 0.08, 0.12, 0.1];
+    const columnRatios = [0.05, 0.25, 0.08, 0.14, 0.12, 0.1, 0.12, 0.14];
 
     // ── Título ─────────────────────────────────────────────
     page.drawText('Resultados comparativos', {
@@ -877,9 +889,11 @@ class PdfMuestraAguaService {
       ['Dureza', String(muestra.dureza ?? 'N/D')],
       ['Alcalinidad', String(muestra.alcalinidad ?? '')],
       ['Salinidad (mg/l)', String(muestra.salinidad ?? 'N/D')],
-      ['Conductividad (dS/cm)', String(muestra.conductividad ?? 'N/D')],
+      // ['Conductividad (uS/cm)', String(muestra.conductividad ?? 'N/D')],
       ['Fuerza Iónica', String(muestra.fuerza_ionica ?? 'N/D')],
-      ['Dosis Hard', String(muestra.dosis ?? 'N/D')],
+      ['Dosis Hard', muestra.dosis != null && Number(muestra.dosis) >= 400
+        ? String(Math.ceil(Number(muestra.dosis) / 100) * 100)
+        : 'N/D'],
     ];
 
     let result = this.drawTable({
