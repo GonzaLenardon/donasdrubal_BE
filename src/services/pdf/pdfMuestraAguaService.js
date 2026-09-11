@@ -278,7 +278,7 @@ class PdfMuestraAguaService {
       //   font: fontBold,
       // });
 
-      cursorY -= 15;
+      cursorY -= 10;
 
       const lines = pdfUtils.wrapText(
         factor.texto,
@@ -733,8 +733,11 @@ class PdfMuestraAguaService {
       clienteNombre: cliente?.razon_social,
     });
 
-    page = conclusionResult.page;
-    cursorY = conclusionResult.cursorY;
+    // page = conclusionResult.page;
+    // cursorY = conclusionResult.cursorY;
+
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
 
     // ── Factores de calidad ─────────────────────────────────────────────
     const factoresResult = await this._drawFactoresCalidad({
