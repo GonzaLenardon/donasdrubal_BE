@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fsPromises  from 'fs/promises';
+import fsPromises from 'fs/promises';
 import fs from 'fs';
 import path from 'path';
 
@@ -74,51 +74,71 @@ class PdfMuestraAguaService {
     fontBold,
     width,
     conclusion,
+    clienteNombre,
   }) {
     const { margin } = this;
+    const text = conclusion?.trim() ? conclusion : '-';
 
-    const _checkPage = (cursor, minSpace = 100) => {
-      if (cursor < minSpace) {
-        page = pdfDoc.addPage();
-        cursor = page.getHeight() - 60;
-      }
-      return cursor;
-    };
+    const boxWidth = width - margin * 2;
+    const headerHeight = 22;
+    const titleHeight = 20;
+    const lineHeight = 14;
+    const bodyPadding = 10;
+    const lines = pdfUtils.wrapText(text, font, 10, boxWidth - bodyPadding * 2);
+    const boxHeight = headerHeight + titleHeight + bodyPadding * 2 + lines.length * lineHeight;
 
-    // 🔹 espacio antes de la sección
-    cursorY -= 20;
+    if (cursorY - boxHeight < 60) {
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
+    }
 
-    cursorY = _checkPage(cursorY, 120);
+    const boxY = cursorY - boxHeight;
+    const bodyY = boxY;
 
-    // ── Título ─────────────────────────────────────────────
-    page.drawText('Conclusión final del informe', {
+    page.drawRectangle({
       x: margin,
-      y: cursorY,
-      size: 12,
+      y: boxY,
+      width: boxWidth,
+      height: boxHeight,
+      borderWidth: 0.8,
+      borderColor: rgb(0.2, 0.5, 0.2),
+    });
+
+    page.drawRectangle({
+      x: margin,
+      y: cursorY - headerHeight,
+      width: boxWidth,
+      height: headerHeight,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+
+    page.drawText(`Cliente: ${clienteNombre ?? '-'}`, {
+      x: margin + bodyPadding,
+      y: cursorY - 15,
+      size: 10,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText('Conclusión del informe', {
+      x: margin + bodyPadding,
+      y: bodyY + boxHeight - headerHeight - 16,
+      size: 11,
       font: fontBold,
     });
 
-    cursorY -= 20;
-
-    // ── Texto ──────────────────────────────────────────────
-    const text = conclusion?.trim() ? conclusion : '-';
-
-    const lines = pdfUtils.wrapText(text, font, 10, width - margin * 2);
-
+    let textY = bodyY + boxHeight - headerHeight - titleHeight - bodyPadding;
     for (const line of lines) {
-      cursorY = _checkPage(cursorY, 60);
-
       page.drawText(line, {
-        x: margin,
-        y: cursorY,
+        x: margin + bodyPadding,
+        y: textY,
         size: 10,
         font,
       });
-
-      cursorY -= 14;
+      textY -= lineHeight;
     }
 
-    cursorY -= 20;
+    cursorY = boxY - 20;
 
     return { page, cursorY };
   }
@@ -142,7 +162,7 @@ class PdfMuestraAguaService {
   _drawTablaReferencia({ page, pdfDoc, cursorY, font, fontBold }) {
     const { margin } = this;
 
-    page.drawText('Tablas de calidad de agua', {
+    page.drawText('Tablas de referencia', {
       x: margin,
       y: cursorY,
       size: 12,
@@ -155,13 +175,14 @@ class PdfMuestraAguaService {
       page,
       pdfDoc,
       startY: cursorY,
-      headers: ['Parámetro', 'Bajo', 'Medio', 'Alto'],
+      headers: ['Parámetro', 'Unidad', 'Bajo', 'Medio', 'Alto'],
       rows: [
-        ['Conductividad eléctrica (dS/cm)', '<500', '500 - 2000', '>2000'],
-        ['Salinidad (mg/l)', '<300', '300 - 1200', '>1200'],
-        ['Fuerza iónica', '<25', '25', '>25'],
+        ['Conductividad eléctrica', '(uS/cm)', '<500', '500 - 2000', '>2000'],
+        ['Salinidad', '(mg/l)', '<300', '300 - 1200', '>1200'],
+        ['Fuerza iónica', 'mmol/L (mM)', 'Baja <20', 'Transición 20-<25', 'Alta >25'],
+        ['Dureza total', 'ppm de CaCO3', 'Blanda <75', 'Semidura 75-150', 'Dura 150-300 / Muy dura >300'],
       ],
-      columnRatios: [0.5, 0.17, 0.17, 0.16],
+      columnRatios: [0.18, 0.20, 0.15, 0.20, 0.27],
       font,
       fontBold,
     });
@@ -169,52 +190,52 @@ class PdfMuestraAguaService {
     return { page: result.page, cursorY: result.cursorY };
   }
 
-/**
- * Tabla de clasificación de dureza del agua
- */
-_drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
-  const { margin } = this;
+  /**
+   * Tabla de clasificación de dureza del agua
+   */
+  _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
+    const { margin } = this;
 
-  // ── Título ─────────────────────────────────────────────
-  page.drawText('Clasificación de dureza del agua', {
-    x: margin,
-    y: cursorY,
-    size: 12,
-    font: fontBold,
-  });
+    // ── Título ─────────────────────────────────────────────
+    page.drawText('Clasificación de dureza del agua', {
+      x: margin,
+      y: cursorY,
+      size: 12, 
+      font: fontBold,
+    });
 
-  cursorY -= 20;
+    cursorY -= 20;
 
-  // ── Tabla ──────────────────────────────────────────────
-  const result = this.drawTable({
-    page,
-    pdfDoc,
-    startY: cursorY,
+    // ── Tabla ──────────────────────────────────────────────
+    const result = this.drawTable({
+      page,
+      pdfDoc,
+      startY: cursorY,
 
-    headers: ['Análisis', 'Referencia', 'Rango', 'Unidad'],
+      headers: ['Análisis', 'Referencia', 'Rango', 'Unidad'],
 
-    rows: [
-      ['DUREZA', 'BLANDA', '< 75', 'ppm'],
-      ['DUREZA', 'SEMIDURA', '75 - 150', 'ppm'],
-      ['DUREZA', 'DURA', '150 - 300', 'ppm'],
-    ],
+      rows: [
+        ['DUREZA', 'BLANDA', '< 75', 'ppm'],
+        ['DUREZA', 'SEMIDURA', '75 - 150', 'ppm'],
+        ['DUREZA', 'DURA', '150 - 300', 'ppm'],
+      ],
 
-    // Ajustado para que no se corte
-    columnRatios: [0.2, 0.3, 0.25, 0.25],
+      // Ajustado para que no se corte
+      columnRatios: [0.2, 0.3, 0.25, 0.25],
 
-    font,
-    fontBold,
-  });
+      font,
+      fontBold,
+    });
 
-  return { page: result.page, cursorY: result.cursorY };
-}  
+    return { page: result.page, cursorY: result.cursorY };
+  }
 
   /**
    * Dibuja los factores de calidad de agua con sus subsecciones.
    * Gestiona saltos de página automáticos correctamente.
    * Retorna { page, cursorY } actualizado.
    */
-  _drawFactoresCalidad({ page, pdfDoc, cursorY, font, fontBold, width }) {
+  async _drawFactoresCalidad({ page, pdfDoc, cursorY, font, fontBold, width }) {
     const { margin } = this;
 
     const _checkPage = (cursor, minSpace = 80) => {
@@ -237,14 +258,27 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
     for (const factor of FACTORES_CALIDAD_AGUA) {
       cursorY = _checkPage(cursorY, 100);
 
-      page.drawText(factor.titulo, {
-        x: margin,
-        y: cursorY,
-        size: 10,
-        font: fontBold,
-      });
+      const lines_titulo = pdfUtils.wrapText(
+        factor.titulo,
+        font,
+        10,
+        width - margin * 2 - 40,
+      );      
+      for (const line of lines_titulo) {
+        cursorY = _checkPage(cursorY, 60);
+        page.drawText(line, { x: margin + 10, y: cursorY, size: 10, font: fontBold });
+        cursorY -= 12;
+      }
 
-      cursorY -= 15;
+
+      // page.drawText(factor.titulo, {
+      //   x: margin,
+      //   y: cursorY,
+      //   size: 10,
+      //   font: fontBold,
+      // });
+
+      cursorY -= 10;
 
       const lines = pdfUtils.wrapText(
         factor.texto,
@@ -259,18 +293,61 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
         cursorY -= 12;
       }
 
+      if (factor.titulo === 'Evaluación demostrativa utilizando agua dura y salada de referencia') {
+        const imageNames = [
+          'calidad_agua_utilizada.png',
+          'ma_cletodim_hard_cletodim.png',
+        ];
+
+        for (const imageName of imageNames) {
+          const imageData = await imagesUtils.getImageDimensions(
+            pdfDoc,
+            path.join(this.assetsUrl, 'images'),
+            imageName,
+            width - margin * 2,
+            600,
+          );
+
+          if (!imageData) continue;
+
+          cursorY = _checkPage(cursorY, imageData.height + 20);
+
+          const imageY = cursorY - imageData.height;
+          page.drawImage(imageData.image, {
+            x: margin + (width - margin * 2 - imageData.width) / 2,
+            y: imageY,
+            width: imageData.width,
+            height: imageData.height,
+          });
+          cursorY = imageY - 12;
+        }
+      }
+
       cursorY -= 8;
 
       if (factor.subsecciones) {
         for (const sub of factor.subsecciones) {
           cursorY = _checkPage(cursorY, 100);
 
-          page.drawText(sub.subtitulo, {
-            x: margin + 10,
-            y: cursorY,
-            size: 9,
-            font: fontBold,
-          });
+
+        const lines_subtitulo = pdfUtils.wrapText(
+          sub.subtitulo,
+          font,
+          9,
+          width - margin * 2 - 40,
+        );      
+        for (const line of lines_subtitulo) {
+          cursorY = _checkPage(cursorY, 60);
+          page.drawText(line, { x: margin + 10, y: cursorY, size: 9, font: fontBold });
+          cursorY -= 12;
+        }          
+
+          // page.drawText(sub.subtitulo, {
+          //   x: margin + 10,
+          //   y: cursorY,
+          //   size: 9,
+          //   font: fontBold,
+          // });
 
           cursorY -= 14;
 
@@ -326,57 +403,83 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
     const tableWidth = pageWidth - margin * 2;
     const rowHeight = 18;
     const colWidths = columnRatios.map((r) => r * tableWidth);
+    const normalizedHeaders = headers.map((header) => (
+      typeof header === 'string'
+        ? { title: header }
+        : { title: header.title, unit: header.unit }
+    ));
+    const headerHeight = normalizedHeaders.some((header) => header.unit)
+      ? 30
+      : rowHeight;
 
     let cursorY = startY;
 
     // ── Header de la tabla ──────────────────────────────────────────────
+    const headerY = cursorY - headerHeight;
     let x = margin;
 
-    headers.forEach((header, i) => {
+    normalizedHeaders.forEach((header, i) => {
       page.drawRectangle({
         x,
-        y: cursorY,
+        y: headerY,
         width: colWidths[i],
-        height: rowHeight,
+        height: headerHeight,
         color: rgb(0.2, 0.5, 0.2),
       });
 
-      page.drawText(header, {
-        x: x + 4,
-        y: cursorY + 5,
-        size: 8,
+      const titleSize = 8;
+      const titleWidth = fontBold.widthOfTextAtSize(header.title, titleSize);
+
+      page.drawText(header.title, {
+        x: x + (colWidths[i] - titleWidth) / 2,
+        y: headerY + (header.unit ? 17 : 5),
+        size: titleSize,
         font: fontBold,
         color: rgb(1, 1, 1),
       });
 
+      if (header.unit) {
+        const unitSize = 7;
+        const unitWidth = font.widthOfTextAtSize(header.unit, unitSize);
+
+        page.drawText(header.unit, {
+          x: x + (colWidths[i] - unitWidth) / 2,
+          y: headerY + 6,
+          size: unitSize,
+          font,
+          color: rgb(1, 1, 1),
+        });
+      }
+
       x += colWidths[i];
     });
 
-    cursorY -= rowHeight;
+    cursorY -= headerHeight;
 
     // ── Filas ───────────────────────────────────────────────────────────
     for (const row of rows) {
       // Salto de página automático
-      if (cursorY < 80) {
+      if (cursorY - rowHeight < 80) {
         page = pdfDoc.addPage();
         cursorY = pageHeight - 60;
       }
 
+      const rowY = cursorY - rowHeight;
       x = margin;
 
       row.forEach((cell, i) => {
         page.drawRectangle({
           x,
-          y: cursorY,
+          y: rowY,
           width: colWidths[i],
           height: rowHeight,
           borderWidth: 0.5,
           borderColor: rgb(0.7, 0.7, 0.7),
         });
 
-        page.drawText(pdfUtils.truncate(String(cell), 22), {
+        page.drawText(pdfUtils.truncate(String(cell), 30), {
           x: x + 4,
-          y: cursorY + 5,
+          y: rowY + 5,
           size: 8,
           font,
         });
@@ -390,65 +493,65 @@ _drawTablaDureza({ page, pdfDoc, cursorY, font, fontBold }) {
     return { page, cursorY };
   }
 
-prepararDatosInforme = (pozos) => {
+  prepararDatosInforme = (pozos) => {
 
-  const datosTabla = [];
-
-
-  pozos.forEach((p, i) => {
-    const muestra = p.muestrasAgua?.[0];
-
-    // TABLA
-    datosTabla.push([
-      String(i + 1),
-      p.nombre ?? '-',
-      String(muestra?.ph ?? '-'),
-      String(muestra?.dureza ?? '-'),
-      String(muestra?.alcalinidad ?? '-'),
-      String(muestra?.salinidad ?? '-'),
-      String(muestra?.conductividad ?? '-'),
-      String(muestra?.fuerza_ionica ?? '-'),
-      String(muestra?.dosis ?? '-'),
-    ]);
+    const datosTabla = [];
 
 
-  });
+    pozos.forEach((p, i) => {
+      const muestra = p.muestrasAgua?.[0];
 
-  return datosTabla;
-}  
+      // TABLA
+      datosTabla.push([
+        String(i + 1),
+        p.nombre ?? '-',
+        String(muestra?.ph ?? 'N/D'),
+        String(muestra?.dureza ?? 'N/D'),
+        String(muestra?.alcalinidad ?? 'N/D'),
+        String(muestra?.salinidad ?? 'N/D'),
+        String(muestra?.conductividad ?? 'N/D'),
+        String(muestra?.fuerza_ionica ?? 'N/D'),
+        String(muestra?.dosis ?? 'N/D'),
+      ]);
 
-listarArchivosInformes = (pozos) => {
-  const archivos = [];
-  pozos.forEach((p) => {
-    const muestra = p.muestrasAgua?.[0];
-    if (muestra?.informe) { 
-      const pathInforme = path.join(this.informesPath, `${p.cliente_id}`, 'pozos', `${p.id}`, 'muestras', `${muestra.id}`);
-      console.log('Buscando informe en:', pathInforme);
-      archivos.push({
-        pozo_id: p.id,
-        pozo_nombre: p.nombre,
-        archivo: this.getPathInforme(pathInforme, muestra.informe)
-      });
-    }   
-  });
-  console.log('Archivos encontrados para anexar:', archivos);
-  return archivos;
-}
 
-getPathInforme(pathInforme, nombreArchivo) {
-  if (!nombreArchivo) return null;
+    });
 
-  const fullPath = path.join(
-    pathInforme, 
-    nombreArchivo);
-
-  if (!fs.existsSync(fullPath)) {
-    console.warn('Archivo no encontrado:', fullPath);
-    return null;
+    return datosTabla;
   }
 
-  return fullPath;
-}
+  listarArchivosInformes = (pozos) => {
+    const archivos = [];
+    pozos.forEach((p) => {
+      const muestra = p.muestrasAgua?.[0];
+      if (muestra?.informe) {
+        const pathInforme = path.join(this.informesPath, `${p.cliente_id}`, 'pozos', `${p.id}`, 'muestras', `${muestra.id}`);
+        console.log('Buscando informe en:', pathInforme);
+        archivos.push({
+          pozo_id: p.id,
+          pozo_nombre: p.nombre,
+          archivo: this.getPathInforme(pathInforme, muestra.informe)
+        });
+      }
+    });
+    console.log('Archivos encontrados para anexar:', archivos);
+    return archivos;
+  }
+
+  getPathInforme(pathInforme, nombreArchivo) {
+    if (!nombreArchivo) return null;
+
+    const fullPath = path.join(
+      pathInforme,
+      nombreArchivo);
+
+    if (!fs.existsSync(fullPath)) {
+      console.warn('Archivo no encontrado:', fullPath);
+      return null;
+    }
+
+    return fullPath;
+  }
 
   // ══════════════════════════════════════════════════════════════════════
   // GENERAR INFORME CALIDAD DE AGUA (múltiples pozos)
@@ -504,15 +607,15 @@ getPathInforme(pathInforme, nombreArchivo) {
     // ------------- LOGOS -----------------
     // LOGO DA
     let logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
-      console.log('LOGO DA:', logoDA);
+    console.log('LOGO DA:', logoDA);
     if (logoDA) {
-        page.drawImage(logoDA.image, {
-          x: margin - 10,
-          y: cursorY,
-          width: logoDA.width,
-          height: logoDA.height
-        });
-    }    
+      page.drawImage(logoDA.image, {
+        x: margin - 10,
+        y: cursorY,
+        width: logoDA.width,
+        height: logoDA.height
+      });
+    }
 
     // ── Header ──────────────────────────────────────────────────────────
     this._drawHeader({
@@ -526,21 +629,31 @@ getPathInforme(pathInforme, nombreArchivo) {
     });
 
     cursorY -= 90;
-  
+
 
     // ── Tabla principal ─────────────────────────────────────────────────
     const headers = [
-      'N°',
-      'Pozo',
-      'pH',
-      'Dureza',
-      'Alcal.',
-      'Sal.',
-      'CE',
-      'F. Iónica',
-      'Dosis Hard',
+      { title: 'N°', unit: ' ' },
+      { title: 'Pozo', unit: ' ' },
+      { title: 'pH', unit: '(s/u)' },
+      { title: 'Dureza', unit: '(ppm CaCO3)' },
+      { title: 'Alcalinidad', unit: '(mg/L)' },
+      { title: 'Salinidad', unit: '(mg/L)' },
+      { title: 'CE a 25°C', unit: '(µS/cm)' },
+      { title: 'F. Iónica', unit: '(mmol/L)' },
+      { title: 'Hard', unit: '(cc/1.000 L)' },
     ];
     const columnRatios = [0.05, 0.25, 0.08, 0.1, 0.12, 0.1, 0.08, 0.12, 0.1];
+
+    // ── Título ─────────────────────────────────────────────
+    page.drawText('Resultados comparativos', {
+      x: margin,
+      y: cursorY,
+      size: 12,
+      font: fontBold,
+    });
+
+    cursorY -= 20;    
 
     let result = this.drawTable({
       page,
@@ -554,7 +667,36 @@ getPathInforme(pathInforme, nombreArchivo) {
     });
 
     page = result.page;
-    cursorY = result.cursorY - 30;
+    cursorY = result.cursorY;
+
+    const notaDosis = '*Nota: la dosis de Hard se calcula a partir de la dureza total. Cuando la dureza es menor de 120 ppm, no se recomienda corregir el agua *';
+    const notaLineHeight = 12;
+    const notaLines = pdfUtils.wrapText(
+      notaDosis,
+      font,
+      9,
+      width - margin * 2,
+    );
+    const notaHeight = 14 + notaLines.length * notaLineHeight + 8;
+
+    if (cursorY - notaHeight < 60) {
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
+    } else {
+      cursorY -= 14;
+    }
+
+    for (const line of notaLines) {
+      page.drawText(line, {
+        x: margin,
+        y: cursorY,
+        size: 9,
+        font,
+      });
+      cursorY -= notaLineHeight;
+    }
+
+    cursorY -= 16;
 
     // ── Tabla de referencia ─────────────────────────────────────────────
     const refResult = this._drawTablaReferencia({
@@ -566,21 +708,39 @@ getPathInforme(pathInforme, nombreArchivo) {
     });
     page = refResult.page;
     cursorY = refResult.cursorY - 30;
-    
-    // ── Tabla dureza agua ─────────────────────────────────────────────
-    const durezaResult = this._drawTablaDureza({
+
+    // // ── Tabla dureza agua ─────────────────────────────────────────────
+    // const durezaResult = this._drawTablaDureza({
+    //   page,
+    //   pdfDoc,
+    //   cursorY,
+    //   font,
+    //   fontBold,
+    // });
+
+    // page = durezaResult.page;
+    // cursorY = durezaResult.cursorY - 40;
+
+    // ── Conclusión ──────────────────────────────────────────────────────
+    const conclusionResult = this._drawConclusion({
       page,
       pdfDoc,
       cursorY,
       font,
       fontBold,
+      width,
+      conclusion,
+      clienteNombre: cliente?.razon_social,
     });
 
-page = durezaResult.page;
-cursorY = durezaResult.cursorY - 40;    
+    // page = conclusionResult.page;
+    // cursorY = conclusionResult.cursorY;
+
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
 
     // ── Factores de calidad ─────────────────────────────────────────────
-    const factoresResult = this._drawFactoresCalidad({
+    const factoresResult = await this._drawFactoresCalidad({
       page,
       pdfDoc,
       cursorY,
@@ -592,20 +752,6 @@ cursorY = durezaResult.cursorY - 40;
     page = factoresResult.page;
     cursorY = factoresResult.cursorY - 30; // 🔥 CLAVE
 
-    // ── Conclusión ──────────────────────────────────────────────────────
-    const conclusionResult = this._drawConclusion({
-      page,
-      pdfDoc,
-      cursorY,
-      font,
-      fontBold,
-      width,
-      conclusion,
-    });
-
-    page = conclusionResult.page;
-    cursorY = conclusionResult.cursorY;
-
     // ── Footer ──────────────────────────────────────────────────────────
     this._drawFooter({ page, font });
 
@@ -616,14 +762,14 @@ cursorY = durezaResult.cursorY - 40;
 
     //------------ ANEXAR PDF INFORMA POZO AGUA -----------------
     // Ruta del PDF que querés anexar
-    
-    if(archivos && archivos.length > 0) {
+
+    if (archivos && archivos.length > 0) {
 
       // const rutaExtra = path.join(this.imagesUrl, muestra.informe);
       // Unir
       try {
         // pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);
-        const rutas =[
+        const rutas = [
           ...archivos.map(a => a.archivo)
         ]
         console.log('Rutas a anexar:', rutas);
@@ -641,8 +787,8 @@ cursorY = durezaResult.cursorY - 40;
       filename: `calidad_agua_${Date.now()}.pdf`,
     };
   }
-  
-  
+
+
 
   // ══════════════════════════════════════════════════════════════════════
   // GENERAR INFORME MUESTRA DE AGUA (una muestra específica)
@@ -681,13 +827,13 @@ cursorY = durezaResult.cursorY - 40;
     // LOGO DA
     const logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
     if (logoDA) {
-        page.drawImage(logoDA.image, {
-          x: margin - 10,
-          y: cursorY,
-          width: logoDA.width,
-          height: logoDA.height
-        });
-    }        
+      page.drawImage(logoDA.image, {
+        x: margin - 10,
+        y: cursorY,
+        width: logoDA.width,
+        height: logoDA.height
+      });
+    }
 
     // ── Header ──────────────────────────────────────────────────────────
     this._drawHeader({
@@ -727,13 +873,13 @@ cursorY = durezaResult.cursorY - 40;
 
     // ── Tabla de parámetros ─────────────────────────────────────────────
     const rows = [
-      ['pH', String(muestra.ph ?? '-')],
-      ['Dureza', String(muestra.dureza ?? '-')],
-      ['Alcalinidad', String(muestra.alcalinidad ?? '-')],
-      ['Salinidad (mg/l)', String(muestra.salinidad ?? '-')],
-      ['Conductividad (dS/cm)', String(muestra.conductividad ?? '-')],
-      ['Fuerza Iónica', String(muestra.fuerza_ionica ?? '-')],
-      ['Dosis Hard', String(muestra.dosis ?? '-')],
+      ['pH', String(muestra.ph ?? 'N/D')],
+      ['Dureza', String(muestra.dureza ?? 'N/D')],
+      ['Alcalinidad', String(muestra.alcalinidad ?? '')],
+      ['Salinidad (mg/l)', String(muestra.salinidad ?? 'N/D')],
+      ['Conductividad (dS/cm)', String(muestra.conductividad ?? 'N/D')],
+      ['Fuerza Iónica', String(muestra.fuerza_ionica ?? 'N/D')],
+      ['Dosis Hard', String(muestra.dosis ?? 'N/D')],
     ];
 
     let result = this.drawTable({
@@ -761,19 +907,19 @@ cursorY = durezaResult.cursorY - 40;
     page = refResult.page;
     cursorY = refResult.cursorY - 30;
 
-        // ── Tabla dureza agua ─────────────────────────────────────────────
-    const durezaResult = this._drawTablaDureza({
-      page,
-      pdfDoc,
-      cursorY,
-      font,
-      fontBold,
-    });
-        page = durezaResult.page;
-    cursorY = durezaResult.cursorY - 40;
+    // // ── Tabla dureza agua ─────────────────────────────────────────────
+    // const durezaResult = this._drawTablaDureza({
+    //   page,
+    //   pdfDoc,
+    //   cursorY,
+    //   font,
+    //   fontBold,
+    // });
+    // page = durezaResult.page;
+    // cursorY = durezaResult.cursorY - 40;
 
     // ── Factores de calidad ─────────────────────────────────────────────
-    const factoresResult = this._drawFactoresCalidad({
+    const factoresResult = await this._drawFactoresCalidad({
       page,
       pdfDoc,
       cursorY,
@@ -794,15 +940,15 @@ cursorY = durezaResult.cursorY - 40;
     let pdfBytes = await pdfDoc.save();
     //------------ ANEXAR PDF INFORMA POZO AGUA -----------------
     // Ruta del PDF que querés anexar
-    
-    if(muestra.informe) {
-      this.informesPath = path.join(this.informesPath, `${cliente.id}`,'pozos', `${pozo.id}`,'muestras', `${muestra.id}`);  
+
+    if (muestra.informe) {
+      this.informesPath = path.join(this.informesPath, `${cliente.id}`, 'pozos', `${pozo.id}`, 'muestras', `${muestra.id}`);
       console.log('Ruta base para informes:', this.informesPath);
       const rutaExtra = path.join(this.informesPath, muestra.informe);
       console.log('Ruta del informe a anexar:', rutaExtra);
       // Unir
       try {
-        pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);        
+        pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);
       } catch (e) {
         console.log('No se pudo anexar PDF extra:', e.message);
         console.log('ruta', rutaExtra);
