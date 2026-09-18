@@ -615,11 +615,11 @@ class PdfMuestraAguaService {
     const { width, height } = page.getSize();
     const { margin } = this;
     let cursorY = height - 70;
-console.log('CursorY inicial:', cursorY);
+
     // ------------- LOGOS -----------------
     // LOGO DA
     let logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
-    console.log('LOGO DA:', logoDA);
+    // console.log('LOGO DA:', logoDA);
     if (logoDA) {
       page.drawImage(logoDA.image, {
         x: margin - 10,
@@ -680,7 +680,7 @@ console.log('CursorY inicial:', cursorY);
 
     page = result.page;
     cursorY = result.cursorY;
-    console.log('cursorY después de tabla principal:', cursorY);
+
 
     const notaDosis = '*Nota: la dosis de Hard se calcula a partir de la dureza total. Cuando la dureza es menor de 120 ppm, no se recomienda corregir el agua *';
     const notaLineHeight = 12;
@@ -708,7 +708,7 @@ console.log('CursorY inicial:', cursorY);
       });
       cursorY -= notaLineHeight;
     }
-    console.log('cursorY después de nota:', cursorY);
+
     // ── Tabla de referencia ─────────────────────────────────────────────
     cursorY -= 16;
     const tablaRefHeight = 30 + 4 * 18; // altura aproximada de la tabla de referencia
@@ -964,9 +964,9 @@ console.log('CursorY inicial:', cursorY);
 
     if (muestra.informe) {
       this.informesPath = path.join(this.informesPath, `${cliente.id}`, 'pozos', `${pozo.id}`, 'muestras', `${muestra.id}`);
-      console.log('Ruta base para informes:', this.informesPath);
+      // console.log('Ruta base para informes:', this.informesPath);
       const rutaExtra = path.join(this.informesPath, muestra.informe);
-      console.log('Ruta del informe a anexar:', rutaExtra);
+      // console.log('Ruta del informe a anexar:', rutaExtra);
       // Unir
       try {
         pdfBytes = await pdfUtils.unirPDFs(pdfBytes, rutaExtra);
