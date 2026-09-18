@@ -615,7 +615,7 @@ class PdfMuestraAguaService {
     const { width, height } = page.getSize();
     const { margin } = this;
     let cursorY = height - 70;
-
+console.log('CursorY inicial:', cursorY);
     // ------------- LOGOS -----------------
     // LOGO DA
     let logoDA = await imagesUtils.getImageDimensions(pdfDoc, path.join(this.assetsUrl, 'images'), 'logo_don_asdrubal_100x355.png', 200, 100);
@@ -643,7 +643,7 @@ class PdfMuestraAguaService {
     cursorY -= 90;
 
 
-    // ── Tabla principal ─────────────────────────────────────────────────
+    // ── Tabla principal: Resultados comparativos ─────────────────────────────────────────────────
     const headers = [
       { title: 'N°', unit: ' ' },
       { title: 'Pozo', unit: ' ' },
@@ -680,6 +680,7 @@ class PdfMuestraAguaService {
 
     page = result.page;
     cursorY = result.cursorY;
+    console.log('cursorY después de tabla principal:', cursorY);
 
     const notaDosis = '*Nota: la dosis de Hard se calcula a partir de la dureza total. Cuando la dureza es menor de 120 ppm, no se recomienda corregir el agua *';
     const notaLineHeight = 12;
@@ -707,10 +708,16 @@ class PdfMuestraAguaService {
       });
       cursorY -= notaLineHeight;
     }
-
-    cursorY -= 16;
-
+    console.log('cursorY después de nota:', cursorY);
     // ── Tabla de referencia ─────────────────────────────────────────────
+    cursorY -= 16;
+    const tablaRefHeight = 30 + 4 * 18; // altura aproximada de la tabla de referencia
+    if (cursorY - tablaRefHeight < 60) {
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
+    }    
+
+
     const refResult = this._drawTablaReferencia({
       page,
       pdfDoc,
