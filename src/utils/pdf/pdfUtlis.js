@@ -114,5 +114,14 @@ export const unirMultiplesPDFs = async (pdfBaseBytes, rutas = []) => {
     }
   }
 
-  return await pdfFinal.save();
+  const resultado = await pdfFinal.save({
+    useObjectStreams: true,
+  });
+    console.log(
+    'PDF final:',
+    (resultado.length / 1024 / 1024).toFixed(2),
+    'MB'
+  );
+
+  return resultado;
 }

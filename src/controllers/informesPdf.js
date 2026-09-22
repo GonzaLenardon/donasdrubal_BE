@@ -1,4 +1,6 @@
 import pdfMuestraAguaService from '../services/pdf/pdfMuestraAguaService.js';
+import path from 'path';
+import fsPromises from 'fs/promises';
 
 const InformesPdf = {
   muestraAgua: async (req, res) => {
@@ -56,18 +58,25 @@ const InformesPdf = {
         conclusion,
       );
 
+
+      const buffer = Buffer.from(pdfBytes);
+      console.log('Respuesta PDF:', {
+        bytes: buffer.length,
+        contentType: 'application/pdf',
+      });
+
+
       res.setHeader('Content-Type', 'application/pdf');
-
-      /*    res.setHeader(
+      res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${filename}"`,
-      ); */
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        `inline; filename="${filename}"`
+      );
+      res.setHeader('Content-Length', buffer.length);
 
-      res.send(Buffer.from(pdfBytes));
+      res.end(buffer);
+ 
     } catch (error) {
       console.error(error);
-
       res.status(500).json({
         error: 'Error generando el PDF',
       });
