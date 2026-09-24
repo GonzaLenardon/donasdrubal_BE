@@ -30,6 +30,10 @@ ProductLots.init(
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
+    quantity_base: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true,
+    },
   },
   {
     sequelize: db,

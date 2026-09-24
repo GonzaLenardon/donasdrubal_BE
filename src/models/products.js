@@ -19,10 +19,6 @@ Products.init(
       allowNull: false,
       unique: true,
     },
-    product_presentation_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     activo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

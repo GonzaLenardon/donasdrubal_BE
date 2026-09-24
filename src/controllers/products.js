@@ -1,16 +1,9 @@
-import { Products, ProductPresentations } from '../models/index.js';
+import { Products } from '../models/index.js';
 
 export const allProducts = async (req, res) => {
   try {
     const products = await Products.findAll({
       where: { activo: true },
-      include: [
-        {
-          model: ProductPresentations,
-          as: 'presentacion',
-          include: [{ model: ProductPresentations, as: 'unidadBase' }],
-        },
-      ],
     });
     res.json(products);
   } catch (error) {

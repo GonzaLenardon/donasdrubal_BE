@@ -377,18 +377,6 @@ Users.hasMany(Jornada, {
 // ASOCIACIONES REMITOS MODULE
 // ============================================================================
 
-// ProductPresentations → Products (One-to-Many)
-ProductPresentations.hasMany(Products, {
-  foreignKey: 'product_presentation_id',
-  as: 'productos',
-  constraints: false,
-});
-Products.belongsTo(ProductPresentations, {
-  foreignKey: 'product_presentation_id',
-  as: 'presentacion',
-  constraints: false,
-});
-
 // ProductPresentations self-referencing (unidad base)
 ProductPresentations.belongsTo(ProductPresentations, {
   foreignKey: 'unidad_base_id',

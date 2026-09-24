@@ -53,11 +53,19 @@ export const addPurchase = async (req, res) => {
         { transaction },
       );
 
+      // Buscar presentación para obtener cantidad_base
+      const presentacion = item.product_presentation_id
+        ? await ProductPresentations.findByPk(item.product_presentation_id, { transaction })
+        : null;
+      const cantidadBase = presentacion?.cantidad_base ? parseFloat(presentacion.cantidad_base) : 1;
+
       // Crear lotes
       for (const lot of item.lotes) {
         let productLot = await ProductLots.findOne({
           where: { product_id: item.product_id, lot_number: lot.lot_number },
         });
+
+        const quantityBase = parseFloat(lot.quantity) * cantidadBase;
 
         if (!productLot) {
           productLot = await ProductLots.create(
@@ -67,10 +75,12 @@ export const addPurchase = async (req, res) => {
               lot_number: lot.lot_number,
               manufacturing_date: lot.manufacturing_date,
               expiration_date: lot.expiration_date,
+              quantity_base: quantityBase,
             },
             { transaction },
           );
         }
+
 
         await PurchaseItemLots.create(
           {
@@ -99,8 +109,9 @@ export const addPurchase = async (req, res) => {
 
         for (const lot of item.lotes) {
           const lotQty = parseFloat(lot.quantity);
+          const lotQtyBase = lotQty * cantidadBase;
           const proporcion = destinoQty / totalItemQty;
-          const lotDestinoQty = lotQty * proporcion;
+          const lotDestinoQtyBase = lotQtyBase * proporcion;
 
           const productLot = await ProductLots.findOne({
             where: { product_id: item.product_id, lot_number: lot.lot_number },
@@ -109,23 +120,23 @@ export const addPurchase = async (req, res) => {
 
           if (!productLot) continue;
 
-          // Actualizar stock del depósito
+          // Actualizar stock del depósito (en unidad base)
           const [stock, created] = await WarehouseStock.findOrCreate({
             where: {
               warehouse_id: destino.warehouse_id,
               product_id: item.product_id,
               product_lot_id: productLot.id,
             },
-            defaults: { quantity: lotDestinoQty },
+            defaults: { quantity: lotDestinoQtyBase },
             transaction,
           });
 
           if (!created) {
-            stock.quantity = parseFloat(stock.quantity) + lotDestinoQty;
+            stock.quantity = parseFloat(stock.quantity) + lotDestinoQtyBase;
             await stock.save({ transaction });
           }
 
-          // Crear movimiento de stock
+          // Crear movimiento de stock (en unidad base)
           await StockMovements.create(
             {
               company_id: 1,
@@ -133,7 +144,7 @@ export const addPurchase = async (req, res) => {
               product_id: item.product_id,
               product_lot_id: productLot.id,
               movement_type: 'ENTRADA',
-              quantity: lotDestinoQty,
+              quantity: lotDestinoQtyBase,
               reference_type: 'purchase',
               reference_id: purchase.id,
               movement_date: purchase_date,
