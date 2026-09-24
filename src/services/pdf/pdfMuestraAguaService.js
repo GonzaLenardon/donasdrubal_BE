@@ -513,12 +513,12 @@ class PdfMuestraAguaService {
       datosTabla.push([
         String(i + 1),
         p.nombre ?? '-',
-        String(muestra?.ph ?? 'N/D'),
-        String(muestra?.dureza ?? 'N/D'),
-        String(muestra?.alcalinidad ?? 'N/D'),
-        String(muestra?.salinidad ?? 'N/D'),
+        String(muestra?.ph != null ? muestra.ph.toFixed(2) : 'N/D'),
+        String(muestra?.dureza != null ? Math.round(muestra.dureza) : 'N/D'),
+        String(muestra?.alcalinidad != null ? Math.round(muestra.alcalinidad) : 'N/D'),
+        String(muestra?.salinidad != null ? Math.round(muestra.salinidad) : 'N/D'),
         // String(muestra?.conductividad ?? 'N/D'),
-        String(muestra?.fuerza_ionica ?? 'N/D'),
+        String(muestra?.fuerza_ionica != null ? muestra.fuerza_ionica.toFixed(2) : 'N/D'),
         String(muestra.dosis != null && Number(muestra.dosis) >= 400
         ? String(Math.ceil(Number(muestra.dosis) / 100) * 100)
         : 'No req. acción'),
