@@ -3,7 +3,19 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     // =================================================================
-    // 1. WAREHOUSES
+    // 1. PRODUCTS
+    // =================================================================
+    await queryInterface.createTable('products', {
+      id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
+      nombre: { allowNull: false, type: Sequelize.STRING(255) },
+      codigo: { allowNull: false, type: Sequelize.STRING(255), unique: true },
+      activo: { allowNull: false, type: Sequelize.BOOLEAN, defaultValue: true },
+      createdAt: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') },
+      updatedAt: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') },
+    });
+
+    // =================================================================
+    // 2. WAREHOUSES
     // =================================================================
     await queryInterface.createTable('warehouses', {
       id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
@@ -341,5 +353,6 @@ module.exports = {
     await queryInterface.dropTable('product_presentations');
     await queryInterface.dropTable('providers');
     await queryInterface.dropTable('warehouses');
+    await queryInterface.dropTable('products');
   },
 };
