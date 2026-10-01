@@ -24,7 +24,7 @@ Remitos.init(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('PENDIENTE', 'DESPACHADO', 'RECIBIDO', 'ANULADO'),
+      type: DataTypes.ENUM('PENDIENTE', 'REVISION', 'COMPLETADO', 'ANULADO'),
       allowNull: false,
       defaultValue: 'PENDIENTE',
     },
@@ -40,24 +40,36 @@ Remitos.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    dispatched_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    received_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
     created_by: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    received_by: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
     notes: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    photo_path: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    photo_uploaded_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    confirmed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    confirmed_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    cancelled_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    cancelled_by: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   },

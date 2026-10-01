@@ -32,6 +32,7 @@ import RemitoItems from './remitoItems.js';
 import RemitoItemLots from './remitoItemLots.js';
 import StockMovements from './stockMovements.js';
 import PurchaseItemDestinations from './purchaseItemDestinations.js';
+import ProductRanking from './productRanking.js';
 
 // ============================================================================
 // ASOCIACIONES USERS - ROLES - PERMISSIONS
@@ -403,6 +404,30 @@ ProductLots.belongsTo(ProductPresentations, {
   constraints: false,
 });
 
+// ProductRanking → Products
+ProductRanking.belongsTo(Products, {
+  foreignKey: 'product_id',
+  as: 'producto',
+  constraints: false,
+});
+Products.hasMany(ProductRanking, {
+  foreignKey: 'product_id',
+  as: 'rankings',
+  constraints: false,
+});
+
+// ProductRanking → ProductPresentations
+ProductRanking.belongsTo(ProductPresentations, {
+  foreignKey: 'product_presentation_id',
+  as: 'presentacion',
+  constraints: false,
+});
+ProductPresentations.hasMany(ProductRanking, {
+  foreignKey: 'product_presentation_id',
+  as: 'rankings',
+  constraints: false,
+});
+
 // WarehouseStock → Warehouses
 WarehouseStock.belongsTo(Warehouses, {
   foreignKey: 'warehouse_id',
@@ -540,10 +565,17 @@ Remitos.belongsTo(Users, {
   constraints: false,
 });
 
-// Remitos → Users (received_by)
+// Remitos → Users (confirmed_by)
 Remitos.belongsTo(Users, {
-  foreignKey: 'received_by',
-  as: 'recibidoPor',
+  foreignKey: 'confirmed_by',
+  as: 'confirmadoPor',
+  constraints: false,
+});
+
+// Remitos → Users (cancelled_by)
+Remitos.belongsTo(Users, {
+  foreignKey: 'cancelled_by',
+  as: 'canceladoPor',
   constraints: false,
 });
 
@@ -659,6 +691,7 @@ export {
   PurchaseItems,
   PurchaseItemLots,
   PurchaseItemDestinations,
+  ProductRanking,
   Remitos,
   RemitoItems,
   RemitoItemLots,

@@ -24,6 +24,10 @@ Products.init(
       allowNull: false,
       defaultValue: true,
     },
+    imagen: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
   },
   {
     sequelize: db,

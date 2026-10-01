@@ -1,5 +1,8 @@
-import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, Products, ProductLots, ProductPresentations } from '../models/index.js';
+import { Op } from 'sequelize';
+import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, Products, ProductLots, ProductPresentations, ProductRanking } from '../models/index.js';
 import db from '../config/database.js';
+import path from 'path';
+import fs from 'fs';
 
 const generateRemitoNumber = async (warehouse_id, transaction) => {
   const warehouse = await Warehouses.findByPk(warehouse_id, { transaction });
@@ -24,6 +27,9 @@ export const allRemitos = async (req, res) => {
       include: [
         { model: Warehouses, as: 'depositoOrigen' },
         { model: Clientes, as: 'cliente' },
+        { model: Users, as: 'creadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Users, as: 'confirmadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Users, as: 'canceladoPor', attributes: ['id', 'nombre', 'email'] },
       ],
       order: [['createdAt', 'DESC']],
     });
@@ -45,6 +51,7 @@ export const addRemito = async (req, res) => {
         company_id: 1,
         remito_number,
         type,
+        status: 'PENDIENTE',
         origin_warehouse_id,
         destination_client_id,
         created_by,
@@ -54,13 +61,11 @@ export const addRemito = async (req, res) => {
     );
 
     for (const item of items) {
-      // Buscar presentación para conversión a unidad base
       const presentacion = item.product_presentation_id
         ? await ProductPresentations.findByPk(item.product_presentation_id, { transaction })
         : null;
       const cantidadBase = presentacion?.cantidad_base ? parseFloat(presentacion.cantidad_base) : 1;
 
-      // Convertir cantidad solicitada a unidad base
       const qtyBase = parseFloat(item.quantity_requested) * cantidadBase;
 
       const remitoItem = await RemitoItems.create(
@@ -74,7 +79,6 @@ export const addRemito = async (req, res) => {
         { transaction },
       );
 
-      // FIFO: buscar SOLO lotes de la misma presentación, ordenados por fecha
       let remaining = qtyBase;
       const stockLots = await WarehouseStock.findAll({
         where: {
@@ -146,30 +150,6 @@ export const addRemito = async (req, res) => {
   }
 };
 
-export const dispatchRemito = async (req, res) => {
-  try {
-    await Remitos.update(
-      { status: 'DESPACHADO', dispatched_at: new Date() },
-      { where: { id: req.params.id } },
-    );
-    res.json({ message: 'Remito despachado' });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-export const receiveRemito = async (req, res) => {
-  try {
-    await Remitos.update(
-      { status: 'RECIBIDO', received_at: new Date(), received_by: req.body.received_by },
-      { where: { id: req.params.id } },
-    );
-    res.json({ message: 'Remito recibido' });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
 export const cancelRemito = async (req, res) => {
   const transaction = await db.transaction();
   try {
@@ -179,19 +159,17 @@ export const cancelRemito = async (req, res) => {
       return res.status(404).json({ message: 'Remito no encontrado' });
     }
 
-    if (remito.status === 'ANULADO') {
+    if (remito.status === 'COMPLETADO' || remito.status === 'ANULADO') {
       await transaction.rollback();
-      return res.status(400).json({ message: 'El remito ya está anulado' });
+      return res.status(400).json({ message: 'No se puede anular un remito en estado ' + remito.status });
     }
 
-    // Buscar todos los ítems del remito con sus lotes consumidos
     const items = await RemitoItems.findAll({
       where: { remito_id: remito.id },
       include: [{ model: RemitoItemLots, as: 'lotes' }],
       transaction,
     });
 
-    // Revertir stock: sumar vuelta cada lote consumido
     for (const item of items) {
       for (const lot of item.lotes) {
         const stock = await WarehouseStock.findOne({
@@ -208,7 +186,6 @@ export const cancelRemito = async (req, res) => {
           await stock.save({ transaction });
         }
 
-        // Crear movimiento ENTRADA (reversa)
         await StockMovements.create(
           {
             company_id: 1,
@@ -227,9 +204,12 @@ export const cancelRemito = async (req, res) => {
       }
     }
 
-    // Marcar remito como ANULADO
     await Remitos.update(
-      { status: 'ANULADO' },
+      {
+        status: 'ANULADO',
+        cancelled_at: new Date(),
+        cancelled_by: req.body.cancelled_by || null,
+      },
       { where: { id: remito.id }, transaction },
     );
 
@@ -241,17 +221,167 @@ export const cancelRemito = async (req, res) => {
   }
 };
 
+export const confirmRemito = async (req, res) => {
+  try {
+    const remito = await Remitos.findByPk(req.params.id);
+    if (!remito) {
+      return res.status(404).json({ message: 'Remito no encontrado' });
+    }
+
+    if (remito.status !== 'REVISION') {
+      return res.status(400).json({ message: 'Solo se pueden confirmar remitos en estado REVISION' });
+    }
+
+    await Remitos.update(
+      {
+        status: 'COMPLETADO',
+        confirmed_at: new Date(),
+        confirmed_by: req.body.confirmed_by || null,
+      },
+      { where: { id: req.params.id } },
+    );
+
+    res.json({ message: 'Remito confirmado' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const uploadRemitoPhoto = async (req, res) => {
+  const transaction = await db.transaction();
+  try {
+    const remito = await Remitos.findByPk(req.params.id, { transaction });
+
+    if (!remito) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'Remito no encontrado' });
+    }
+
+    if (remito.status === 'COMPLETADO' || remito.status === 'ANULADO') {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'No se puede modificar un remito en estado ' + remito.status });
+    }
+
+    if (!req.file) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'No se recibió ningún archivo' });
+    }
+
+    if (remito.photo_path) {
+      const oldPath = path.join(process.cwd(), remito.photo_path);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    remito.photo_path = `/uploads/remitos/${req.file.filename}`;
+    remito.photo_uploaded_at = new Date();
+    remito.status = 'REVISION';
+    await remito.save({ transaction });
+
+    await transaction.commit();
+    res.json({ message: 'Foto subida correctamente', remito });
+  } catch (error) {
+    await transaction.rollback();
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getCatalogo = async (req, res) => {
+  try {
+    const { warehouse_id } = req.params;
+
+    const stock = await WarehouseStock.findAll({
+      where: {
+        warehouse_id,
+        quantity: { [Op.gt]: 0 },
+      },
+      include: [
+        {
+          model: ProductLots,
+          as: 'lote',
+          include: [
+            {
+              model: ProductPresentations,
+              as: 'presentacion',
+              include: [{ model: ProductPresentations, as: 'unidadBase' }],
+            },
+          ],
+        },
+        { model: Products, as: 'producto' },
+      ],
+    });
+
+    const catalogo = {};
+    for (const s of stock) {
+      const presId = s.lote?.product_presentation_id || 0;
+      const key = `${s.product_id}_${presId}`;
+
+      if (!catalogo[key]) {
+        const cantidadBase = s.lote?.presentacion?.cantidad_base
+          ? parseFloat(s.lote.presentacion.cantidad_base)
+          : 1;
+
+        catalogo[key] = {
+          product_id: s.product_id,
+          product_name: s.producto?.nombre || '',
+          product_code: s.producto?.codigo || '',
+          product_image: s.producto?.imagen || null,
+          presentation_id: presId,
+          presentation_name: s.lote?.presentacion?.nombre || 'Sin presentación',
+          cantidad_base: cantidadBase,
+          unidad_base: s.lote?.presentacion?.unidadBase?.nombre || '',
+          stock_base: 0,
+          ranking: 0,
+        };
+      }
+      catalogo[key].stock_base += parseFloat(s.quantity);
+    }
+
+    const rankings = await ProductRanking.findAll();
+    for (const r of rankings) {
+      const key = `${r.product_id}_${r.product_presentation_id}`;
+      if (catalogo[key]) {
+        catalogo[key].ranking = r.ranking;
+      }
+    }
+
+    let resultado = Object.values(catalogo).sort((a, b) => {
+      if (b.ranking !== a.ranking) return b.ranking - a.ranking;
+      return a.product_name.localeCompare(b.product_name);
+    });
+
+    for (const item of resultado) {
+      item.stock_en_presentacion = item.stock_base / item.cantidad_base;
+    }
+
+    resultado = resultado.map((item) => ({
+      ...item,
+      stock_base: parseFloat(item.stock_base.toFixed(4)),
+      stock_en_presentacion: parseFloat(item.stock_en_presentacion.toFixed(2)),
+    }));
+
+    res.json(resultado);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getRemitoById = async (req, res) => {
   try {
     const remito = await Remitos.findByPk(req.params.id, {
       include: [
         { model: Warehouses, as: 'depositoOrigen' },
         { model: Clientes, as: 'cliente' },
+        { model: Users, as: 'creadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Users, as: 'confirmadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Users, as: 'canceladoPor', attributes: ['id', 'nombre', 'email'] },
         {
           model: RemitoItems,
           as: 'items',
           include: [
             { model: Products, as: 'producto' },
+            { model: ProductPresentations, as: 'presentacion' },
             {
               model: RemitoItemLots,
               as: 'lotes',
