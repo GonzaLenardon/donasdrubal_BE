@@ -8,6 +8,8 @@ import TipoClientes from '../models/tipoClientes.js';
 import ClienteIngenieros from '../models/clientesIngenieros.js';
 import Users from '../models/users.js';
 import Clientes from '../models/clientes.js';
+import Notas from '../models/Notas.js';
+import Alertas from '../models/alertas.js';
 import { Op } from 'sequelize';
 import { crearAlerta } from './alertas.js';
 
@@ -419,18 +421,125 @@ const upCliente = async (req, res) => {
 
 //  Eliminar cliente + usuario
 const deleteClient = async (req, res) => {
+  const clientId = Number(req.params.id ?? req.params.cliente_id);
+
+  if (!clientId) {
+    return res.status(400).json({
+      ok: false,
+      mensaje: 'ID del cliente es requerido',
+    });
+  }
+
+  const transaction = await db.transaction();
+
   try {
-    const client = await Clientes.findByPk(req.params.id);
-    if (!client)
-      return res.status(404).json({ message: 'Cliente no encontrado' });
+    const client = await Clientes.findByPk(clientId, {
+      transaction,
+      paranoid: false,
+    });
 
-    await User.destroy({ where: { id: client.user_id } });
-    await Clientes.destroy({ where: { id: client.id } });
+    if (!client) {
+      await transaction.rollback();
+      return res.status(404).json({
+        ok: false,
+        mensaje: 'Cliente no encontrado',
+      });
+    }
 
-    res.json({ message: 'Cliente y usuario eliminados' });
+    const [maquinasCount, pozosCount, jornadasCount] = await Promise.all([
+      db.models.Maquinas.count({
+        where: {
+          cliente_id: clientId,
+          deletedAt: null,
+        },
+        transaction,
+      }),
+      db.models.Pozo.count({
+        where: {
+          cliente_id: clientId,
+          deletedAt: null,
+        },
+        transaction,
+      }),
+      db.models.Jornada.count({
+        where: {
+          cliente_id: clientId,
+          deletedAt: null,
+        },
+        transaction,
+      }),
+    ]);
+
+    if (maquinasCount > 0 || pozosCount > 0 || jornadasCount > 0) {
+      await transaction.rollback();
+      return res.status(409).json({
+        ok: false,
+        mensaje: 'No se puede eliminar el cliente porque tiene registros asociados.',
+        detalles: {
+          maquinas: maquinasCount,
+          pozos: pozosCount,
+          jornadas: jornadasCount,
+        },
+      });
+    }
+
+    const clienteUserId = client.user_id ? Number(client.user_id) : null;
+
+    await Promise.all([
+      Notas.destroy({
+        where: { cliente_id: clientId },
+        transaction,
+      }),
+      Alertas.destroy({
+        where: {
+          entidad_tipo: 'cliente',
+          entidad_id: clientId,
+        },
+        force: true,
+        transaction,
+      }),
+      ClienteIngenieros.destroy({
+        where: { cliente_id: clientId },
+        transaction,
+      }),
+      clienteUserId
+        ? UserRoles.destroy({
+            where: {
+              user_id: clienteUserId,
+            },
+            transaction,
+          })
+        : Promise.resolve(),
+      clienteUserId
+        ? Users.destroy({
+            where: {
+              id: clienteUserId,
+            },
+            transaction,
+          })
+        : Promise.resolve(),
+    ]);
+
+    await Clientes.destroy({
+      where: { id: clientId },
+      transaction,
+    });
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      ok: true,
+      mensaje: 'Cliente eliminado correctamente.',
+      usuario_id: clienteUserId,
+    });
   } catch (error) {
+    await transaction.rollback();
     console.error('❌ Error al eliminar cliente', error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      ok: false,
+      mensaje: 'Error al eliminar cliente',
+      error: error.message,
+    });
   }
 };
 
@@ -456,4 +565,4 @@ const getCliente = async (req, res) => {
   }
 };
 
-export { addClient, allClientes, upCliente, getCliente };
+export { addClient, allClientes, upCliente, getCliente, deleteClient };
