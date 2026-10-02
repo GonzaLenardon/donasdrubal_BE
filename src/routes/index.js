@@ -77,6 +77,7 @@ import controllersTipoServicios from '../controllers/tipoServicios.js';
 import controllersAlertas from '../controllers/alertas.js';
 import * as clientDashboardController from '../controllers/clienteDashboard.js';
 import * as userDashboard from '../controllers/userDashboard.js';
+import * as ubicacionesController from '../controllers/ubicaciones.js';
 
 import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
@@ -130,6 +131,20 @@ router.get(
 router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
 
 router.get('/auth/verify', verify);
+
+// ========================================
+// RUTAS PROTEGIDAS - UBICACIONES
+// ========================================
+
+router.get('/paises', ubicacionesController.getPaises);
+router.get(
+  '/paises/:pais_id/provincias',
+  ubicacionesController.getProvinciasPorPais,
+);
+router.get(
+  '/provincias/:provincia_id/ciudades',
+  ubicacionesController.getCiudadesPorProvincia,
+);
 
 // ========================================
 // RUTAS PROTEGIDAS - USUARIOS
