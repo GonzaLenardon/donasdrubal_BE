@@ -16,6 +16,9 @@ import Jornada from './jornada.js';
 import TipoClientes from './tipoClientes.js';
 import Alertas from './alertas.js';
 import TipoServicios from './tiposServicios.js';
+import Pais from './paises.js';
+import Provincia from './provincias.js';
+import Ciudad from './ciudades.js';
 
 import Notas from './notas.js';
 import Products from './products.js';
@@ -35,9 +38,35 @@ import PurchaseItemDestinations from './purchaseItemDestinations.js';
 import ProductRanking from './productRanking.js';
 
 // ============================================================================
+// ASOCIACIONES GEOGRÁFICAS
+// ============================================================================
+Pais.hasMany(Provincia, {
+  foreignKey: 'pais_id',
+  as: 'provincias',
+  constraints: false,
+});
+
+Provincia.belongsTo(Pais, {
+  foreignKey: 'pais_id',
+  as: 'pais',
+  constraints: false,
+});
+
+Provincia.hasMany(Ciudad, {
+  foreignKey: 'provincia_id',
+  as: 'ciudades',
+  constraints: false,
+});
+
+Ciudad.belongsTo(Provincia, {
+  foreignKey: 'provincia_id',
+  as: 'provincia',
+  constraints: false,
+});
+
+// ============================================================================
 // ASOCIACIONES USERS - ROLES - PERMISSIONS
 // ============================================================================
-
 Users.belongsToMany(Roles, {
   through: UserRoles,
   foreignKey: 'user_id',
@@ -681,6 +710,9 @@ export {
   TipoServicios,
   Alertas,
   Notas,
+  Pais,
+  Provincia,
+  Ciudad,
   Products,
   ProductPresentations,
   ProductLots,
