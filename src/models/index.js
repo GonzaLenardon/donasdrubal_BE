@@ -21,6 +21,7 @@ import Provincia from './provincias.js';
 import Ciudad from './ciudades.js';
 
 import Notas from './notas.js';
+import ClienteInvitaciones from './clienteInvitaciones.js';
 
 // ============================================================================
 // ASOCIACIONES GEOGRÁFICAS
@@ -99,6 +100,27 @@ Clientes.belongsTo(Users, {
   foreignKey: 'user_id',
   as: 'user',
   constraints: false, // ✅ AGREGAR
+});
+
+Clientes.hasMany(ClienteInvitaciones, {
+  foreignKey: 'cliente_id',
+  as: 'invitaciones',
+  constraints: false,
+});
+ClienteInvitaciones.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'prospecto',
+  constraints: false,
+});
+Users.hasMany(ClienteInvitaciones, {
+  foreignKey: 'creado_por',
+  as: 'invitacionesProspectosCreadas',
+  constraints: false,
+});
+ClienteInvitaciones.belongsTo(Users, {
+  foreignKey: 'creado_por',
+  as: 'creador',
+  constraints: false,
 });
 
 // Clientes ↔ Ingenieros (Many-to-Many)
@@ -413,4 +435,5 @@ export {
   Pais,
   Provincia,
   Ciudad,
+  ClienteInvitaciones,
 };

@@ -75,7 +75,7 @@ const addClient = async (req, res) => {
     }
 
     // Crear cliente
-    const nuevoCliente = await Clientes.create(clienteData);
+    const nuevoCliente = await Clientes.create({ ...clienteData, tipo_registro: 'cliente' });
 
     // Crear relaciones con ingenieros
     const relacionesIngenieros = ingenieros.map((ing) => ({

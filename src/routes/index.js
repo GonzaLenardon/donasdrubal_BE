@@ -83,6 +83,16 @@ import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
+import {
+  crearProspecto,
+  listarProspectos,
+  obtenerProspecto,
+  actualizarProspecto,
+  convertirProspecto,
+  crearInvitacion,
+  consultarInvitacion,
+  completarProspecto,
+} from '../controllers/prospectos.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
@@ -106,6 +116,8 @@ router.get('/', (req, res) => {
 
 router.post('/login', login);
 router.post('/user', addUser);
+router.get('/registro-prospecto/:token', consultarInvitacion);
+router.put('/registro-prospecto/:token', completarProspecto);
 
 router.get('/informes/resumen', ejecutarResumenSemanal); // Endpoint para cron externo
 
@@ -163,6 +175,13 @@ router.get('/user/:user_id/roles', getUserRoles);
 // ========================================
 // RUTAS PROTEGIDAS - CLIENTES
 // ========================================
+
+router.post('/prospectos', crearProspecto);
+router.get('/prospectos', listarProspectos);
+router.get('/prospectos/:id', obtenerProspecto);
+router.put('/prospectos/:id', actualizarProspecto);
+router.post('/prospectos/:id/convertir', convertirProspecto);
+router.post('/prospectos/:id/invitacion', crearInvitacion);
 
 router.post('/clientes', verifyRole([ROLES.ADMIN]), addClient);
 router.get('/clientes', allClientes);
