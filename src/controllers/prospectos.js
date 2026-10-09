@@ -152,8 +152,9 @@ export const actualizarProspecto = async (req, res) => {
 };
 
 export const convertirProspecto = async (req, res) => {
-  const forbidden = requireAllowedRole(req, res);
-  if (forbidden) return forbidden;
+  if (!isAdmin(req)) {
+    return res.status(403).json({ ok: false, mensaje: 'Solo un administrador puede convertir prospectos en clientes' });
+  }
   const transaction = await db.transaction();
   try {
     const prospecto = await findScoped(req, req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
@@ -202,7 +203,12 @@ export const consultarInvitacion = async (req, res) => {
     const result = await getActiveInvitation(req.params.token);
     if (result.error) return sendTokenError(res, result.error);
     const { prospecto } = result.invitation;
-    return res.json({ ok: true, valido: true, prospecto: Object.fromEntries(['id', 'razon_social', 'cuil_cuit', 'email', 'telefono'].map((key) => [key, prospecto[key]])) });
+    const fieldsToPreload = ['id', ...PUBLIC_FIELDS];
+    return res.json({
+      ok: true,
+      valido: true,
+      prospecto: Object.fromEntries(fieldsToPreload.map((key) => [key, prospecto[key]])),
+    });
   } catch (error) {
     console.error('Error al consultar invitación:', error);
     return res.status(500).json({ ok: false, mensaje: 'Error al consultar invitación' });

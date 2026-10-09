@@ -180,7 +180,7 @@ router.post('/prospectos', crearProspecto);
 router.get('/prospectos', listarProspectos);
 router.get('/prospectos/:id', obtenerProspecto);
 router.put('/prospectos/:id', actualizarProspecto);
-router.post('/prospectos/:id/convertir', convertirProspecto);
+router.post('/prospectos/:id/convertir', verifyRole([ROLES.ADMIN]), convertirProspecto);
 router.post('/prospectos/:id/invitacion', crearInvitacion);
 
 router.post('/clientes', verifyRole([ROLES.ADMIN]), addClient);
