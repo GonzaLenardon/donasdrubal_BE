@@ -118,6 +118,9 @@ router.post('/login', login);
 router.post('/user', addUser);
 router.get('/registro-prospecto/:token', consultarInvitacion);
 router.put('/registro-prospecto/:token', completarProspecto);
+router.get('/paises', ubicacionesController.getPaises);
+router.get('/paises/:pais_id/provincias', ubicacionesController.getProvinciasPorPais);
+router.get('/provincias/:provincia_id/ciudades', ubicacionesController.getCiudadesPorProvincia);
 
 router.get('/informes/resumen', ejecutarResumenSemanal); // Endpoint para cron externo
 
@@ -147,16 +150,6 @@ router.get('/auth/verify', verify);
 // ========================================
 // RUTAS PROTEGIDAS - UBICACIONES
 // ========================================
-
-router.get('/paises', ubicacionesController.getPaises);
-router.get(
-  '/paises/:pais_id/provincias',
-  ubicacionesController.getProvinciasPorPais,
-);
-router.get(
-  '/provincias/:provincia_id/ciudades',
-  ubicacionesController.getCiudadesPorProvincia,
-);
 
 // ========================================
 // RUTAS PROTEGIDAS - USUARIOS
