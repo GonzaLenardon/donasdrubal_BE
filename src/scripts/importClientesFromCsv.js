@@ -113,6 +113,7 @@ const importClients = async () => {
         const cliente = await Clientes.create(
           {
             razon_social,
+            tipo_registro: 'cliente',
             tipo_cliente_id,
             litros_estimados,
             comodato,
