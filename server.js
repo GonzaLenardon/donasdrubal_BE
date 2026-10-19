@@ -68,7 +68,7 @@ const startServer = async () => {
     console.log('🕒 Cron resumen semanal iniciado.'); */
 
     // 🔹 Iniciar servidor Express
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
     });
   } catch (error) {
