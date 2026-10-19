@@ -19,10 +19,6 @@ StockMovements.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    product_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     product_lot_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

@@ -1,4 +1,4 @@
-import { WarehouseStock, ProductLots, Products, ProductPresentations, Warehouses } from '../models/index.js';
+import { WarehouseStock, ProductLots, ProductVariants, ProductPresentations, Warehouses } from '../models/index.js';
 import { Op } from 'sequelize';
 
 export const getStockByWarehouse = async (req, res) => {
@@ -13,12 +13,15 @@ export const getStockByWarehouse = async (req, res) => {
           model: ProductLots,
           as: 'lote',
           include: [{
-            model: ProductPresentations,
-            as: 'presentacion',
-            include: [{ model: ProductPresentations, as: 'unidadBase' }],
+            model: ProductVariants,
+            as: 'variante',
+            include: [{
+              model: ProductPresentations,
+              as: 'presentacion',
+              include: [{ model: ProductPresentations, as: 'unidadBase' }],
+            }],
           }],
         },
-        { model: Products, as: 'producto' },
         { model: Warehouses, as: 'deposito' },
       ],
     });
@@ -37,12 +40,15 @@ export const getAllStock = async (req, res) => {
           model: ProductLots,
           as: 'lote',
           include: [{
-            model: ProductPresentations,
-            as: 'presentacion',
-            include: [{ model: ProductPresentations, as: 'unidadBase' }],
+            model: ProductVariants,
+            as: 'variante',
+            include: [{
+              model: ProductPresentations,
+              as: 'presentacion',
+              include: [{ model: ProductPresentations, as: 'unidadBase' }],
+            }],
           }],
         },
-        { model: Products, as: 'producto' },
         { model: Warehouses, as: 'deposito' },
       ],
     });

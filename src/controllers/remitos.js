@@ -1,25 +1,8 @@
 import { Op } from 'sequelize';
-import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, Products, ProductLots, ProductPresentations, ProductRanking } from '../models/index.js';
+import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants } from '../models/index.js';
 import db from '../config/database.js';
 import path from 'path';
 import fs from 'fs';
-
-const generateRemitoNumber = async (warehouse_id, transaction) => {
-  const warehouse = await Warehouses.findByPk(warehouse_id, { transaction });
-  if (!warehouse) throw new Error('Depósito no encontrado');
-
-  const lastRemito = await Remitos.findOne({
-    where: { origin_warehouse_id: warehouse_id },
-    order: [['id', 'DESC']],
-    transaction,
-  });
-
-  const nextCorrelative = lastRemito
-    ? parseInt(lastRemito.remito_number.split('-')[2]) + 1
-    : 1;
-
-  return `REM-${String(warehouse.id).padStart(4, '0')}-${String(nextCorrelative).padStart(4, '0')}`;
-};
 
 export const allRemitos = async (req, res) => {
   try {
@@ -42,14 +25,35 @@ export const allRemitos = async (req, res) => {
 export const addRemito = async (req, res) => {
   const transaction = await db.transaction();
   try {
-    const { type, origin_warehouse_id, destination_client_id, notes, created_by, items } = req.body;
+    const { type, origin_warehouse_id, destination_client_id, notes, created_by, items, remito_number } = req.body;
 
-    const remito_number = await generateRemitoNumber(origin_warehouse_id, transaction);
+    // Validar remito_number
+    if (!remito_number || !/^\d{1,8}$/.test(String(remito_number))) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'El número de remito debe ser numérico de hasta 8 dígitos' });
+    }
+
+    const formattedNumber = String(remito_number).padStart(8, '0');
+
+    // Validar unicidad por depósito
+    const existing = await Remitos.findOne({
+      where: {
+        company_id: 1,
+        origin_warehouse_id,
+        remito_number: formattedNumber,
+      },
+      transaction,
+    });
+
+    if (existing) {
+      await transaction.rollback();
+      return res.status(409).json({ message: `El número de remito ${formattedNumber} ya existe para este depósito` });
+    }
 
     const remito = await Remitos.create(
       {
         company_id: 1,
-        remito_number,
+        remito_number: formattedNumber,
         type,
         status: 'PENDIENTE',
         origin_warehouse_id,
@@ -61,18 +65,22 @@ export const addRemito = async (req, res) => {
     );
 
     for (const item of items) {
-      const presentacion = item.product_presentation_id
-        ? await ProductPresentations.findByPk(item.product_presentation_id, { transaction })
-        : null;
-      const cantidadBase = presentacion?.cantidad_base ? parseFloat(presentacion.cantidad_base) : 1;
+      const variante = await ProductVariants.findByPk(item.product_variant_id, {
+        transaction,
+        include: [{ model: ProductPresentations, as: 'presentacion' }],
+      });
 
+      if (!variante) {
+        throw new Error(`Variante ${item.product_variant_id} no encontrada`);
+      }
+
+      const cantidadBase = variante?.presentacion?.cantidad_base ? parseFloat(variante.presentacion.cantidad_base) : 1;
       const qtyBase = parseFloat(item.quantity_requested) * cantidadBase;
 
       const remitoItem = await RemitoItems.create(
         {
           remito_id: remito.id,
-          product_id: item.product_id,
-          product_presentation_id: item.product_presentation_id,
+          product_variant_id: item.product_variant_id,
           quantity_requested: qtyBase,
           description: item.description,
         },
@@ -83,14 +91,11 @@ export const addRemito = async (req, res) => {
       const stockLots = await WarehouseStock.findAll({
         where: {
           warehouse_id: origin_warehouse_id,
-          product_id: item.product_id,
         },
         include: [{
           model: ProductLots,
           as: 'lote',
-          where: item.product_presentation_id
-            ? { product_presentation_id: item.product_presentation_id }
-            : {},
+          where: { product_variant_id: item.product_variant_id },
         }],
         order: [[{ model: ProductLots, as: 'lote' }, 'manufacturing_date', 'ASC']],
         transaction,
@@ -118,7 +123,6 @@ export const addRemito = async (req, res) => {
           {
             company_id: 1,
             warehouse_id: origin_warehouse_id,
-            product_id: item.product_id,
             product_lot_id: stockEntry.product_lot_id,
             movement_type: 'SALIDA',
             quantity: toDispatch,
@@ -134,8 +138,8 @@ export const addRemito = async (req, res) => {
       }
 
       if (remaining > 0) {
-        const unidadLabel = presentacion?.nombre || 'unidad base';
-        throw new Error(`Stock insuficiente para producto ${item.product_id}. Faltante: ${remaining / cantidadBase} ${unidadLabel}`);
+        const unidadLabel = variante?.presentacion?.nombre || 'unidad base';
+        throw new Error(`Stock insuficiente para variante ${item.product_variant_id}. Faltante: ${remaining / cantidadBase} ${unidadLabel}`);
       }
 
       remitoItem.quantity_dispatched = qtyBase;
@@ -175,7 +179,6 @@ export const cancelRemito = async (req, res) => {
         const stock = await WarehouseStock.findOne({
           where: {
             warehouse_id: remito.origin_warehouse_id,
-            product_id: item.product_id,
             product_lot_id: lot.product_lot_id,
           },
           transaction,
@@ -190,7 +193,6 @@ export const cancelRemito = async (req, res) => {
           {
             company_id: 1,
             warehouse_id: remito.origin_warehouse_id,
-            product_id: item.product_id,
             product_lot_id: lot.product_lot_id,
             movement_type: 'ENTRADA',
             quantity: lot.quantity_dispatched,
@@ -302,48 +304,40 @@ export const getCatalogo = async (req, res) => {
           as: 'lote',
           include: [
             {
-              model: ProductPresentations,
-              as: 'presentacion',
-              include: [{ model: ProductPresentations, as: 'unidadBase' }],
+              model: ProductVariants,
+              as: 'variante',
+              include: [
+                { model: ProductPresentations, as: 'presentacion' },
+              ],
             },
           ],
         },
-        { model: Products, as: 'producto' },
       ],
     });
 
     const catalogo = {};
     for (const s of stock) {
-      const presId = s.lote?.product_presentation_id || 0;
-      const key = `${s.product_id}_${presId}`;
+      const variant = s.lote?.variante;
+      if (!variant) continue;
 
+      const key = variant.id;
       if (!catalogo[key]) {
-        const cantidadBase = s.lote?.presentacion?.cantidad_base
-          ? parseFloat(s.lote.presentacion.cantidad_base)
+        const cantidadBase = variant.presentacion?.cantidad_base
+          ? parseFloat(variant.presentacion.cantidad_base)
           : 1;
 
         catalogo[key] = {
-          product_id: s.product_id,
-          product_name: s.producto?.nombre || '',
-          product_code: s.producto?.codigo || '',
-          product_image: s.producto?.imagen || null,
-          presentation_id: presId,
-          presentation_name: s.lote?.presentacion?.nombre || 'Sin presentación',
+          product_variant_id: variant.id,
+          product_id: variant.product_id,
+          product_name: variant.codigo || '',
+          presentation_name: variant.presentacion?.nombre || 'Sin presentación',
           cantidad_base: cantidadBase,
-          unidad_base: s.lote?.presentacion?.unidadBase?.nombre || '',
+          unidad_base: variant.presentacion?.unidadBase?.nombre || '',
           stock_base: 0,
-          ranking: 0,
+          ranking: variant.ranking || 0,
         };
       }
       catalogo[key].stock_base += parseFloat(s.quantity);
-    }
-
-    const rankings = await ProductRanking.findAll();
-    for (const r of rankings) {
-      const key = `${r.product_id}_${r.product_presentation_id}`;
-      if (catalogo[key]) {
-        catalogo[key].ranking = r.ranking;
-      }
     }
 
     let resultado = Object.values(catalogo).sort((a, b) => {
@@ -380,8 +374,11 @@ export const getRemitoById = async (req, res) => {
           model: RemitoItems,
           as: 'items',
           include: [
-            { model: Products, as: 'producto' },
-            { model: ProductPresentations, as: 'presentacion' },
+            {
+              model: ProductVariants,
+              as: 'variante',
+              include: [{ model: ProductPresentations, as: 'presentacion' }],
+            },
             {
               model: RemitoItemLots,
               as: 'lotes',

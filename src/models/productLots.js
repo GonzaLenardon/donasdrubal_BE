@@ -10,13 +10,9 @@ ProductLots.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    product_id: {
+    product_variant_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    product_presentation_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
     },
     lot_number: {
       type: DataTypes.STRING(255),

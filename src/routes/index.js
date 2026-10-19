@@ -91,9 +91,12 @@ import * as warehousesController from '../controllers/warehouses.js';
 import * as providersController from '../controllers/providers.js';
 import * as purchasesController from '../controllers/purchases.js';
 import * as remitosController from '../controllers/remitos.js';
-import * as productRankingsController from '../controllers/productRankings.js';
+import * as remitoArchivosController from '../controllers/remitoArchivos.js';
 import * as warehouseStockController from '../controllers/warehouseStock.js';
 import * as stockMovementsController from '../controllers/stockMovements.js';
+import * as rubrosController from '../controllers/rubros.js';
+import * as subrubrosController from '../controllers/subrubros.js';
+import * as productVariantsController from '../controllers/productVariants.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
@@ -625,16 +628,32 @@ router.put('/stock/remitos/:id/photo', uploadRemitos.single('photo'), remitosCon
 router.put('/stock/remitos/:id/confirm', remitosController.confirmRemito);
 router.put('/stock/remitos/:id/cancel', remitosController.cancelRemito);
 
+// Archivos de remitos
+router.get('/stock/remitos/:remitoId/archivos', remitoArchivosController.getArchivosByRemito);
+router.post('/stock/remitos/:remitoId/archivos', uploadRemitos.array('archivos', 10), remitoArchivosController.addArchivo);
+router.delete('/stock/remitos/:remitoId/archivos/:archivoId', remitoArchivosController.deleteArchivo);
+
 // ========================================
-// RUTAS PROTEGIDAS - PRODUCT RANKINGS
+// RUTAS PROTEGIDAS - RUBROS, SUBRUBROS, PRODUCT VARIANTS
 // ========================================
 
-router.get('/stock/rankings', productRankingsController.allRankings);
-router.get('/stock/rankings/full', productRankingsController.getFullRankings);
-router.post('/stock/rankings', productRankingsController.addRanking);
-router.get('/stock/rankings/product/:productId', productRankingsController.getRankingByProduct);
-router.put('/stock/rankings/:id', productRankingsController.updateRanking);
-router.delete('/stock/rankings/:id', productRankingsController.deleteRanking);
+router.get('/stock/rubros', rubrosController.allRubros);
+router.post('/stock/rubros', rubrosController.addRubro);
+router.put('/stock/rubros/:id', rubrosController.updateRubro);
+router.delete('/stock/rubros/:id', rubrosController.deleteRubro);
+
+router.get('/stock/subrubros', subrubrosController.allSubrubros);
+router.post('/stock/subrubros', subrubrosController.addSubrubro);
+router.put('/stock/subrubros/:id', subrubrosController.updateSubrubro);
+router.delete('/stock/subrubros/:id', subrubrosController.deleteSubrubro);
+
+router.get('/stock/product-variants', productVariantsController.allVariants);
+router.get('/stock/product-variants/full', productVariantsController.getFullVariants);
+router.post('/stock/product-variants', productVariantsController.addVariant);
+router.put('/stock/product-variants/:id', productVariantsController.updateVariant);
+router.delete('/stock/product-variants/:id', productVariantsController.deleteVariant);
+router.put('/stock/product-variants/:id/ranking', productVariantsController.setRanking);
+router.put('/stock/product-variants/:id/activo', productVariantsController.toggleActivo);
 
 // ========================================
 // RUTAS PROTEGIDAS - STOCK POR DEPOSITO
