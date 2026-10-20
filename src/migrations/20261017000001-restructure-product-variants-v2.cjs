@@ -23,10 +23,20 @@ module.exports = {
     // Helper: verificar si un índice existe
     const indexExists = async (tableName, indexName) => {
       const [result] = await queryInterface.sequelize.query(
-        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS 
+        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '${tableName}' AND INDEX_NAME = '${indexName}' LIMIT 1`
       );
       return result.length > 0;
+    };
+
+    // Helper: obtener el nombre de la FK que referencia una columna (si existe)
+    const getForeignKeyName = async (tableName, columnName) => {
+      const [result] = await queryInterface.sequelize.query(
+        `SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '${tableName}'
+         AND COLUMN_NAME = '${columnName}' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1`
+      );
+      return result.length > 0 ? result[0].CONSTRAINT_NAME : null;
     };
 
     // =================================================================
@@ -265,33 +275,56 @@ module.exports = {
     // =================================================================
     // 9. ALTER TABLE warehouse_stock — remove product_id, update index
     // =================================================================
+    // 'warehouse_stock_unique' (warehouse_id, product_id, product_lot_id) es el único
+    // índice con warehouse_id como columna líder, por lo que MySQL lo necesita para
+    // soportar la FK de warehouse_id → warehouses. Hay que crear el índice de
+    // reemplazo (con warehouse_id también como líder) ANTES de borrar el viejo.
     if (await indexExists('warehouse_stock', 'warehouse_stock_unique')) {
+      if (!(await indexExists('warehouse_stock', 'warehouse_stock_unique_tmp'))) {
+        await queryInterface.addIndex('warehouse_stock', ['warehouse_id', 'product_lot_id'], {
+          unique: true, name: 'warehouse_stock_unique_tmp',
+        });
+      }
       await queryInterface.removeIndex('warehouse_stock', 'warehouse_stock_unique');
     }
     if (await columnExists('warehouse_stock', 'product_id')) {
+      const fkName = await getForeignKeyName('warehouse_stock', 'product_id');
+      if (fkName) {
+        await queryInterface.sequelize.query(
+          `ALTER TABLE warehouse_stock DROP FOREIGN KEY \`${fkName}\``
+        );
+      }
       await queryInterface.removeColumn('warehouse_stock', 'product_id');
     }
-    // Nuevo índice único: (warehouse_id, product_lot_id)
-    if (!(await indexExists('warehouse_stock', 'warehouse_stock_unique'))) {
-      await queryInterface.addIndex('warehouse_stock', ['warehouse_id', 'product_lot_id'], {
-        unique: true, name: 'warehouse_stock_unique',
-      });
+    // Renombrar el índice temporal al nombre definitivo
+    if ((await indexExists('warehouse_stock', 'warehouse_stock_unique_tmp'))
+      && !(await indexExists('warehouse_stock', 'warehouse_stock_unique'))) {
+      await queryInterface.sequelize.query(
+        `ALTER TABLE warehouse_stock RENAME INDEX warehouse_stock_unique_tmp TO warehouse_stock_unique`
+      );
     }
 
     // =================================================================
     // 10. ALTER TABLE stock_movements — remove product_id, update index
     // =================================================================
-    if (await indexExists('stock_movements', 'stock_movements_warehouse_product')) {
-      await queryInterface.removeIndex('stock_movements', 'stock_movements_warehouse_product');
-    }
-    if (await columnExists('stock_movements', 'product_id')) {
-      await queryInterface.removeColumn('stock_movements', 'product_id');
-    }
-    // Nuevo índice: (warehouse_id, product_lot_id)
+    // Mismo problema: 'stock_movements_warehouse_product' es el único índice con
+    // warehouse_id como líder (soporta la FK). Crear el reemplazo antes de borrarlo.
     if (!(await indexExists('stock_movements', 'stock_movements_warehouse_lot'))) {
       await queryInterface.addIndex('stock_movements', ['warehouse_id', 'product_lot_id'], {
         name: 'stock_movements_warehouse_lot',
       });
+    }
+    if (await indexExists('stock_movements', 'stock_movements_warehouse_product')) {
+      await queryInterface.removeIndex('stock_movements', 'stock_movements_warehouse_product');
+    }
+    if (await columnExists('stock_movements', 'product_id')) {
+      const fkName = await getForeignKeyName('stock_movements', 'product_id');
+      if (fkName) {
+        await queryInterface.sequelize.query(
+          `ALTER TABLE stock_movements DROP FOREIGN KEY \`${fkName}\``
+        );
+      }
+      await queryInterface.removeColumn('stock_movements', 'product_id');
     }
 
     // =================================================================
@@ -324,7 +357,7 @@ module.exports = {
     // Helper: verificar si un índice existe
     const indexExists = async (tableName, indexName) => {
       const [result] = await queryInterface.sequelize.query(
-        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS 
+        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '${tableName}' AND INDEX_NAME = '${indexName}' LIMIT 1`
       );
       return result.length > 0;
@@ -361,13 +394,15 @@ module.exports = {
         allowNull: false, type: Sequelize.INTEGER,
       });
     }
-    if (await indexExists('stock_movements', 'stock_movements_warehouse_lot')) {
-      await queryInterface.removeIndex('stock_movements', 'stock_movements_warehouse_lot');
-    }
+    // Crear el índice de reemplazo (warehouse_id como líder) antes de borrar el que
+    // soporta actualmente la FK de warehouse_id.
     if (!(await indexExists('stock_movements', 'stock_movements_warehouse_product'))) {
       await queryInterface.addIndex('stock_movements', ['warehouse_id', 'product_id'], {
         name: 'stock_movements_warehouse_product',
       });
+    }
+    if (await indexExists('stock_movements', 'stock_movements_warehouse_lot')) {
+      await queryInterface.removeIndex('stock_movements', 'stock_movements_warehouse_lot');
     }
 
     // 3. Restaurar product_id en warehouse_stock
@@ -381,12 +416,22 @@ module.exports = {
         allowNull: false, type: Sequelize.INTEGER,
       });
     }
+    // Igual que en up(): crear el reemplazo con nombre temporal antes de borrar el
+    // índice actual, porque es el único que soporta la FK de warehouse_id.
+    if (!(await indexExists('warehouse_stock', 'warehouse_stock_unique_tmp'))) {
+      await queryInterface.addIndex('warehouse_stock', ['warehouse_id', 'product_id', 'product_lot_id'], {
+        unique: true, name: 'warehouse_stock_unique_tmp',
+      });
+    }
     if (await indexExists('warehouse_stock', 'warehouse_stock_unique')) {
       await queryInterface.removeIndex('warehouse_stock', 'warehouse_stock_unique');
     }
-    await queryInterface.addIndex('warehouse_stock', ['warehouse_id', 'product_id', 'product_lot_id'], {
-      unique: true, name: 'warehouse_stock_unique',
-    });
+    if ((await indexExists('warehouse_stock', 'warehouse_stock_unique_tmp'))
+      && !(await indexExists('warehouse_stock', 'warehouse_stock_unique'))) {
+      await queryInterface.sequelize.query(
+        `ALTER TABLE warehouse_stock RENAME INDEX warehouse_stock_unique_tmp TO warehouse_stock_unique`
+      );
+    }
 
     // 4. Restaurar columnas en remito_items
     if (!(await columnExists('remito_items', 'product_presentation_id'))) {
