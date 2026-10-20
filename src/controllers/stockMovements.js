@@ -1,12 +1,19 @@
-import { StockMovements, Warehouses, Products, ProductLots } from '../models/index.js';
+import { StockMovements, Warehouses, ProductLots, ProductVariants, ProductPresentations } from '../models/index.js';
 
 export const allMovements = async (req, res) => {
   try {
     const movements = await StockMovements.findAll({
       include: [
         { model: Warehouses, as: 'deposito' },
-        { model: Products, as: 'producto' },
-        { model: ProductLots, as: 'lote' },
+        {
+          model: ProductLots,
+          as: 'lote',
+          include: [{
+            model: ProductVariants,
+            as: 'variante',
+            include: [{ model: ProductPresentations, as: 'presentacion' }],
+          }],
+        },
       ],
       order: [['movement_date', 'DESC']],
     });
@@ -21,8 +28,15 @@ export const movementsByWarehouse = async (req, res) => {
     const movements = await StockMovements.findAll({
       where: { warehouse_id: req.params.warehouse_id },
       include: [
-        { model: Products, as: 'producto' },
-        { model: ProductLots, as: 'lote' },
+        {
+          model: ProductLots,
+          as: 'lote',
+          include: [{
+            model: ProductVariants,
+            as: 'variante',
+            include: [{ model: ProductPresentations, as: 'presentacion' }],
+          }],
+        },
       ],
       order: [['movement_date', 'DESC']],
     });

@@ -35,7 +35,10 @@ import RemitoItems from './remitoItems.js';
 import RemitoItemLots from './remitoItemLots.js';
 import StockMovements from './stockMovements.js';
 import PurchaseItemDestinations from './purchaseItemDestinations.js';
-import ProductRanking from './productRanking.js';
+import Rubros from './rubros.js';
+import Subrubros from './subrubros.js';
+import ProductVariants from './productVariants.js';
+import RemitoArchivos from './remitoArchivos.js';
 import ClienteInvitaciones from './clienteInvitaciones.js';
 
 // ============================================================================
@@ -433,281 +436,254 @@ Users.hasMany(Jornada, {
 ProductPresentations.belongsTo(ProductPresentations, {
   foreignKey: 'unidad_base_id',
   as: 'unidadBase',
-  constraints: false,
 });
 
-// Products → ProductLots (One-to-Many)
-Products.hasMany(ProductLots, {
-  foreignKey: 'product_id',
+// ProductLots → ProductVariants (Many-to-One)
+ProductLots.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
+});
+ProductVariants.hasMany(ProductLots, {
+  foreignKey: 'product_variant_id',
   as: 'lotes',
-  constraints: false,
 });
-ProductLots.belongsTo(Products, {
+
+// ProductVariants → Products (Many-to-One)
+ProductVariants.belongsTo(Products, {
   foreignKey: 'product_id',
   as: 'producto',
-  constraints: false,
 });
-
-// ProductLots → ProductPresentations (Many-to-One)
-ProductLots.belongsTo(ProductPresentations, {
-  foreignKey: 'product_presentation_id',
-  as: 'presentacion',
-  constraints: false,
-});
-
-// ProductRanking → Products
-ProductRanking.belongsTo(Products, {
+Products.hasMany(ProductVariants, {
   foreignKey: 'product_id',
-  as: 'producto',
-  constraints: false,
-});
-Products.hasMany(ProductRanking, {
-  foreignKey: 'product_id',
-  as: 'rankings',
-  constraints: false,
+  as: 'variantes',
 });
 
-// ProductRanking → ProductPresentations
-ProductRanking.belongsTo(ProductPresentations, {
-  foreignKey: 'product_presentation_id',
+// ProductVariants → ProductPresentations (Many-to-One)
+ProductVariants.belongsTo(ProductPresentations, {
+  foreignKey: 'presentation_id',
   as: 'presentacion',
-  constraints: false,
 });
-ProductPresentations.hasMany(ProductRanking, {
-  foreignKey: 'product_presentation_id',
-  as: 'rankings',
-  constraints: false,
+ProductPresentations.hasMany(ProductVariants, {
+  foreignKey: 'presentation_id',
+  as: 'variantes',
+});
+
+// Products → Rubros (Many-to-One)
+Products.belongsTo(Rubros, {
+  foreignKey: 'rubro_id',
+  as: 'rubro',
+});
+Rubros.hasMany(Products, {
+  foreignKey: 'rubro_id',
+  as: 'productos',
+});
+
+// Products → Subrubros (Many-to-One)
+Products.belongsTo(Subrubros, {
+  foreignKey: 'subrubro_id',
+  as: 'subrubro',
+});
+Subrubros.hasMany(Products, {
+  foreignKey: 'subrubro_id',
+  as: 'productos',
+});
+
+// Subrubros → Rubros (Many-to-One)
+Subrubros.belongsTo(Rubros, {
+  foreignKey: 'rubro_id',
+  as: 'rubro',
+});
+Rubros.hasMany(Subrubros, {
+  foreignKey: 'rubro_id',
+  as: 'subrubros',
 });
 
 // WarehouseStock → Warehouses
 WarehouseStock.belongsTo(Warehouses, {
   foreignKey: 'warehouse_id',
   as: 'deposito',
-  constraints: false,
 });
 Warehouses.hasMany(WarehouseStock, {
   foreignKey: 'warehouse_id',
   as: 'stock',
-  constraints: false,
-});
-
-// WarehouseStock → Products
-WarehouseStock.belongsTo(Products, {
-  foreignKey: 'product_id',
-  as: 'producto',
-  constraints: false,
 });
 
 // WarehouseStock → ProductLots
 WarehouseStock.belongsTo(ProductLots, {
   foreignKey: 'product_lot_id',
   as: 'lote',
-  constraints: false,
 });
 
 // Purchases → Providers
 Purchases.belongsTo(Providers, {
   foreignKey: 'provider_id',
   as: 'proveedor',
-  constraints: false,
 });
 Providers.hasMany(Purchases, {
   foreignKey: 'provider_id',
   as: 'compras',
-  constraints: false,
 });
 
 // Purchases → Warehouses
 Purchases.belongsTo(Warehouses, {
   foreignKey: 'warehouse_id',
   as: 'deposito',
-  constraints: false,
 });
 
 // Purchases → Users (created_by)
 Purchases.belongsTo(Users, {
   foreignKey: 'created_by',
   as: 'creadoPor',
-  constraints: false,
 });
 
 // Purchases → PurchaseItems
 Purchases.hasMany(PurchaseItems, {
   foreignKey: 'purchase_id',
   as: 'items',
-  constraints: false,
 });
 PurchaseItems.belongsTo(Purchases, {
   foreignKey: 'purchase_id',
   as: 'compra',
-  constraints: false,
 });
 
-// PurchaseItems → Products
-PurchaseItems.belongsTo(Products, {
-  foreignKey: 'product_id',
-  as: 'producto',
-  constraints: false,
-});
-
-// PurchaseItems → ProductPresentations
-PurchaseItems.belongsTo(ProductPresentations, {
-  foreignKey: 'product_presentation_id',
-  as: 'presentacion',
-  constraints: false,
+// PurchaseItems → ProductVariants
+PurchaseItems.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
 });
 
 // PurchaseItems → PurchaseItemLots
 PurchaseItems.hasMany(PurchaseItemLots, {
   foreignKey: 'purchase_item_id',
   as: 'lotes',
-  constraints: false,
 });
 PurchaseItemLots.belongsTo(PurchaseItems, {
   foreignKey: 'purchase_item_id',
   as: 'itemCompra',
-  constraints: false,
 });
 
 // PurchaseItemLots → ProductLots
 PurchaseItemLots.belongsTo(ProductLots, {
   foreignKey: 'product_lot_id',
   as: 'lote',
-  constraints: false,
 });
 
 // PurchaseItems → PurchaseItemDestinations
 PurchaseItems.hasMany(PurchaseItemDestinations, {
   foreignKey: 'purchase_item_id',
   as: 'destinos',
-  constraints: false,
 });
 PurchaseItemDestinations.belongsTo(PurchaseItems, {
   foreignKey: 'purchase_item_id',
   as: 'itemCompra',
-  constraints: false,
 });
 
 // PurchaseItemDestinations → Warehouses
 PurchaseItemDestinations.belongsTo(Warehouses, {
   foreignKey: 'warehouse_id',
   as: 'deposito',
-  constraints: false,
 });
 
 // Remitos → Warehouses (origin)
 Remitos.belongsTo(Warehouses, {
   foreignKey: 'origin_warehouse_id',
   as: 'depositoOrigen',
-  constraints: false,
 });
 
 // Remitos → Clientes (destination)
 Remitos.belongsTo(Clientes, {
   foreignKey: 'destination_client_id',
   as: 'cliente',
-  constraints: false,
 });
 
 // Remitos → Users (created_by)
 Remitos.belongsTo(Users, {
   foreignKey: 'created_by',
   as: 'creadoPor',
-  constraints: false,
 });
 
 // Remitos → Users (confirmed_by)
 Remitos.belongsTo(Users, {
   foreignKey: 'confirmed_by',
   as: 'confirmadoPor',
-  constraints: false,
 });
 
 // Remitos → Users (cancelled_by)
 Remitos.belongsTo(Users, {
   foreignKey: 'cancelled_by',
   as: 'canceladoPor',
-  constraints: false,
 });
 
 // Remitos → RemitoItems
 Remitos.hasMany(RemitoItems, {
   foreignKey: 'remito_id',
   as: 'items',
-  constraints: false,
 });
 RemitoItems.belongsTo(Remitos, {
   foreignKey: 'remito_id',
   as: 'remito',
-  constraints: false,
 });
 
-// RemitoItems → Products
-RemitoItems.belongsTo(Products, {
-  foreignKey: 'product_id',
-  as: 'producto',
-  constraints: false,
+// Remitos → RemitoArchivos
+Remitos.hasMany(RemitoArchivos, {
+  foreignKey: 'remito_id',
+  as: 'archivos',
+});
+RemitoArchivos.belongsTo(Remitos, {
+  foreignKey: 'remito_id',
+  as: 'remito',
 });
 
-// RemitoItems → ProductPresentations
-RemitoItems.belongsTo(ProductPresentations, {
-  foreignKey: 'product_presentation_id',
-  as: 'presentacion',
-  constraints: false,
+// RemitoArchivos → Users (uploaded_by)
+RemitoArchivos.belongsTo(Users, {
+  foreignKey: 'uploaded_by',
+  as: 'subidoPor',
+});
+
+// RemitoItems → ProductVariants
+RemitoItems.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
 });
 
 // RemitoItems → RemitoItemLots
 RemitoItems.hasMany(RemitoItemLots, {
   foreignKey: 'remito_item_id',
   as: 'lotes',
-  constraints: false,
 });
 RemitoItemLots.belongsTo(RemitoItems, {
   foreignKey: 'remito_item_id',
   as: 'itemRemito',
-  constraints: false,
 });
 
 // RemitoItemLots → ProductLots
 RemitoItemLots.belongsTo(ProductLots, {
   foreignKey: 'product_lot_id',
   as: 'lote',
-  constraints: false,
 });
 
 // StockMovements → Warehouses
 StockMovements.belongsTo(Warehouses, {
   foreignKey: 'warehouse_id',
   as: 'deposito',
-  constraints: false,
-});
-
-// StockMovements → Products
-StockMovements.belongsTo(Products, {
-  foreignKey: 'product_id',
-  as: 'producto',
-  constraints: false,
 });
 
 // StockMovements → ProductLots
 StockMovements.belongsTo(ProductLots, {
   foreignKey: 'product_lot_id',
   as: 'lote',
-  constraints: false,
 });
 
 // StockMovements → Remitos
 StockMovements.belongsTo(Remitos, {
   foreignKey: 'remito_id',
   as: 'remito',
-  constraints: false,
 });
 
 // StockMovements → Users (created_by)
 StockMovements.belongsTo(Users, {
   foreignKey: 'created_by',
   as: 'creadoPor',
-  constraints: false,
 });
 
 // ============================================================================
@@ -738,6 +714,9 @@ export {
   Products,
   ProductPresentations,
   ProductLots,
+  ProductVariants,
+  Rubros,
+  Subrubros,
   Warehouses,
   Providers,
   WarehouseStock,
@@ -745,10 +724,10 @@ export {
   PurchaseItems,
   PurchaseItemLots,
   PurchaseItemDestinations,
-  ProductRanking,
   Remitos,
   RemitoItems,
   RemitoItemLots,
+  RemitoArchivos,
   StockMovements,
   ClienteInvitaciones,
 };

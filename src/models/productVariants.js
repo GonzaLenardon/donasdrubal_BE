@@ -1,9 +1,9 @@
 import { Model, DataTypes } from 'sequelize';
 import db from '../config/database.js';
 
-class ProductRanking extends Model {}
+class ProductVariants extends Model {}
 
-ProductRanking.init(
+ProductVariants.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -14,9 +14,19 @@ ProductRanking.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    product_presentation_id: {
+    presentation_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    codigo: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     ranking: {
       type: DataTypes.INTEGER,
@@ -30,18 +40,19 @@ ProductRanking.init(
   },
   {
     sequelize: db,
-    modelName: 'ProductRanking',
-    tableName: 'product_rankings',
+    modelName: 'ProductVariants',
+    tableName: 'product_variants',
     timestamps: true,
-    paranoid: false,
+    paranoid: true,
+    deletedAt: 'deleted_at',
     indexes: [
       {
         unique: true,
-        fields: ['product_id', 'product_presentation_id'],
-        name: 'product_rankings_unique',
+        fields: ['product_id', 'presentation_id'],
+        name: 'product_variants_unique',
       },
     ],
   },
 );
 
-export default ProductRanking;
+export default ProductVariants;

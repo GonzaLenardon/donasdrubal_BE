@@ -1,4 +1,4 @@
-import { Purchases, PurchaseItems, PurchaseItemLots, PurchaseItemDestinations, Products, ProductPresentations, ProductLots, Providers, Warehouses, StockMovements, WarehouseStock } from '../models/index.js';
+import { Purchases, PurchaseItems, PurchaseItemLots, PurchaseItemDestinations, ProductPresentations, ProductVariants, ProductLots, Providers, Warehouses, StockMovements, WarehouseStock } from '../models/index.js';
 import db from '../config/database.js';
 
 export const allPurchases = async (req, res) => {
@@ -10,8 +10,11 @@ export const allPurchases = async (req, res) => {
           model: PurchaseItems,
           as: 'items',
           include: [
-            { model: Products, as: 'producto' },
-            { model: ProductPresentations, as: 'presentacion' },
+            {
+              model: ProductVariants,
+              as: 'variante',
+              include: [{ model: ProductPresentations, as: 'presentacion' }],
+            },
             {
               model: PurchaseItemDestinations,
               as: 'destinos',
@@ -46,23 +49,23 @@ export const addPurchase = async (req, res) => {
       const purchaseItem = await PurchaseItems.create(
         {
           purchase_id: purchase.id,
-          product_id: item.product_id,
-          product_presentation_id: item.product_presentation_id,
+          product_variant_id: item.product_variant_id,
           quantity: item.quantity,
         },
         { transaction },
       );
 
-      // Buscar presentación para obtener cantidad_base
-      const presentacion = item.product_presentation_id
-        ? await ProductPresentations.findByPk(item.product_presentation_id, { transaction })
-        : null;
-      const cantidadBase = presentacion?.cantidad_base ? parseFloat(presentacion.cantidad_base) : 1;
+      // Buscar variante para obtener cantidad_base
+      const variante = await ProductVariants.findByPk(item.product_variant_id, {
+        transaction,
+        include: [{ model: ProductPresentations, as: 'presentacion' }],
+      });
+      const cantidadBase = variante?.presentacion?.cantidad_base ? parseFloat(variante.presentacion.cantidad_base) : 1;
 
       // Crear lotes
       for (const lot of item.lotes) {
         let productLot = await ProductLots.findOne({
-          where: { product_id: item.product_id, lot_number: lot.lot_number },
+          where: { product_variant_id: item.product_variant_id, lot_number: lot.lot_number },
         });
 
         const quantityBase = parseFloat(lot.quantity) * cantidadBase;
@@ -70,8 +73,7 @@ export const addPurchase = async (req, res) => {
         if (!productLot) {
           productLot = await ProductLots.create(
             {
-              product_id: item.product_id,
-              product_presentation_id: item.product_presentation_id,
+              product_variant_id: item.product_variant_id,
               lot_number: lot.lot_number,
               manufacturing_date: lot.manufacturing_date,
               expiration_date: lot.expiration_date,
@@ -80,7 +82,6 @@ export const addPurchase = async (req, res) => {
             { transaction },
           );
         }
-
 
         await PurchaseItemLots.create(
           {
@@ -114,7 +115,7 @@ export const addPurchase = async (req, res) => {
           const lotDestinoQtyBase = lotQtyBase * proporcion;
 
           const productLot = await ProductLots.findOne({
-            where: { product_id: item.product_id, lot_number: lot.lot_number },
+            where: { product_variant_id: item.product_variant_id, lot_number: lot.lot_number },
             transaction,
           });
 
@@ -124,7 +125,6 @@ export const addPurchase = async (req, res) => {
           const [stock, created] = await WarehouseStock.findOrCreate({
             where: {
               warehouse_id: destino.warehouse_id,
-              product_id: item.product_id,
               product_lot_id: productLot.id,
             },
             defaults: { quantity: lotDestinoQtyBase },
@@ -141,7 +141,6 @@ export const addPurchase = async (req, res) => {
             {
               company_id: 1,
               warehouse_id: destino.warehouse_id,
-              product_id: item.product_id,
               product_lot_id: productLot.id,
               movement_type: 'ENTRADA',
               quantity: lotDestinoQtyBase,

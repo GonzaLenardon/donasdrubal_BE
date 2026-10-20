@@ -28,13 +28,22 @@ Products.init(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    rubro_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    subrubro_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   {
     sequelize: db,
     modelName: 'Products',
     tableName: 'products',
     timestamps: true,
-    paranoid: false,
+    paranoid: true,
+    deletedAt: 'deleted_at',
   },
 );
 

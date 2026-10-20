@@ -33,7 +33,8 @@ ProductPresentations.init(
     modelName: 'ProductPresentations',
     tableName: 'product_presentations',
     timestamps: true,
-    paranoid: false,
+    paranoid: true,
+    deletedAt: 'deleted_at',
   },
 );
 

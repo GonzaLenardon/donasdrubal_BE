@@ -14,13 +14,9 @@ RemitoItems.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    product_id: {
+    product_variant_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    product_presentation_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
     },
     quantity_requested: {
       type: DataTypes.DECIMAL(15, 4),
