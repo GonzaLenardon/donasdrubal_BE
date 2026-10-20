@@ -16,6 +16,12 @@ Clientes.init(
       allowNull: true,
     },
 
+    tipo_registro: {
+      type: DataTypes.ENUM('prospecto', 'cliente'),
+      allowNull: false,
+      defaultValue: 'prospecto',
+    },
+
     categoria: {
       type: DataTypes.ENUM('alto', 'medio', 'bajo'),
       allowNull: false,

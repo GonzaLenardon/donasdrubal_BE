@@ -90,6 +90,16 @@ class EmailService {
       attributes: ['id', 'nombre', 'email'],
     });
 
+    const usuarioOrigen = Number(alerta.usuario_from_id) > 0
+      ? await Users.findByPk(alerta.usuario_from_id, {
+          attributes: ['id', 'nombre'],
+        })
+      : null;
+    const nombreOrigen =
+      usuarioOrigen?.nombre ||
+      alerta.usuario_from_nombre ||
+      (Number(alerta.usuario_from_id) > 0 ? 'Usuario' : 'Sistema');
+
     if (!usuarioDestino?.email) {
       throw new Error(
         `No se encontro email para el usuario ${alerta.usuario_to_id}`,
@@ -113,9 +123,9 @@ class EmailService {
     const info = await this.transporter.sendMail({
       from: `"Don Asdrubal" <${process.env.SMTP_USER}>`,
       to: usuarioDestino.email,
-      subject: alerta.titulo,
+      subject: `${alerta.titulo} - ${nombreOrigen}`,
       html: `
-        <h2>${escapeHtml(alerta.titulo)}</h2>
+        <h2>${escapeHtml(alerta.titulo)} - ${escapeHtml(nombreOrigen)}</h2>
         <p>Hola ${escapeHtml(usuarioDestino.nombre)},</p>
         <p>${escapeHtml(alerta.mensaje)}</p>
         ${fechas ? `<ul>${fechas}</ul>` : ''}

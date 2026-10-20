@@ -97,6 +97,16 @@ import * as stockMovementsController from '../controllers/stockMovements.js';
 import * as rubrosController from '../controllers/rubros.js';
 import * as subrubrosController from '../controllers/subrubros.js';
 import * as productVariantsController from '../controllers/productVariants.js';
+import {
+  crearProspecto,
+  listarProspectos,
+  obtenerProspecto,
+  actualizarProspecto,
+  convertirProspecto,
+  crearInvitacion,
+  consultarInvitacion,
+  completarProspecto,
+} from '../controllers/prospectos.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
@@ -120,6 +130,18 @@ router.get('/', (req, res) => {
 
 router.post('/login', login);
 router.post('/user', addUser);
+// ========================================
+// RUTAS  - PROSPECTO CLIENTE
+// ========================================
+router.get('/registro-prospecto/:token', consultarInvitacion);
+router.put('/registro-prospecto/:token', completarProspecto);
+
+// ========================================
+// RUTAS  - UBICACIONES
+// ========================================
+router.get('/paises', ubicacionesController.getPaises);
+router.get('/paises/:pais_id/provincias', ubicacionesController.getProvinciasPorPais);
+router.get('/provincias/:provincia_id/ciudades', ubicacionesController.getCiudadesPorProvincia);
 
 router.get('/informes/resumen', ejecutarResumenSemanal); // Endpoint para cron externo
 
@@ -147,20 +169,6 @@ router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
 router.get('/auth/verify', verify);
 
 // ========================================
-// RUTAS PROTEGIDAS - UBICACIONES
-// ========================================
-
-router.get('/paises', ubicacionesController.getPaises);
-router.get(
-  '/paises/:pais_id/provincias',
-  ubicacionesController.getProvinciasPorPais,
-);
-router.get(
-  '/provincias/:provincia_id/ciudades',
-  ubicacionesController.getCiudadesPorProvincia,
-);
-
-// ========================================
 // RUTAS PROTEGIDAS - USUARIOS
 // ========================================
 
@@ -173,6 +181,17 @@ router.put('/user', updateUser);
 router.get('/user/:user_id', getUser);
 router.post('/user/role', verifyRole([ROLES.ADMIN]), assignRoleToUser);
 router.get('/user/:user_id/roles', getUserRoles);
+
+// ========================================
+// RUTAS PROTEGIDAS - PROSPECTO CLIENTES
+// ========================================
+
+router.post('/prospectos', crearProspecto);
+router.get('/prospectos', listarProspectos);
+router.get('/prospectos/:id', obtenerProspecto);
+router.put('/prospectos/:id', actualizarProspecto);
+router.post('/prospectos/:id/convertir', verifyRole([ROLES.ADMIN]), convertirProspecto);
+router.post('/prospectos/:id/invitacion', crearInvitacion);
 
 // ========================================
 // RUTAS PROTEGIDAS - CLIENTES
