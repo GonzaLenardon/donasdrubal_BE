@@ -1,0 +1,50 @@
+import { Model, DataTypes } from 'sequelize';
+import db from '../config/database.js';
+
+class Products extends Model {}
+
+Products.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombre: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    codigo: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    imagen: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    rubro_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    subrubro_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize: db,
+    modelName: 'Products',
+    tableName: 'products',
+    timestamps: true,
+    paranoid: true,
+    deletedAt: 'deleted_at',
+  },
+);
+
+export default Products;

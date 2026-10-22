@@ -68,6 +68,8 @@ import { allTipoClientes } from '../controllers/tipoClientes.js';
 import { uploadCalibraciones } from '../middlewares/uploadCalibraciones.js';
 import { uploadMuestrasAgua } from '../middlewares/uploadMuestras.js';
 import { uploadJornadas } from '../middlewares/uploadMuestras.js';
+import { uploadRemitos } from '../middlewares/uploadRemitos.js';
+import { uploadProductos } from '../middlewares/uploadProductos.js';
 
 import * as maquinaTipoController from '../controllers/maquinas_tipos.js';
 import * as pozoController from '../controllers/pozos.js';
@@ -83,6 +85,28 @@ import pdfMuetraAguaService from '../services/pdf/pdfMuestraAguaService.js';
 import { uploadArchivo } from '../utils/files/uploadFiles.js';
 import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
+import * as productsController from '../controllers/products.js';
+import * as productPresentationsController from '../controllers/productPresentations.js';
+import * as warehousesController from '../controllers/warehouses.js';
+import * as providersController from '../controllers/providers.js';
+import * as purchasesController from '../controllers/purchases.js';
+import * as remitosController from '../controllers/remitos.js';
+import * as remitoArchivosController from '../controllers/remitoArchivos.js';
+import * as warehouseStockController from '../controllers/warehouseStock.js';
+import * as stockMovementsController from '../controllers/stockMovements.js';
+import * as rubrosController from '../controllers/rubros.js';
+import * as subrubrosController from '../controllers/subrubros.js';
+import * as productVariantsController from '../controllers/productVariants.js';
+import {
+  crearProspecto,
+  listarProspectos,
+  obtenerProspecto,
+  actualizarProspecto,
+  convertirProspecto,
+  crearInvitacion,
+  consultarInvitacion,
+  completarProspecto,
+} from '../controllers/prospectos.js';
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
@@ -106,6 +130,18 @@ router.get('/', (req, res) => {
 
 router.post('/login', login);
 router.post('/user', addUser);
+// ========================================
+// RUTAS  - PROSPECTO CLIENTE
+// ========================================
+router.get('/registro-prospecto/:token', consultarInvitacion);
+router.put('/registro-prospecto/:token', completarProspecto);
+
+// ========================================
+// RUTAS  - UBICACIONES
+// ========================================
+router.get('/paises', ubicacionesController.getPaises);
+router.get('/paises/:pais_id/provincias', ubicacionesController.getProvinciasPorPais);
+router.get('/provincias/:provincia_id/ciudades', ubicacionesController.getCiudadesPorProvincia);
 
 router.get('/informes/resumen', ejecutarResumenSemanal); // Endpoint para cron externo
 
@@ -133,20 +169,6 @@ router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
 router.get('/auth/verify', verify);
 
 // ========================================
-// RUTAS PROTEGIDAS - UBICACIONES
-// ========================================
-
-router.get('/paises', ubicacionesController.getPaises);
-router.get(
-  '/paises/:pais_id/provincias',
-  ubicacionesController.getProvinciasPorPais,
-);
-router.get(
-  '/provincias/:provincia_id/ciudades',
-  ubicacionesController.getCiudadesPorProvincia,
-);
-
-// ========================================
 // RUTAS PROTEGIDAS - USUARIOS
 // ========================================
 
@@ -159,6 +181,17 @@ router.put('/user', updateUser);
 router.get('/user/:user_id', getUser);
 router.post('/user/role', verifyRole([ROLES.ADMIN]), assignRoleToUser);
 router.get('/user/:user_id/roles', getUserRoles);
+
+// ========================================
+// RUTAS PROTEGIDAS - PROSPECTO CLIENTES
+// ========================================
+
+router.post('/prospectos', crearProspecto);
+router.get('/prospectos', listarProspectos);
+router.get('/prospectos/:id', obtenerProspecto);
+router.put('/prospectos/:id', actualizarProspecto);
+router.post('/prospectos/:id/convertir', verifyRole([ROLES.ADMIN]), convertirProspecto);
+router.post('/prospectos/:id/invitacion', crearInvitacion);
 
 // ========================================
 // RUTAS PROTEGIDAS - CLIENTES
@@ -556,4 +589,103 @@ router.post('/informes/resumen/rango', resumenCrmPdf.reportePorRango);
 /*=========================================
   FIN RUTAS PROTEGIDAS - DASHBOARD CLIENTE
 =========================================*/
+
+// ========================================
+// RUTAS PROTEGIDAS - PRODUCTOS
+// ========================================
+
+router.get('/stock/products', productsController.allProducts);
+router.post('/stock/products', productsController.addProduct);
+router.put('/stock/products/:id', productsController.updateProduct);
+router.delete('/stock/products/:id', productsController.deleteProduct);
+router.put('/stock/products/:id/image', uploadProductos.single('image'), productsController.uploadProductImage);
+router.delete('/stock/products/:id/image', productsController.deleteProductImage);
+
+// ========================================
+// RUTAS PROTEGIDAS - PRESENTACIONES
+// ========================================
+
+router.get('/stock/presentations', productPresentationsController.allPresentations);
+router.post('/stock/presentations', productPresentationsController.addPresentation);
+router.put('/stock/presentations/:id', productPresentationsController.updatePresentation);
+router.delete('/stock/presentations/:id', productPresentationsController.deletePresentation);
+
+// ========================================
+// RUTAS PROTEGIDAS - DEPOSITOS
+// ========================================
+
+router.get('/stock/warehouses', warehousesController.allWarehouses);
+router.post('/stock/warehouses', warehousesController.addWarehouse);
+router.put('/stock/warehouses/:id', warehousesController.updateWarehouse);
+router.delete('/stock/warehouses/:id', warehousesController.deleteWarehouse);
+
+// ========================================
+// RUTAS PROTEGIDAS - PROVEEDORES
+// ========================================
+
+router.get('/stock/providers', providersController.allProviders);
+router.post('/stock/providers', providersController.addProvider);
+router.put('/stock/providers/:id', providersController.updateProvider);
+router.delete('/stock/providers/:id', providersController.deleteProvider);
+
+// ========================================
+// RUTAS PROTEGIDAS - COMPRAS
+// ========================================
+
+router.get('/stock/purchases', purchasesController.allPurchases);
+router.post('/stock/purchases', purchasesController.addPurchase);
+
+// ========================================
+// RUTAS PROTEGIDAS - REMITOS
+// ========================================
+
+router.get('/stock/remitos', remitosController.allRemitos);
+router.get('/stock/remitos/catalogo/:warehouse_id', remitosController.getCatalogo);
+router.get('/stock/remitos/:id', remitosController.getRemitoById);
+router.post('/stock/remitos', remitosController.addRemito);
+router.put('/stock/remitos/:id/photo', uploadRemitos.single('photo'), remitosController.uploadRemitoPhoto);
+router.put('/stock/remitos/:id/confirm', remitosController.confirmRemito);
+router.put('/stock/remitos/:id/cancel', remitosController.cancelRemito);
+
+// Archivos de remitos
+router.get('/stock/remitos/:remitoId/archivos', remitoArchivosController.getArchivosByRemito);
+router.post('/stock/remitos/:remitoId/archivos', uploadRemitos.array('archivos', 10), remitoArchivosController.addArchivo);
+router.delete('/stock/remitos/:remitoId/archivos/:archivoId', remitoArchivosController.deleteArchivo);
+
+// ========================================
+// RUTAS PROTEGIDAS - RUBROS, SUBRUBROS, PRODUCT VARIANTS
+// ========================================
+
+router.get('/stock/rubros', rubrosController.allRubros);
+router.post('/stock/rubros', rubrosController.addRubro);
+router.put('/stock/rubros/:id', rubrosController.updateRubro);
+router.delete('/stock/rubros/:id', rubrosController.deleteRubro);
+
+router.get('/stock/subrubros', subrubrosController.allSubrubros);
+router.post('/stock/subrubros', subrubrosController.addSubrubro);
+router.put('/stock/subrubros/:id', subrubrosController.updateSubrubro);
+router.delete('/stock/subrubros/:id', subrubrosController.deleteSubrubro);
+
+router.get('/stock/product-variants', productVariantsController.allVariants);
+router.get('/stock/product-variants/full', productVariantsController.getFullVariants);
+router.post('/stock/product-variants', productVariantsController.addVariant);
+router.put('/stock/product-variants/:id', productVariantsController.updateVariant);
+router.delete('/stock/product-variants/:id', productVariantsController.deleteVariant);
+router.put('/stock/product-variants/:id/ranking', productVariantsController.setRanking);
+router.put('/stock/product-variants/:id/activo', productVariantsController.toggleActivo);
+
+// ========================================
+// RUTAS PROTEGIDAS - STOCK POR DEPOSITO
+// ========================================
+
+router.get('/stock/warehouse/:warehouse_id', warehouseStockController.getStockByWarehouse);
+router.get('/stock/all', warehouseStockController.getAllStock);
+
+// ========================================
+// RUTAS PROTEGIDAS - MOVIMIENTOS DE STOCK
+// ========================================
+
+router.get('/stock/movements', stockMovementsController.allMovements);
+router.get('/stock/movements/warehouse/:warehouse_id', stockMovementsController.movementsByWarehouse);
+
 export { router };

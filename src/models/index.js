@@ -21,6 +21,25 @@ import Provincia from './provincias.js';
 import Ciudad from './ciudades.js';
 
 import Notas from './notas.js';
+import Products from './products.js';
+import ProductPresentations from './productPresentations.js';
+import ProductLots from './productLots.js';
+import Warehouses from './warehouses.js';
+import Providers from './providers.js';
+import WarehouseStock from './warehouseStock.js';
+import Purchases from './purchases.js';
+import PurchaseItems from './purchaseItems.js';
+import PurchaseItemLots from './purchaseItemLots.js';
+import Remitos from './remitos.js';
+import RemitoItems from './remitoItems.js';
+import RemitoItemLots from './remitoItemLots.js';
+import StockMovements from './stockMovements.js';
+import PurchaseItemDestinations from './purchaseItemDestinations.js';
+import Rubros from './rubros.js';
+import Subrubros from './subrubros.js';
+import ProductVariants from './productVariants.js';
+import RemitoArchivos from './remitoArchivos.js';
+import ClienteInvitaciones from './clienteInvitaciones.js';
 
 // ============================================================================
 // ASOCIACIONES GEOGRÁFICAS
@@ -99,6 +118,27 @@ Clientes.belongsTo(Users, {
   foreignKey: 'user_id',
   as: 'user',
   constraints: false, // ✅ AGREGAR
+});
+
+Clientes.hasMany(ClienteInvitaciones, {
+  foreignKey: 'cliente_id',
+  as: 'invitaciones',
+  constraints: false,
+});
+ClienteInvitaciones.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'prospecto',
+  constraints: false,
+});
+Users.hasMany(ClienteInvitaciones, {
+  foreignKey: 'creado_por',
+  as: 'invitacionesProspectosCreadas',
+  constraints: false,
+});
+ClienteInvitaciones.belongsTo(Users, {
+  foreignKey: 'creado_por',
+  as: 'creador',
+  constraints: false,
 });
 
 // Clientes ↔ Ingenieros (Many-to-Many)
@@ -389,6 +429,264 @@ Users.hasMany(Jornada, {
 // });
 
 // ============================================================================
+// ASOCIACIONES REMITOS MODULE
+// ============================================================================
+
+// ProductPresentations self-referencing (unidad base)
+ProductPresentations.belongsTo(ProductPresentations, {
+  foreignKey: 'unidad_base_id',
+  as: 'unidadBase',
+});
+
+// ProductLots → ProductVariants (Many-to-One)
+ProductLots.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
+});
+ProductVariants.hasMany(ProductLots, {
+  foreignKey: 'product_variant_id',
+  as: 'lotes',
+});
+
+// ProductVariants → Products (Many-to-One)
+ProductVariants.belongsTo(Products, {
+  foreignKey: 'product_id',
+  as: 'producto',
+});
+Products.hasMany(ProductVariants, {
+  foreignKey: 'product_id',
+  as: 'variantes',
+});
+
+// ProductVariants → ProductPresentations (Many-to-One)
+ProductVariants.belongsTo(ProductPresentations, {
+  foreignKey: 'presentation_id',
+  as: 'presentacion',
+});
+ProductPresentations.hasMany(ProductVariants, {
+  foreignKey: 'presentation_id',
+  as: 'variantes',
+});
+
+// Products → Rubros (Many-to-One)
+Products.belongsTo(Rubros, {
+  foreignKey: 'rubro_id',
+  as: 'rubro',
+});
+Rubros.hasMany(Products, {
+  foreignKey: 'rubro_id',
+  as: 'productos',
+});
+
+// Products → Subrubros (Many-to-One)
+Products.belongsTo(Subrubros, {
+  foreignKey: 'subrubro_id',
+  as: 'subrubro',
+});
+Subrubros.hasMany(Products, {
+  foreignKey: 'subrubro_id',
+  as: 'productos',
+});
+
+// Subrubros → Rubros (Many-to-One)
+Subrubros.belongsTo(Rubros, {
+  foreignKey: 'rubro_id',
+  as: 'rubro',
+});
+Rubros.hasMany(Subrubros, {
+  foreignKey: 'rubro_id',
+  as: 'subrubros',
+});
+
+// WarehouseStock → Warehouses
+WarehouseStock.belongsTo(Warehouses, {
+  foreignKey: 'warehouse_id',
+  as: 'deposito',
+});
+Warehouses.hasMany(WarehouseStock, {
+  foreignKey: 'warehouse_id',
+  as: 'stock',
+});
+
+// WarehouseStock → ProductLots
+WarehouseStock.belongsTo(ProductLots, {
+  foreignKey: 'product_lot_id',
+  as: 'lote',
+});
+
+// Purchases → Providers
+Purchases.belongsTo(Providers, {
+  foreignKey: 'provider_id',
+  as: 'proveedor',
+});
+Providers.hasMany(Purchases, {
+  foreignKey: 'provider_id',
+  as: 'compras',
+});
+
+// Purchases → Warehouses
+Purchases.belongsTo(Warehouses, {
+  foreignKey: 'warehouse_id',
+  as: 'deposito',
+});
+
+// Purchases → Users (created_by)
+Purchases.belongsTo(Users, {
+  foreignKey: 'created_by',
+  as: 'creadoPor',
+});
+
+// Purchases → PurchaseItems
+Purchases.hasMany(PurchaseItems, {
+  foreignKey: 'purchase_id',
+  as: 'items',
+});
+PurchaseItems.belongsTo(Purchases, {
+  foreignKey: 'purchase_id',
+  as: 'compra',
+});
+
+// PurchaseItems → ProductVariants
+PurchaseItems.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
+});
+
+// PurchaseItems → PurchaseItemLots
+PurchaseItems.hasMany(PurchaseItemLots, {
+  foreignKey: 'purchase_item_id',
+  as: 'lotes',
+});
+PurchaseItemLots.belongsTo(PurchaseItems, {
+  foreignKey: 'purchase_item_id',
+  as: 'itemCompra',
+});
+
+// PurchaseItemLots → ProductLots
+PurchaseItemLots.belongsTo(ProductLots, {
+  foreignKey: 'product_lot_id',
+  as: 'lote',
+});
+
+// PurchaseItems → PurchaseItemDestinations
+PurchaseItems.hasMany(PurchaseItemDestinations, {
+  foreignKey: 'purchase_item_id',
+  as: 'destinos',
+});
+PurchaseItemDestinations.belongsTo(PurchaseItems, {
+  foreignKey: 'purchase_item_id',
+  as: 'itemCompra',
+});
+
+// PurchaseItemDestinations → Warehouses
+PurchaseItemDestinations.belongsTo(Warehouses, {
+  foreignKey: 'warehouse_id',
+  as: 'deposito',
+});
+
+// Remitos → Warehouses (origin)
+Remitos.belongsTo(Warehouses, {
+  foreignKey: 'origin_warehouse_id',
+  as: 'depositoOrigen',
+});
+
+// Remitos → Clientes (destination)
+Remitos.belongsTo(Clientes, {
+  foreignKey: 'destination_client_id',
+  as: 'cliente',
+});
+
+// Remitos → Users (created_by)
+Remitos.belongsTo(Users, {
+  foreignKey: 'created_by',
+  as: 'creadoPor',
+});
+
+// Remitos → Users (confirmed_by)
+Remitos.belongsTo(Users, {
+  foreignKey: 'confirmed_by',
+  as: 'confirmadoPor',
+});
+
+// Remitos → Users (cancelled_by)
+Remitos.belongsTo(Users, {
+  foreignKey: 'cancelled_by',
+  as: 'canceladoPor',
+});
+
+// Remitos → RemitoItems
+Remitos.hasMany(RemitoItems, {
+  foreignKey: 'remito_id',
+  as: 'items',
+});
+RemitoItems.belongsTo(Remitos, {
+  foreignKey: 'remito_id',
+  as: 'remito',
+});
+
+// Remitos → RemitoArchivos
+Remitos.hasMany(RemitoArchivos, {
+  foreignKey: 'remito_id',
+  as: 'archivos',
+});
+RemitoArchivos.belongsTo(Remitos, {
+  foreignKey: 'remito_id',
+  as: 'remito',
+});
+
+// RemitoArchivos → Users (uploaded_by)
+RemitoArchivos.belongsTo(Users, {
+  foreignKey: 'uploaded_by',
+  as: 'subidoPor',
+});
+
+// RemitoItems → ProductVariants
+RemitoItems.belongsTo(ProductVariants, {
+  foreignKey: 'product_variant_id',
+  as: 'variante',
+});
+
+// RemitoItems → RemitoItemLots
+RemitoItems.hasMany(RemitoItemLots, {
+  foreignKey: 'remito_item_id',
+  as: 'lotes',
+});
+RemitoItemLots.belongsTo(RemitoItems, {
+  foreignKey: 'remito_item_id',
+  as: 'itemRemito',
+});
+
+// RemitoItemLots → ProductLots
+RemitoItemLots.belongsTo(ProductLots, {
+  foreignKey: 'product_lot_id',
+  as: 'lote',
+});
+
+// StockMovements → Warehouses
+StockMovements.belongsTo(Warehouses, {
+  foreignKey: 'warehouse_id',
+  as: 'deposito',
+});
+
+// StockMovements → ProductLots
+StockMovements.belongsTo(ProductLots, {
+  foreignKey: 'product_lot_id',
+  as: 'lote',
+});
+
+// StockMovements → Remitos
+StockMovements.belongsTo(Remitos, {
+  foreignKey: 'remito_id',
+  as: 'remito',
+});
+
+// StockMovements → Users (created_by)
+StockMovements.belongsTo(Users, {
+  foreignKey: 'created_by',
+  as: 'creadoPor',
+});
+
+// ============================================================================
 // EXPORTAR TODO
 // ============================================================================
 export { db };
@@ -413,4 +711,23 @@ export {
   Pais,
   Provincia,
   Ciudad,
+  Products,
+  ProductPresentations,
+  ProductLots,
+  ProductVariants,
+  Rubros,
+  Subrubros,
+  Warehouses,
+  Providers,
+  WarehouseStock,
+  Purchases,
+  PurchaseItems,
+  PurchaseItemLots,
+  PurchaseItemDestinations,
+  Remitos,
+  RemitoItems,
+  RemitoItemLots,
+  RemitoArchivos,
+  StockMovements,
+  ClienteInvitaciones,
 };
