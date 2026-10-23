@@ -238,6 +238,93 @@ class PdfMuestraAguaService {
     return { page: result.page, cursorY: result.cursorY };
   }
 
+  /** Dibuja en vectores la tabla del agua usada en la prueba. */
+  _drawTablaAguaUtilizada({ page, pdfDoc, cursorY, font, fontBold, width }) {
+    const { margin } = this;
+    const tableWidth = width - margin * 2;
+    const titleHeight = 24;
+    const headerHeight = 22;
+    const rowHeight = 22;
+    const tableHeight = titleHeight + headerHeight + rowHeight * 5;
+    const bottomPadding = 16;
+
+    if (cursorY - tableHeight < 60) {
+      page = pdfDoc.addPage();
+      cursorY = page.getHeight() - 60;
+    }
+
+    const x = margin;
+    const titleY = cursorY - titleHeight;
+    const darkGreen = rgb(0.1, 0.4, 0.2);
+    const lightGreen = rgb(0.84, 0.91, 0.84);
+    const border = rgb(0.72, 0.78, 0.72);
+    const columnWidths = [tableWidth * 0.42, tableWidth * 0.22, tableWidth * 0.36];
+    const headers = ['VARIABLE', 'RESULTADO', 'UNIDAD'];
+    const rows = [
+      ['pH', '7,7', '—'],
+      ['Dureza total', '1.100', 'ppm de CaCO3'],
+      ['Salinidad', '3.718', 'mg/L'],
+      ['Alcalinidad', '83,74', 'ppm de CaCO3'],
+      ['Fuerza Iónica', '103', 'mmol/L'],
+    ];
+
+    page.drawRectangle({ x, y: titleY, width: tableWidth, height: titleHeight, color: darkGreen });
+    const title = 'CALIDAD DEL AGUA UTILIZADA EN LA PRUEBA';
+    const titleSize = 10;
+    page.drawText(title, {
+      x: x + (tableWidth - fontBold.widthOfTextAtSize(title, titleSize)) / 2,
+      y: titleY + 7,
+      size: titleSize,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    let rowTop = titleY;
+    for (let rowIndex = -1; rowIndex < rows.length; rowIndex += 1) {
+      const isHeader = rowIndex === -1;
+      const row = isHeader ? headers : rows[rowIndex];
+      const height = isHeader ? headerHeight : rowHeight;
+      const rowY = rowTop - height;
+      page.drawRectangle({
+        x, y: rowY, width: tableWidth, height,
+        color: isHeader ? lightGreen : rgb(1, 1, 1),
+        borderColor: border,
+        borderWidth: 0.5,
+      });
+
+      let cellX = x;
+      for (let columnIndex = 0; columnIndex < row.length; columnIndex += 1) {
+        const cellWidth = columnWidths[columnIndex];
+        const value = row[columnIndex];
+        const cellFont = isHeader || (!isHeader && columnIndex === 1) ? fontBold : font;
+        const size = 8.5;
+        const textWidth = cellFont.widthOfTextAtSize(value, size);
+        const textX = columnIndex === 0 && !isHeader
+          ? cellX + 8
+          : cellX + (cellWidth - textWidth) / 2;
+        page.drawText(value, {
+          x: textX,
+          y: rowY + (height - size) / 2 + 2,
+          size,
+          font: cellFont,
+          color: rgb(0.12, 0.12, 0.12),
+        });
+        if (columnIndex > 0) {
+          page.drawLine({
+            start: { x: cellX, y: rowY },
+            end: { x: cellX, y: rowY + height },
+            thickness: 0.5,
+            color: border,
+          });
+        }
+        cellX += cellWidth;
+      }
+      rowTop = rowY;
+    }
+
+    return { page, cursorY: titleY - headerHeight - rowHeight * rows.length - bottomPadding };
+  }
+
   /**
    * Dibuja los factores de calidad de agua con sus subsecciones.
    * Gestiona saltos de página automáticos correctamente.
@@ -302,10 +389,18 @@ class PdfMuestraAguaService {
       }
 
       if (factor.titulo === 'Evaluación demostrativa utilizando agua dura y salada de referencia') {
-        const imageNames = [
-          'calidad_agua_utilizada.png',
-          'ma_cletodim_hard_cletodim.png',
-        ];
+        const tablaResult = this._drawTablaAguaUtilizada({
+          page,
+          pdfDoc,
+          cursorY,
+          font,
+          fontBold,
+          width,
+        });
+        page = tablaResult.page;
+        cursorY = tablaResult.cursorY;
+
+        const imageNames = ['ma_cletodim_hard_cletodim.png'];
 
         for (const imageName of imageNames) {
           const imageData = await imagesUtils.getImageDimensions(
