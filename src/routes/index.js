@@ -110,6 +110,7 @@ import {
 
 import resumenSemanalPdf from '../controllers/resumenSemanalPdf.js';
 import resumenCrmPdf from '../controllers/resumenCrmPdf.js';
+import informeCrm from '../controllers/informeCrm.js';
 import iniciarResumenSemanalCron from '../cron/resumenSemanalCron.js';
 import { ejecutarResumenSemanal } from '../jobs/enviarResumenSemanal.js';
 import { ejecutarResumenCrm } from '../jobs/enviarResumenCrm.js';
@@ -581,6 +582,9 @@ router.get('/user/:usuario_id/notas', notas.allNotasUser);
 /* router.post('/informes/resumen/rango', resumenSemanalPdf.reportePorRango); */
 
 router.post('/informes/resumen/rango', resumenCrmPdf.reportePorRango);
+
+// Informe CRM configurable (filtros recibidos en body JSON).
+router.post('/reportes-crm/informe', informeCrm.generar);
 
 /* router.get('/informes/resumen-crm', resumenCrmPdf.reporteCrm); */
 
