@@ -2,7 +2,6 @@ import InformeCrmService, {
   FiltroInvalidoError,
   RecursoNoEncontradoError,
 } from '../services/reportes/informeCrmService.js';
-import PdfInformeCrmService from '../services/pdf/pdfInformeCrmService.js';
 
 const informeCrm = {
   generar: async (req, res) => {
@@ -14,11 +13,7 @@ const informeCrm = {
       }
       const servicio = new InformeCrmService();
       const data = await servicio.generar(filtros);
-      const pdf = new PdfInformeCrmService();
-      const { pdfBytes, filename } = await pdf.generar(data);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-      return res.send(Buffer.from(pdfBytes));
+      return res.status(200).json({ ok: true, data });
     } catch (error) {
       if (error instanceof FiltroInvalidoError) {
         return res.status(400).json({ ok: false, error: error.message });
