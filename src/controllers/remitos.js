@@ -1,18 +1,46 @@
 import { Op } from 'sequelize';
-import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants } from '../models/index.js';
+import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants, Products, ClienteIngenieros } from '../models/index.js';
+import { ROLES } from '../config/constants/roles.js';
 import db from '../config/database.js';
 import path from 'path';
 import fs from 'fs';
 
 export const allRemitos = async (req, res) => {
   try {
+    const where = {};
+
+    if (req.user?.rol !== ROLES.ADMIN) {
+      const vinculos = await ClienteIngenieros.findAll({
+        where: { user_id: req.user.id },
+        attributes: ['cliente_id'],
+      });
+      where.destination_client_id = { [Op.in]: vinculos.map((v) => v.cliente_id) };
+    }
+
     const remitos = await Remitos.findAll({
+      where,
       include: [
         { model: Warehouses, as: 'depositoOrigen' },
         { model: Clientes, as: 'cliente' },
         { model: Users, as: 'creadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'confirmadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'canceladoPor', attributes: ['id', 'nombre', 'email'] },
+        {
+          model: RemitoItems,
+          as: 'items',
+          attributes: ['id', 'product_variant_id'],
+          include: [
+            {
+              model: ProductVariants,
+              as: 'variante',
+              attributes: ['id', 'codigo'],
+              include: [
+                { model: Products, as: 'producto', attributes: ['id', 'nombre', 'codigo'] },
+                { model: ProductPresentations, as: 'presentacion', attributes: ['id', 'nombre'] },
+              ],
+            },
+          ],
+        },
       ],
       order: [['createdAt', 'DESC']],
     });
@@ -377,7 +405,10 @@ export const getRemitoById = async (req, res) => {
             {
               model: ProductVariants,
               as: 'variante',
-              include: [{ model: ProductPresentations, as: 'presentacion' }],
+              include: [
+                { model: Products, as: 'producto' },
+                { model: ProductPresentations, as: 'presentacion' },
+              ],
             },
             {
               model: RemitoItemLots,
