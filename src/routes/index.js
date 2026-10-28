@@ -97,6 +97,7 @@ import * as stockMovementsController from '../controllers/stockMovements.js';
 import * as rubrosController from '../controllers/rubros.js';
 import * as subrubrosController from '../controllers/subrubros.js';
 import * as productVariantsController from '../controllers/productVariants.js';
+import { listAuditLogs } from '../controllers/auditLogs.js';
 import {
   crearProspecto,
   listarProspectos,
@@ -166,6 +167,10 @@ router.get(
 // ========================================
 
 router.use(verifyToken); // 👈 A partir de aquí, todas requieren token
+
+// This backend currently authorizes through roles; the migration also creates
+// AUDIT_READ and assigns it to the Administrator role for the permissions model.
+router.get('/audit-logs', verifyRole([ROLES.ADMIN]), listAuditLogs);
 
 router.get('/auth/verify', verify);
 
