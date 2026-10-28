@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { getAuditContext } from '../services/auditContext.js';
 
 export const verifyToken = (req, res, next) => {
   try {
@@ -22,6 +23,9 @@ export const verifyToken = (req, res, next) => {
       email: decoded.email,
       rol: decoded.rol,
     };
+
+    const auditContext = getAuditContext();
+    if (auditContext) auditContext.actor = { id: decoded.id, type: 'user' };
 
     console.log('req.user', req.user);
 

@@ -2,6 +2,7 @@
 import { createUser } from '../services/model/userService.js';
 import { Users, Roles, UserRoles, db } from '../models/index.js';
 import jwt from 'jsonwebtoken';
+import AuditLogService from '../services/AuditLogService.js';
 
 const pruebaUser = async (req, res) => {
   console.log('haber que nos llega', req);
@@ -291,8 +292,6 @@ const getUser = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
 
-  console.log('llego a Login', email, password);
-
   try {
     const x = await Roles.findAll();
     console.log('roles', x);
@@ -321,6 +320,11 @@ const login = async (req, res) => {
     console.log('Payload JWT:', user.roles);
 
     const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '8h' });
+    await AuditLogService.record({
+      actor: { id: user.id, type: 'user' }, module: 'AUTH', action: 'LOGIN',
+      entityType: 'users', entityId: user.id, description: 'Inicio de sesión exitoso',
+      newValues: { email: user.email },
+    });
 
     /*
     console.log(
@@ -364,7 +368,7 @@ const verify = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {
+const logout = async (req, res) => {
   try {
     // Limpiar la cookie
     res.clearCookie('Token', {
@@ -373,6 +377,12 @@ const logout = (req, res) => {
 
       sameSite: 'Lax',
       path: '/',
+    });
+
+    await AuditLogService.record({
+      actor: req.user ? { id: req.user.id, type: 'user' } : null,
+      module: 'AUTH', action: 'LOGOUT', entityType: 'users', entityId: req.user?.id ?? null,
+      description: 'Cierre de sesión',
     });
 
     // Si usas sesiones, también destruirlas

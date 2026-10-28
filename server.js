@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 import iniciarResumenSemanalCron from './src/cron/resumenSemanalCron.js';
+import { auditContextMiddleware } from './src/middlewares/auditContext.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(auditContextMiddleware);
 
 app.use(
   cors({

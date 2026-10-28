@@ -40,6 +40,8 @@ import Subrubros from './subrubros.js';
 import ProductVariants from './productVariants.js';
 import RemitoArchivos from './remitoArchivos.js';
 import ClienteInvitaciones from './clienteInvitaciones.js';
+import AuditLogs from './auditLogs.js';
+import { registerModelAuditHooks } from '../services/modelAuditHooks.js';
 
 // ============================================================================
 // ASOCIACIONES GEOGRÁFICAS
@@ -686,6 +688,10 @@ StockMovements.belongsTo(Users, {
   as: 'creadoPor',
 });
 
+Users.hasMany(AuditLogs, { foreignKey: 'user_id', as: 'auditLogs', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+AuditLogs.belongsTo(Users, { foreignKey: 'user_id', as: 'actor', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+registerModelAuditHooks(db);
+
 // ============================================================================
 // EXPORTAR TODO
 // ============================================================================
@@ -730,4 +736,5 @@ export {
   RemitoArchivos,
   StockMovements,
   ClienteInvitaciones,
+  AuditLogs,
 };
