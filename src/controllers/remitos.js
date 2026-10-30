@@ -1,6 +1,9 @@
 import { Op } from 'sequelize';
 import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants, Products, ClienteIngenieros } from '../models/index.js';
 import { ROLES } from '../config/constants/roles.js';
+import {
+  obtenerRemitosFaltantes,
+} from '../services/reportes/remitosFaltantesService.js';
 import db from '../config/database.js';
 import path from 'path';
 import fs from 'fs';
@@ -425,3 +428,47 @@ export const getRemitoById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const parseId = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const numero = Number(value);
+  if (!Number.isSafeInteger(numero) || numero <= 0) return undefined;
+  return numero;
+};
+
+const responderFaltantes = async (req, res, { agrupar }) => {
+  const depositoId = parseId(req.params.deposito_id);
+  if (depositoId === undefined) {
+    return res.status(400).json({ ok: false, mensaje: 'deposito_id inválido' });
+  }
+
+  const ingenieroId = parseId(req.params.ingeniero_id);
+  if (ingenieroId === undefined) {
+    return res.status(400).json({ ok: false, mensaje: 'ingeniero_id inválido' });
+  }
+
+  try {
+    const esAdmin = req.user?.rol === ROLES.ADMIN;
+    const resultado = await obtenerRemitosFaltantes({
+      depositoId,
+      ingenieroId,
+      agrupar,
+      user: req.user,
+      esAdmin,
+    });
+
+    return res.json({ ok: true, ...resultado });
+  } catch (error) {
+    console.error('Error al obtener faltantes de remitos:', error.message);
+    return res.status(500).json({
+      ok: false,
+      mensaje: 'No se pudo generar el informe de faltantes de remitos',
+    });
+  }
+};
+
+export const getRemitosFaltantes = async (req, res) =>
+  responderFaltantes(req, res, { agrupar: false });
+
+export const getRemitosFaltantesAgrupados = async (req, res) =>
+  responderFaltantes(req, res, { agrupar: true });
