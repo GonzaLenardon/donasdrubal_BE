@@ -650,6 +650,12 @@ router.post('/stock/purchases', purchasesController.addPurchase);
 
 router.get('/stock/remitos', remitosController.allRemitos);
 router.get('/stock/remitos/catalogo/:warehouse_id', remitosController.getCatalogo);
+router.get('/stock/remitos/faltantes', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantes);
+router.get('/stock/remitos/faltantes/agrupados', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantesAgrupados);
+router.get('/stock/remitos/faltantes/deposito/:deposito_id', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantes);
+router.get('/stock/remitos/faltantes/deposito/:deposito_id/agrupados', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantesAgrupados);
+router.get('/stock/remitos/faltantes/ingeniero/:ingeniero_id', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantes);
+router.get('/stock/remitos/faltantes/ingeniero/:ingeniero_id/agrupados', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantesAgrupados);
 router.get('/stock/remitos/:id', remitosController.getRemitoById);
 router.post('/stock/remitos', remitosController.addRemito);
 router.put('/stock/remitos/:id/photo', uploadRemitos.single('photo'), remitosController.uploadRemitoPhoto);
