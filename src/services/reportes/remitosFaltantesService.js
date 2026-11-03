@@ -73,6 +73,7 @@ export const construirRunsFaltantes = (numerosFaltantes, umbral) => {
 
 export const analizarGrupo = (remitos, { agrupar = false } = {}) => {
   const items = (remitos ?? [])
+    .filter((remito) => !remito.destination_warehouse_id)
     .map((remito) => ({
       ...remito,
       numero: parseNumeroRemito(remito.remito_number),
@@ -155,7 +156,7 @@ export const obtenerRemitosFaltantes = async ({
   user,
   esAdmin = false,
 } = {}) => {
-  const where = {};
+  const where = { destination_warehouse_id: null };
 
   if (depositoId) {
     where.origin_warehouse_id = depositoId;
