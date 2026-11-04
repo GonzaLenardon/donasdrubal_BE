@@ -592,6 +592,11 @@ Remitos.belongsTo(Warehouses, {
   as: 'depositoOrigen',
 });
 
+Remitos.belongsTo(Warehouses, {
+  foreignKey: 'destination_warehouse_id',
+  as: 'depositoDestino',
+});
+
 // Remitos → Clientes (destination)
 Remitos.belongsTo(Clientes, {
   foreignKey: 'destination_client_id',

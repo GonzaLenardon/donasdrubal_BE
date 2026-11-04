@@ -658,6 +658,7 @@ router.get('/stock/remitos/faltantes/ingeniero/:ingeniero_id', verifyRole([ROLES
 router.get('/stock/remitos/faltantes/ingeniero/:ingeniero_id/agrupados', verifyRole([ROLES.ADMIN, ROLES.INGENIERO]), remitosController.getRemitosFaltantesAgrupados);
 router.get('/stock/remitos/:id', remitosController.getRemitoById);
 router.post('/stock/remitos', remitosController.addRemito);
+router.post('/stock/remitos/internos', remitosController.addRemitoInterno);
 router.put('/stock/remitos/:id/photo', uploadRemitos.single('photo'), remitosController.uploadRemitoPhoto);
 router.put('/stock/remitos/:id/confirm', remitosController.confirmRemito);
 router.put('/stock/remitos/:id/cancel', remitosController.cancelRemito);

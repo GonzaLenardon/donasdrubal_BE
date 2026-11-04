@@ -63,6 +63,19 @@ test('detecta los saltos de numeración de un depósito', () => {
   assert.equal(analisis.faltantes.at(-1).agrupado, true);
 });
 
+test('no mezcla la numeración interna de transferencias con remitos de clientes', () => {
+  const analisis = analizarGrupo([
+    { remito_number: '00000001' },
+    { remito_number: 'TR-00000002', destination_warehouse_id: 4 },
+    { remito_number: '00000003' },
+  ]);
+
+  assert.equal(analisis.numeroMin, 1);
+  assert.equal(analisis.numeroMax, 3);
+  assert.equal(analisis.totalFaltantes, 1);
+  assert.equal(analisis.faltantes[0].desde, 2);
+});
+
 test('modo detalle: todos los faltantes se listan uno por uno', () => {
   const remitos = [
     { remito_number: '00000001' },

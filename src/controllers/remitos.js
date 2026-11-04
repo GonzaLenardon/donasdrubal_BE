@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { randomBytes } from 'node:crypto';
 import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants, Products, ClienteIngenieros } from '../models/index.js';
 import { ROLES } from '../config/constants/roles.js';
 import {
@@ -17,14 +18,18 @@ export const allRemitos = async (req, res) => {
         where: { user_id: req.user.id },
         attributes: ['cliente_id'],
       });
-      where.destination_client_id = { [Op.in]: vinculos.map((v) => v.cliente_id) };
+      where[Op.or] = [
+        { destination_client_id: { [Op.in]: vinculos.map((v) => v.cliente_id) } },
+        { destination_warehouse_id: { [Op.ne]: null }, created_by: req.user.id },
+      ];
     }
 
     const remitos = await Remitos.findAll({
       where,
       include: [
         { model: Warehouses, as: 'depositoOrigen' },
-        { model: Clientes, as: 'cliente' },
+          { model: Warehouses, as: 'depositoDestino' },
+          { model: Clientes, as: 'cliente' },
         { model: Users, as: 'creadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'confirmadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'canceladoPor', attributes: ['id', 'nombre', 'email'] },
@@ -57,6 +62,11 @@ export const addRemito = async (req, res) => {
   const transaction = await db.transaction();
   try {
     const { type, origin_warehouse_id, destination_client_id, notes, created_by, items, remito_number } = req.body;
+
+    if (!origin_warehouse_id || !destination_client_id) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'El remito debe indicar depósito de origen y cliente de destino' });
+    }
 
     // Validar remito_number
     if (!remito_number || !/^\d{1,8}$/.test(String(remito_number))) {
@@ -185,16 +195,198 @@ export const addRemito = async (req, res) => {
   }
 };
 
+export const addRemitoInterno = async (req, res) => {
+  const transaction = await db.transaction();
+  try {
+    const originWarehouseId = Number(req.body.origin_warehouse_id);
+    const destinationWarehouseId = Number(req.body.destination_warehouse_id);
+    const { items, notes, issued_at } = req.body;
+
+    if (!Number.isSafeInteger(originWarehouseId) || originWarehouseId <= 0 ||
+      !Number.isSafeInteger(destinationWarehouseId) || destinationWarehouseId <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Seleccione depósitos de origen y destino válidos' });
+    }
+
+    if (originWarehouseId === destinationWarehouseId) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'El depósito de origen y destino deben ser distintos' });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Agregue al menos un producto a transferir' });
+    }
+
+    const [origin, destination] = await Promise.all([
+      Warehouses.findByPk(originWarehouseId, { transaction }),
+      Warehouses.findByPk(destinationWarehouseId, { transaction }),
+    ]);
+
+    if (!origin || !destination || !origin.activo || !destination.activo) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Los depósitos deben existir y estar activos' });
+    }
+
+    const userId = req.user?.id ?? req.body.created_by ?? null;
+    const now = new Date();
+    const issuedAt = issued_at ? new Date(`${issued_at}T12:00:00`) : now;
+    if (Number.isNaN(issuedAt.getTime())) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'La fecha del remito no es válida' });
+    }
+    const remito = await Remitos.create(
+      {
+        company_id: 1,
+        remito_number: `TMP-${randomBytes(8).toString('hex')}`,
+        type: 'NO_OFICIAL',
+        status: 'COMPLETADO',
+        origin_warehouse_id: originWarehouseId,
+        destination_client_id: null,
+        destination_warehouse_id: destinationWarehouseId,
+        created_by: userId,
+        issued_at: issuedAt,
+        confirmed_at: now,
+        confirmed_by: userId,
+        notes,
+      },
+      { transaction },
+    );
+
+    for (const item of items) {
+      const variantId = Number(item.product_variant_id);
+      const requested = Number(item.quantity_requested);
+      if (!Number.isSafeInteger(variantId) || variantId <= 0 || !Number.isFinite(requested) || requested <= 0) {
+        throw new Error('Cada producto debe tener una variante y una cantidad válida mayor a cero');
+      }
+
+      const variant = await ProductVariants.findByPk(variantId, {
+        transaction,
+        include: [{ model: ProductPresentations, as: 'presentacion' }],
+      });
+      if (!variant) throw new Error(`Variante ${variantId} no encontrada`);
+
+      const cantidadBase = variant.presentacion?.cantidad_base
+        ? Number(variant.presentacion.cantidad_base)
+        : 1;
+      const quantityBase = Math.round(requested * cantidadBase * 10000) / 10000;
+      if (!Number.isFinite(quantityBase) || quantityBase <= 0) {
+        throw new Error(`Cantidad inválida para la variante ${variantId}`);
+      }
+
+      const remitoItem = await RemitoItems.create(
+        {
+          remito_id: remito.id,
+          product_variant_id: variantId,
+          quantity_requested: quantityBase,
+          quantity_dispatched: quantityBase,
+          description: item.description,
+        },
+        { transaction },
+      );
+
+      const sourceLots = await WarehouseStock.findAll({
+        where: {
+          warehouse_id: originWarehouseId,
+          quantity: { [Op.gt]: 0 },
+        },
+        include: [{
+          model: ProductLots,
+          as: 'lote',
+          where: { product_variant_id: variantId },
+        }],
+        order: [[{ model: ProductLots, as: 'lote' }, 'manufacturing_date', 'ASC']],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+
+      let remaining = quantityBase;
+      for (const sourceStock of sourceLots) {
+        if (remaining <= 0) break;
+
+        const available = Number(sourceStock.quantity);
+        const quantityMoved = Math.min(remaining, available);
+        const destinationStock = await WarehouseStock.findOrCreate({
+          where: {
+            warehouse_id: destinationWarehouseId,
+            product_lot_id: sourceStock.product_lot_id,
+          },
+          defaults: {
+            warehouse_id: destinationWarehouseId,
+            product_lot_id: sourceStock.product_lot_id,
+            quantity: 0,
+          },
+          transaction,
+        });
+        const destinationEntry = destinationStock[0];
+        sourceStock.quantity = Math.round((available - quantityMoved) * 10000) / 10000;
+        destinationEntry.quantity = Math.round((Number(destinationEntry.quantity) + quantityMoved) * 10000) / 10000;
+        await sourceStock.save({ transaction });
+        await destinationEntry.save({ transaction });
+
+        await RemitoItemLots.create(
+          {
+            remito_item_id: remitoItem.id,
+            product_lot_id: sourceStock.product_lot_id,
+            quantity_dispatched: quantityMoved,
+          },
+          { transaction },
+        );
+
+        for (const movement of [
+          { warehouse_id: originWarehouseId, movement_type: 'SALIDA' },
+          { warehouse_id: destinationWarehouseId, movement_type: 'ENTRADA' },
+        ]) {
+          await StockMovements.create(
+            {
+              company_id: 1,
+              ...movement,
+              product_lot_id: sourceStock.product_lot_id,
+              quantity: quantityMoved,
+              reference_type: 'remito_transfer',
+              reference_id: remito.id,
+              remito_id: remito.id,
+              movement_date: issuedAt,
+              created_by: userId,
+              notes: `Transferencia interna ${origin.nombre} → ${destination.nombre}`,
+            },
+            { transaction },
+          );
+        }
+
+        remaining = Math.round((remaining - quantityMoved) * 10000) / 10000;
+      }
+
+      if (remaining > 0) {
+        const unidad = variant.presentacion?.nombre || 'unidad base';
+        throw new Error(`Stock insuficiente para variante ${variantId}. Faltante: ${(remaining / cantidadBase).toFixed(2)} ${unidad}`);
+      }
+    }
+
+    remito.remito_number = `TR-${String(remito.id).padStart(8, '0')}`;
+    await remito.save({ transaction });
+    await transaction.commit();
+    res.status(201).json(remito);
+  } catch (error) {
+    await transaction.rollback();
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const cancelRemito = async (req, res) => {
   const transaction = await db.transaction();
   try {
-    const remito = await Remitos.findByPk(req.params.id, { transaction });
+    const remito = await Remitos.findByPk(req.params.id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
     if (!remito) {
       await transaction.rollback();
       return res.status(404).json({ message: 'Remito no encontrado' });
     }
 
-    if (remito.status === 'COMPLETADO' || remito.status === 'ANULADO') {
+    const esInterno = Boolean(remito.destination_warehouse_id);
+    if (remito.status === 'ANULADO' || (remito.status === 'COMPLETADO' && !esInterno)) {
       await transaction.rollback();
       return res.status(400).json({ message: 'No se puede anular un remito en estado ' + remito.status });
     }
@@ -207,12 +399,66 @@ export const cancelRemito = async (req, res) => {
 
     for (const item of items) {
       for (const lot of item.lotes) {
+        if (esInterno) {
+          const destinationStock = await WarehouseStock.findOne({
+            where: {
+              warehouse_id: remito.destination_warehouse_id,
+              product_lot_id: lot.product_lot_id,
+            },
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+          const quantityToReturn = Number(lot.quantity_dispatched);
+          if (!destinationStock || Number(destinationStock.quantity) < quantityToReturn) {
+            throw new Error(`No se puede anular: el depósito destino no tiene stock suficiente del lote ${lot.product_lot_id}`);
+          }
+
+          destinationStock.quantity = Math.round((Number(destinationStock.quantity) - quantityToReturn) * 10000) / 10000;
+          await destinationStock.save({ transaction });
+
+          const sourceStock = await WarehouseStock.findOrCreate({
+            where: {
+              warehouse_id: remito.origin_warehouse_id,
+              product_lot_id: lot.product_lot_id,
+            },
+            defaults: {
+              warehouse_id: remito.origin_warehouse_id,
+              product_lot_id: lot.product_lot_id,
+              quantity: 0,
+            },
+            transaction,
+          });
+          sourceStock[0].quantity = Math.round((Number(sourceStock[0].quantity) + quantityToReturn) * 10000) / 10000;
+          await sourceStock[0].save({ transaction });
+
+          for (const movement of [
+            { warehouse_id: remito.destination_warehouse_id, movement_type: 'SALIDA' },
+            { warehouse_id: remito.origin_warehouse_id, movement_type: 'ENTRADA' },
+          ]) {
+            await StockMovements.create(
+              {
+                company_id: 1,
+                ...movement,
+                product_lot_id: lot.product_lot_id,
+                quantity: quantityToReturn,
+                reference_type: 'remito_transfer_cancel',
+                reference_id: remito.id,
+                remito_id: remito.id,
+                created_by: req.user?.id ?? req.body.cancelled_by ?? remito.created_by,
+              },
+              { transaction },
+            );
+          }
+          continue;
+        }
+
         const stock = await WarehouseStock.findOne({
           where: {
             warehouse_id: remito.origin_warehouse_id,
             product_lot_id: lot.product_lot_id,
           },
           transaction,
+          lock: transaction.LOCK.UPDATE,
         });
 
         if (stock) {
@@ -241,7 +487,7 @@ export const cancelRemito = async (req, res) => {
       {
         status: 'ANULADO',
         cancelled_at: new Date(),
-        cancelled_by: req.body.cancelled_by || null,
+        cancelled_by: req.user?.id ?? req.body.cancelled_by ?? null,
       },
       { where: { id: remito.id }, transaction },
     );
@@ -338,7 +584,12 @@ export const getCatalogo = async (req, res) => {
               model: ProductVariants,
               as: 'variante',
               include: [
-                { model: ProductPresentations, as: 'presentacion' },
+                { model: Products, as: 'producto' },
+                {
+                  model: ProductPresentations,
+                  as: 'presentacion',
+                  include: [{ model: ProductPresentations, as: 'unidadBase' }],
+                },
               ],
             },
           ],
@@ -360,7 +611,8 @@ export const getCatalogo = async (req, res) => {
         catalogo[key] = {
           product_variant_id: variant.id,
           product_id: variant.product_id,
-          product_name: variant.codigo || '',
+          product_name: variant.producto?.nombre || variant.codigo || '',
+          product_code: variant.codigo || '',
           presentation_name: variant.presentacion?.nombre || 'Sin presentación',
           cantidad_base: cantidadBase,
           unidad_base: variant.presentacion?.unidadBase?.nombre || '',
@@ -397,7 +649,8 @@ export const getRemitoById = async (req, res) => {
     const remito = await Remitos.findByPk(req.params.id, {
       include: [
         { model: Warehouses, as: 'depositoOrigen' },
-        { model: Clientes, as: 'cliente' },
+          { model: Warehouses, as: 'depositoDestino' },
+          { model: Clientes, as: 'cliente' },
         { model: Users, as: 'creadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'confirmadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Users, as: 'canceladoPor', attributes: ['id', 'nombre', 'email'] },
