@@ -22,6 +22,7 @@ import Ciudad from './ciudades.js';
 
 import Notas from './notas.js';
 import Products from './products.js';
+import ProductBrands from './productBrands.js';
 import ProductPresentations from './productPresentations.js';
 import ProductLots from './productLots.js';
 import Warehouses from './warehouses.js';
@@ -471,6 +472,15 @@ ProductPresentations.hasMany(ProductVariants, {
 });
 
 // Products → Rubros (Many-to-One)
+Products.belongsTo(ProductBrands, {
+  foreignKey: 'brand_id',
+  as: 'brand',
+});
+ProductBrands.hasMany(Products, {
+  foreignKey: 'brand_id',
+  as: 'products',
+});
+
 Products.belongsTo(Rubros, {
   foreignKey: 'rubro_id',
   as: 'rubro',
@@ -723,6 +733,7 @@ export {
   Provincia,
   Ciudad,
   Products,
+  ProductBrands,
   ProductPresentations,
   ProductLots,
   ProductVariants,

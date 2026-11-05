@@ -36,6 +36,10 @@ Products.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    brand_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   {
     sequelize: db,

@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { Products, Rubros, Subrubros, ProductVariants, ProductPresentations } from '../models/index.js';
+import { Products, ProductBrands, Rubros, Subrubros, ProductVariants, ProductPresentations } from '../models/index.js';
 import db from '../config/database.js';
 
 export const allProducts = async (req, res) => {
@@ -8,6 +8,7 @@ export const allProducts = async (req, res) => {
     const products = await Products.findAll({
       where: { activo: true },
       include: [
+        { model: ProductBrands, as: 'brand' },
         { model: Rubros, as: 'rubro' },
         { model: Subrubros, as: 'subrubro' },
       ],
@@ -22,7 +23,7 @@ export const allProducts = async (req, res) => {
 export const addProduct = async (req, res) => {
   const transaction = await db.transaction();
   try {
-    const { codigo, subrubro_id, rubro_id, presentation_id, codigo_variante } = req.body;
+    const { codigo, subrubro_id, rubro_id, brand_id, presentation_id, codigo_variante } = req.body;
 
     // Validar código único (incluyendo dados de baja)
     const existingCodigo = await Products.findOne({
@@ -43,6 +44,12 @@ export const addProduct = async (req, res) => {
     if (subrubro.rubro_id !== parseInt(rubro_id)) {
       await transaction.rollback();
       return res.status(400).json({ message: 'El subrubro no pertenece al rubro seleccionado' });
+    }
+
+    const brand = await ProductBrands.findByPk(brand_id);
+    if (!brand || !brand.activo) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Seleccione una marca activa' });
     }
 
     // Validar presentation_id
@@ -75,6 +82,7 @@ export const addProduct = async (req, res) => {
       imagen: req.body.imagen,
       rubro_id: parseInt(rubro_id),
       subrubro_id: parseInt(subrubro_id),
+      brand_id: parseInt(brand_id),
     }, { transaction });
 
     // Crear variante
@@ -91,6 +99,7 @@ export const addProduct = async (req, res) => {
     // Recargar con includes para devolver completo
     const productFull = await Products.findByPk(product.id, {
       include: [
+        { model: ProductBrands, as: 'brand' },
         { model: Rubros, as: 'rubro' },
         { model: Subrubros, as: 'subrubro' },
         {
@@ -115,7 +124,7 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    const { codigo, subrubro_id, rubro_id } = req.body;
+    const { codigo, subrubro_id, rubro_id, brand_id } = req.body;
 
     // Validar código único si cambió
     if (codigo && codigo !== product.codigo) {
@@ -137,6 +146,13 @@ export const updateProduct = async (req, res) => {
       const rubroId = rubro_id || product.rubro_id;
       if (subrubro.rubro_id !== parseInt(rubroId)) {
         return res.status(400).json({ message: 'El subrubro no pertenece al rubro seleccionado' });
+      }
+    }
+
+    if (brand_id !== undefined && parseInt(brand_id) !== product.brand_id) {
+      const brand = await ProductBrands.findByPk(brand_id);
+      if (!brand || !brand.activo) {
+        return res.status(400).json({ message: 'Seleccione una marca activa' });
       }
     }
 

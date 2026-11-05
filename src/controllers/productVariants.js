@@ -1,10 +1,11 @@
-import { ProductVariants, Products, ProductPresentations, Rubros, Subrubros, ProductLots, StockMovements } from '../models/index.js';
+import { ProductVariants, Products, ProductBrands, ProductPresentations, Rubros, Subrubros, ProductLots, StockMovements } from '../models/index.js';
 
 export const allVariants = async (req, res) => {
   try {
     const variants = await ProductVariants.findAll({
       include: [
         { model: Products, as: 'producto', include: [
+          { model: ProductBrands, as: 'brand' },
           { model: Rubros, as: 'rubro' },
           { model: Subrubros, as: 'subrubro' },
         ]},
@@ -23,6 +24,7 @@ export const getFullVariants = async (req, res) => {
     const variants = await ProductVariants.findAll({
       include: [
         { model: Products, as: 'producto', include: [
+          { model: ProductBrands, as: 'brand' },
           { model: Rubros, as: 'rubro' },
           { model: Subrubros, as: 'subrubro' },
         ]},
