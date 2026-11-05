@@ -87,6 +87,7 @@ import InformesPdf from '../controllers/informesPdf.js';
 import * as notas from '../controllers/notas.js';
 import * as productsController from '../controllers/products.js';
 import * as productPresentationsController from '../controllers/productPresentations.js';
+import * as productBrandsController from '../controllers/productBrands.js';
 import * as warehousesController from '../controllers/warehouses.js';
 import * as providersController from '../controllers/providers.js';
 import * as purchasesController from '../controllers/purchases.js';
@@ -609,6 +610,15 @@ router.put('/stock/products/:id', productsController.updateProduct);
 router.delete('/stock/products/:id', productsController.deleteProduct);
 router.put('/stock/products/:id/image', uploadProductos.single('image'), productsController.uploadProductImage);
 router.delete('/stock/products/:id/image', productsController.deleteProductImage);
+
+// ========================================
+// RUTAS PROTEGIDAS - MARCAS DE PRODUCTOS
+// ========================================
+
+router.get('/stock/product-brands', productBrandsController.allProductBrands);
+router.post('/stock/product-brands', productBrandsController.addProductBrand);
+router.put('/stock/product-brands/:id', productBrandsController.updateProductBrand);
+router.delete('/stock/product-brands/:id', productBrandsController.deleteProductBrand);
 
 // ========================================
 // RUTAS PROTEGIDAS - PRESENTACIONES
