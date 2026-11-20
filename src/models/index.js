@@ -39,6 +39,8 @@ import Rubros from './rubros.js';
 import Subrubros from './subrubros.js';
 import ProductVariants from './productVariants.js';
 import RemitoArchivos from './remitoArchivos.js';
+import Facturas from './facturas.js';
+import RemitoFacturas from './remitoFacturas.js';
 import ClienteInvitaciones from './clienteInvitaciones.js';
 import AuditLogs from './auditLogs.js';
 import { registerModelAuditHooks } from '../services/modelAuditHooks.js';
@@ -647,6 +649,38 @@ RemitoArchivos.belongsTo(Users, {
   as: 'subidoPor',
 });
 
+// Facturas → Clientes (facturación / anticipo de un cliente)
+Facturas.belongsTo(Clientes, {
+  foreignKey: 'cliente_id',
+  as: 'cliente',
+});
+
+// Facturas → Users (created_by)
+Facturas.belongsTo(Users, {
+  foreignKey: 'created_by',
+  as: 'creadoPor',
+});
+
+// Facturas → RemitoFacturas (1 factura → N remitos)
+Facturas.hasMany(RemitoFacturas, {
+  foreignKey: 'factura_id',
+  as: 'remitos',
+});
+RemitoFacturas.belongsTo(Facturas, {
+  foreignKey: 'factura_id',
+  as: 'factura',
+});
+
+// Remitos → RemitoFacturas (1 remito → N facturas parciales)
+Remitos.hasMany(RemitoFacturas, {
+  foreignKey: 'remito_id',
+  as: 'facturaciones',
+});
+RemitoFacturas.belongsTo(Remitos, {
+  foreignKey: 'remito_id',
+  as: 'remito',
+});
+
 // RemitoItems → ProductVariants
 RemitoItems.belongsTo(ProductVariants, {
   foreignKey: 'product_variant_id',
@@ -739,6 +773,8 @@ export {
   RemitoItems,
   RemitoItemLots,
   RemitoArchivos,
+  Facturas,
+  RemitoFacturas,
   StockMovements,
   ClienteInvitaciones,
   AuditLogs,

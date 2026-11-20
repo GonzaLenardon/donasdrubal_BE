@@ -1,10 +1,11 @@
 import { Op } from 'sequelize';
 import { randomBytes } from 'node:crypto';
-import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants, Products, ClienteIngenieros } from '../models/index.js';
+import { Remitos, RemitoItems, RemitoItemLots, WarehouseStock, StockMovements, Warehouses, Clientes, Users, ProductLots, ProductPresentations, ProductVariants, Products, ClienteIngenieros, Facturas, RemitoFacturas } from '../models/index.js';
 import { ROLES } from '../config/constants/roles.js';
 import {
   obtenerRemitosFaltantes,
 } from '../services/reportes/remitosFaltantesService.js';
+import { calcularSaldosFacturacion } from '../services/facturacionService.js';
 import db from '../config/database.js';
 import path from 'path';
 import fs from 'fs';
@@ -36,7 +37,7 @@ export const allRemitos = async (req, res) => {
         {
           model: RemitoItems,
           as: 'items',
-          attributes: ['id', 'product_variant_id'],
+          attributes: ['id', 'product_variant_id', 'quantity_dispatched'],
           include: [
             {
               model: ProductVariants,
@@ -52,6 +53,24 @@ export const allRemitos = async (req, res) => {
       ],
       order: [['createdAt', 'DESC']],
     });
+
+    // Estado de facturación derivado de remito_facturas (no es una
+    // columna nueva en remitos): total remitido, facturado, saldo y
+    // estado NO_FACTURADO / PARCIAL / FACTURADO.
+    const saldos = await calcularSaldosFacturacion(remitos.map((r) => r.id));
+    for (const remito of remitos) {
+      const saldo = saldos[remito.id] || {
+        total: 0,
+        facturado: 0,
+        saldo: 0,
+        estado: 'NO_FACTURADO',
+      };
+      remito.dataValues.total_remitido = saldo.total;
+      remito.dataValues.facturado = saldo.facturado;
+      remito.dataValues.saldo_facturacion = saldo.saldo;
+      remito.dataValues.estado_facturacion = saldo.estado;
+    }
+
     res.json(remitos);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -673,9 +692,37 @@ export const getRemitoById = async (req, res) => {
             },
           ],
         },
+        {
+          // Facturas activas (no anuladas) en las que participa este remito
+          model: RemitoFacturas,
+          as: 'facturaciones',
+          attributes: ['id', 'cantidad_facturada', 'factura_id', 'createdAt'],
+          include: [
+            {
+              model: Facturas,
+              as: 'factura',
+              attributes: ['id', 'numero', 'fecha', 'tipo', 'estado'],
+              where: { estado: { [Op.ne]: 'ANULADA' } },
+              required: true,
+            },
+          ],
+        },
       ],
     });
     if (!remito) return res.status(404).json({ message: 'Remito no encontrado' });
+
+    const saldos = await calcularSaldosFacturacion([remito.id]);
+    const saldo = saldos[remito.id] || {
+      total: 0,
+      facturado: 0,
+      saldo: 0,
+      estado: 'NO_FACTURADO',
+    };
+    remito.dataValues.total_remitido = saldo.total;
+    remito.dataValues.facturado = saldo.facturado;
+    remito.dataValues.saldo_facturacion = saldo.saldo;
+    remito.dataValues.estado_facturacion = saldo.estado;
+
     res.json(remito);
   } catch (error) {
     res.status(500).json({ message: error.message });

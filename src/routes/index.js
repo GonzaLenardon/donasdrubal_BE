@@ -92,6 +92,7 @@ import * as providersController from '../controllers/providers.js';
 import * as purchasesController from '../controllers/purchases.js';
 import * as remitosController from '../controllers/remitos.js';
 import * as remitoArchivosController from '../controllers/remitoArchivos.js';
+import * as facturasController from '../controllers/facturas.js';
 import * as warehouseStockController from '../controllers/warehouseStock.js';
 import * as stockMovementsController from '../controllers/stockMovements.js';
 import * as rubrosController from '../controllers/rubros.js';
@@ -667,6 +668,17 @@ router.put('/stock/remitos/:id/cancel', remitosController.cancelRemito);
 router.get('/stock/remitos/:remitoId/archivos', remitoArchivosController.getArchivosByRemito);
 router.post('/stock/remitos/:remitoId/archivos', uploadRemitos.array('archivos', 10), remitoArchivosController.addArchivo);
 router.delete('/stock/remitos/:remitoId/archivos/:archivoId', remitoArchivosController.deleteArchivo);
+
+// ========================================
+// RUTAS PROTEGIDAS - FACTURACIÓN (etapa simulada)
+// ========================================
+
+router.get('/stock/facturas', facturasController.allFacturas);
+// Ojo: debe ir antes de /:id para no ser capturada como id
+router.get('/stock/facturas/remitos-disponibles', facturasController.remitosDisponibles);
+router.get('/stock/facturas/:id', facturasController.getFacturaById);
+router.post('/stock/facturas', verifyRole([ROLES.ADMIN]), facturasController.addFactura);
+router.put('/stock/facturas/:id/anular', verifyRole([ROLES.ADMIN]), facturasController.anularFactura);
 
 // ========================================
 // RUTAS PROTEGIDAS - RUBROS, SUBRUBROS, PRODUCT VARIANTS
