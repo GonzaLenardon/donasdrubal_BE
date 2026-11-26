@@ -498,6 +498,8 @@ class PdfMuestraAguaService {
     columnRatios,
     font,
     fontBold,
+    centerColumns = [],
+    wrapColumns = [],
   }) {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
@@ -505,6 +507,7 @@ class PdfMuestraAguaService {
 
     const tableWidth = pageWidth - margin * 2;
     const rowHeight = 18;
+    const bodyFontSize = 8;
     const colWidths = columnRatios.map((r) => r * tableWidth);
     const normalizedHeaders = headers.map((header) => (
       typeof header === 'string'
@@ -561,13 +564,24 @@ class PdfMuestraAguaService {
 
     // ── Filas ───────────────────────────────────────────────────────────
     for (const row of rows) {
+      const cellLines = row.map((cell, i) => {
+        const value = String(cell);
+        return wrapColumns.includes(i)
+          ? pdfUtils.wrapText(value, font, bodyFontSize, colWidths[i] - 8)
+          : [pdfUtils.truncate(value, 30)];
+      });
+      const currentRowHeight = Math.max(
+        rowHeight,
+        ...cellLines.map((lines) => lines.length * (bodyFontSize + 2) + 6),
+      );
+
       // Salto de página automático
-      if (cursorY - rowHeight < 80) {
+      if (cursorY - currentRowHeight < 80) {
         page = pdfDoc.addPage();
         cursorY = pageHeight - 60;
       }
 
-      const rowY = cursorY - rowHeight;
+      const rowY = cursorY - currentRowHeight;
       x = margin;
 
       row.forEach((cell, i) => {
@@ -575,22 +589,29 @@ class PdfMuestraAguaService {
           x,
           y: rowY,
           width: colWidths[i],
-          height: rowHeight,
+          height: currentRowHeight,
           borderWidth: 0.5,
           borderColor: rgb(0.7, 0.7, 0.7),
         });
 
-        page.drawText(pdfUtils.truncate(String(cell), 30), {
-          x: x + 4,
-          y: rowY + 5,
-          size: 8,
-          font,
-        });
+        const lines = cellLines[i];
+        const lineHeight = bodyFontSize + 2;
+        let textY = rowY + (currentRowHeight - lines.length * lineHeight) / 2 + 1;
+        for (const line of lines) {
+          const lineWidth = font.widthOfTextAtSize(line, bodyFontSize);
+          page.drawText(line, {
+            x: centerColumns.includes(i) ? x + (colWidths[i] - lineWidth) / 2 : x + 4,
+            y: textY,
+            size: bodyFontSize,
+            font,
+          });
+          textY -= lineHeight;
+        }
 
         x += colWidths[i];
       });
 
-      cursorY -= rowHeight;
+      cursorY -= currentRowHeight;
     }
 
     return { page, cursorY };
@@ -750,7 +771,7 @@ class PdfMuestraAguaService {
       { title: 'F. Iónica', unit: '(mmol/L)' },
       { title: 'Hard', unit: '(cc/1.000 L)' },
     ];
-    const columnRatios = [0.05, 0.25, 0.08, 0.14, 0.12, 0.1, 0.12, 0.14];
+    const columnRatios = [0.05, 0.31, 0.07, 0.13, 0.12, 0.1, 0.11, 0.11];
 
     // ── Título ─────────────────────────────────────────────
     page.drawText('Resultados comparativos', {
@@ -769,6 +790,8 @@ class PdfMuestraAguaService {
       headers,
       rows: datosTabla,
       columnRatios,
+      centerColumns: [0, 2, 3, 4, 5, 6, 7],
+      wrapColumns: [1],
       font,
       fontBold,
     });
